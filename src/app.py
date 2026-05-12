@@ -15,25 +15,29 @@ st.set_page_config(page_title="AI 教学助手 - 流行病学与卫生统计", l
 KNOWLEDGE_DIR = Path(__file__).parent.parent / "knowledge_base"
 CASES_DIR = Path(__file__).parent.parent / "cases"
 
+# --- Configuration & Defaults ---
+DEFAULT_API_KEY = "sk-b6b9822caa6b4ef28f4c785887fd6c37"
+DEFAULT_BASE_URL = "https://api.deepseek.com"
+DEFAULT_MODEL_NAME = "deepseek-v4-flash"
+
 def get_api_client():
-    if "api_key" not in st.session_state or not st.session_state.api_key:
-        st.error("请在侧边栏配置 API Key")
-        return None
-    return OpenAI(
-        api_key=st.session_state.api_key,
-        base_url=st.session_state.base_url
-    )
+    # Priority: session_state (if set via secret) > Defaults
+    api_key = st.session_state.get("api_key", DEFAULT_API_KEY)
+    base_url = st.session_state.get("base_url", DEFAULT_BASE_URL)
+    return OpenAI(api_key=api_key, base_url=base_url)
 
 # --- Sidebar ---
 with st.sidebar:
-    with st.expander("⚙️ 配置", expanded=False):
-        st.session_state.api_key = st.text_input("API Key", value="sk-b6b9822caa6b4ef28f4c785887fd6c37", type="password", help="输入国内大模型 API Key")
-        st.session_state.base_url = st.text_input("Base URL", value="https://api.deepseek.com", help="API 服务地址")
-        st.session_state.model_name = st.text_input("Model Name", value="deepseek-v4-flash")
-    
-    st.divider()
     st.title("📍 导航")
-    menu = st.radio("选择功能", ["知识库问答", "案例模拟训练", "教师管理"])
+    # Only show these two to students
+    menu = st.radio("选择功能", ["知识库问答", "案例模拟训练"])
+    
+    # Secret access to Teacher Management (append ?admin=true to URL)
+    is_admin = st.query_params.get("admin") == "true"
+    if is_admin:
+        st.divider()
+        if st.checkbox("开启管理模式"):
+            menu = "教师管理"
 
 # --- Helper Functions ---
 def load_knowledge():
@@ -107,6 +111,9 @@ if menu == "知识库问答":
     for msg in st.session_state.qa_messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
+            if msg["role"] == "assistant":
+                if "[显示猴痘皮疹图]" in msg["content"]:
+                    st.image("/Users/yanfei/ai-teaching-assistant/assets/mpox_rash.png", caption="猴痘皮疹典型临床特征参考图")
 
     if prompt := st.chat_input("输入你的问题..."):
         st.session_state.qa_messages.append({"role": "user", "content": prompt})
@@ -116,17 +123,30 @@ if menu == "知识库问答":
         client = get_api_client()
         if client:
             with st.chat_message("assistant"):
-                system_prompt = f"你是一个专业的口岸卫生检疫与现场流行病学教学助手。请根据以下口岸 SOP、指南和规范内容回答学员的问题。如果问题不在知识库中，请基于你的专业知识回答。请注意：回答应直接针对问题本身，不要在结尾添加‘扩展建议’或主动推荐其他流程。\n\n知识库内容：\n{context}"
-                response = client.chat.completions.create(
-                    model=st.session_state.model_name,
-                    messages=[
+                system_prompt = f"""你是一个专业的口岸卫生检疫与现场流行病学教学助手。
+请根据以下知识库内容回答学员问题。回答应直接针对问题，不要在结尾添加‘扩展建议’。
 
+关于图片的展示规则：
+1. 知识库中包含一张【猴痘皮疹典型临床特征参考图片】。
+2. 只有当学员专门询问“猴痘皮疹的形态”、“皮疹特点”或“皮疹演变”等具体细节时，你才可以在回答中包含此标记：[显示猴痘皮疹图]。
+3. 严禁在回答“猴痘是什么”或普通症状列表时包含此标记。
+
+知识库内容：
+{context}"""
+                response = client.chat.completions.create(
+                    model=st.session_state.get("model_name", DEFAULT_MODEL_NAME),
+                    messages=[
                         {"role": "system", "content": system_prompt},
                         *st.session_state.qa_messages
                     ],
                     stream=True
                 )
                 full_response = st.write_stream(response)
+                
+                # Strict trigger: only show if the specific tag is present
+                if "[显示猴痘皮疹图]" in full_response:
+                    st.image("/Users/yanfei/ai-teaching-assistant/assets/mpox_rash.png", caption="猴痘皮疹典型临床特征参考图")
+                
                 st.session_state.qa_messages.append({"role": "assistant", "content": full_response})
 
 elif menu == "案例模拟训练":
@@ -193,7 +213,7 @@ elif menu == "案例模拟训练":
 任务：评价学员的选择是否正确、完整，指出错误或缺失，并给出基于 SOP 的专业解析。简洁专业。
 """
                         response = client.chat.completions.create(
-                            model=st.session_state.model_name,
+                            model=st.session_state.get("model_name", DEFAULT_MODEL_NAME),
                             messages=[
                                 {"role": "system", "content": sys_eval_prompt},
                                 {"role": "user", "content": f"病例背景：{case_data['background']}\n{user_ans_str}"}
@@ -424,7 +444,7 @@ JSON 结构模板：
 }}
 """
                             response = client.chat.completions.create(
-                                model=st.session_state.model_name,
+                                model=st.session_state.get("model_name", DEFAULT_MODEL_NAME),
                                 messages=[{"role": "system", "content": gen_prompt}]
                             )
                             # Strip potential code blocks
