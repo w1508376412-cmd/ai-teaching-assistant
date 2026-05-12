@@ -14,6 +14,7 @@ st.set_page_config(page_title="AI 教学助手 - 流行病学与卫生统计", l
 
 KNOWLEDGE_DIR = Path(__file__).parent.parent / "knowledge_base"
 CASES_DIR = Path(__file__).parent.parent / "cases"
+ASSETS_DIR = Path(__file__).parent.parent / "assets"
 
 # --- Configuration & Defaults ---
 DEFAULT_API_KEY = "sk-b6b9822caa6b4ef28f4c785887fd6c37"
@@ -113,7 +114,7 @@ if menu == "知识库问答":
             st.markdown(msg["content"])
             if msg["role"] == "assistant":
                 if "[显示猴痘皮疹图]" in msg["content"]:
-                    st.image("/Users/yanfei/ai-teaching-assistant/assets/mpox_rash.png", caption="猴痘皮疹典型临床特征参考图")
+                    st.image(ASSETS_DIR / "mpox_rash.png", caption="猴痘皮疹典型临床特征参考图")
 
     if prompt := st.chat_input("输入你的问题..."):
         st.session_state.qa_messages.append({"role": "user", "content": prompt})
@@ -145,7 +146,7 @@ if menu == "知识库问答":
                 
                 # Strict trigger: only show if the specific tag is present
                 if "[显示猴痘皮疹图]" in full_response:
-                    st.image("/Users/yanfei/ai-teaching-assistant/assets/mpox_rash.png", caption="猴痘皮疹典型临床特征参考图")
+                    st.image(ASSETS_DIR / "mpox_rash.png", caption="猴痘皮疹典型临床特征参考图")
                 
                 st.session_state.qa_messages.append({"role": "assistant", "content": full_response})
 
