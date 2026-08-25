@@ -1,0 +1,1818 @@
+{
+  "title": "临床常见皮疹图谱",
+  "version": "2026-08-25",
+  "summary": {
+    "category_count": 8,
+    "disease_count": 30,
+    "image_count": 72
+  },
+  "notice": "图谱用于医学教学与鉴别思路训练，不能替代面诊、病理或实验室诊断。教材图片版权归出版社与原作者，仅供教学参考。",
+  "provenance": [
+    "教材：《皮肤性病学》第10版（人民卫生出版社，2024），版权归出版社与原作者。",
+    "CDC PHIL：仅收录经原站核对为公有领域的图像。",
+    "PubMed Central：仅收录 CC BY / CC0 开放许可文献配图。"
+  ],
+  "categories": [
+    {
+      "id": "c0",
+      "title": "病毒性疾病",
+      "full_title": "一、病毒性疾病",
+      "diseases": [
+        {
+          "id": "measles",
+          "name": "麻疹",
+          "english": "Measles",
+          "facts": {
+            "发热": "前驱高热 3–4 天，出疹时体温达峰值",
+            "皮疹": "耳后颜面 → 颈躯干四肢；暗红色斑丘疹，可融合；疹间皮肤正常",
+            "鉴别要点": "科氏斑（Koplik spots）为诊断金标准，出疹前 1–2 天见于颊黏膜；伴流涕、结膜充血、畏光；疹退后遗留色素沉着与糠麸样脱屑"
+          },
+          "images": [
+            {
+              "file": "measles_16469.webp",
+              "alt": "麻疹皮疹",
+              "width": 790,
+              "height": 1200,
+              "source_label": "CDC PHIL 16469",
+              "license": "公有领域",
+              "dimensions": "1580×2400",
+              "caption": "患儿面颈部、胸部、躯干及四肢出现斑片状斑丘疹，诊断为麻疹。",
+              "provider": "CDC/ Betty G. Partin",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=16469"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/16469/16469.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "measles_22148.webp",
+              "alt": "麻疹皮疹",
+              "width": 790,
+              "height": 1200,
+              "source_label": "CDC PHIL 22148",
+              "license": "公有领域",
+              "dimensions": "1580×2400",
+              "caption": "麻疹早期的面部近观。注意其眼睛充血流泪，前额与面颊可见轻度潮湿光泽——这是麻疹前驱期结膜炎与卡他症状的表现。",
+              "provider": "CDC",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=22148"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/22148/22148.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "measles_24413.webp",
+              "alt": "麻疹皮疹",
+              "width": 1200,
+              "height": 790,
+              "source_label": "CDC PHIL 24413",
+              "license": "公有领域",
+              "dimensions": "2400×1580",
+              "caption": "病程第 3 天的口腔近观：左侧颊黏膜可见麻疹特征性的科氏斑（Koplik spots）。科氏斑通常在出疹前 1–2 天至出疹后 1–2 天可见。",
+              "provider": "CDC/ Heinz F. Eichenwald, MD",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=24413"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/24413/24413.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "measles_24426.webp",
+              "alt": "麻疹皮疹",
+              "width": 1200,
+              "height": 790,
+              "source_label": "CDC PHIL 24426",
+              "license": "公有领域",
+              "dimensions": "2400×1580",
+              "caption": "病程第 5 天的口腔近观：左侧颊黏膜的科氏斑，此时已较前明显。",
+              "provider": "CDC/ Heinz F. Eichenwald, MD",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=24426"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/24426/24426.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "measles_24430.webp",
+              "alt": "麻疹皮疹",
+              "width": 790,
+              "height": 1200,
+              "source_label": "CDC PHIL 24430",
+              "license": "公有领域",
+              "dimensions": "1580×2400",
+              "caption": "口腔近观：左侧颊黏膜可见麻疹科氏斑。科氏斑为红晕环绕的灰白色针尖样小点，特异性极高。",
+              "provider": "CDC/ Heinz F. Eichenwald, MD",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=24430"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/24430/24430.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "measles_24434.webp",
+              "alt": "麻疹皮疹",
+              "width": 1200,
+              "height": 790,
+              "source_label": "CDC PHIL 24434",
+              "license": "公有领域",
+              "dimensions": "2400×1580",
+              "caption": "患儿背部后面观：麻疹的红斑性皮疹，表现为形状不规则、相互融合的隆起性皮损。",
+              "provider": "CDC/ Heinz F. Eichenwald, MD",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=24434"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/24434/24434.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "measles_24435.webp",
+              "alt": "麻疹皮疹",
+              "width": 1200,
+              "height": 790,
+              "source_label": "CDC PHIL 24435",
+              "license": "公有领域",
+              "dimensions": "2400×1580",
+              "caption": "同一患儿背部的另一角度：可见不规则、融合成片的隆起性红色皮损。",
+              "provider": "CDC/ Heinz F. Eichenwald, MD",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=24435"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/24435/24435.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "measles_24437.webp",
+              "alt": "麻疹皮疹",
+              "width": 1200,
+              "height": 790,
+              "source_label": "CDC PHIL 24437",
+              "license": "公有领域",
+              "dimensions": "2400×1580",
+              "caption": "胸腹部前下方观：麻疹皮疹演变至第 8 天。此阶段皮疹开始消退，遗留褐色色素沉着。",
+              "provider": "CDC/ Heinz F. Eichenwald, MD",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=24437"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/24437/24437.tif"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 8,
+          "search_text": "麻疹 Measles 前驱高热 3–4 天，出疹时体温达峰值 耳后颜面 → 颈躯干四肢；暗红色斑丘疹，可融合；疹间皮肤正常 科氏斑（Koplik spots）为诊断金标准，出疹前 1–2 天见于颊黏膜；伴流涕、结膜充血、畏光；疹退后遗留色素沉着与糠麸样脱屑"
+        },
+        {
+          "id": "rubella",
+          "name": "风疹",
+          "english": "Rubella",
+          "facts": {
+            "发热": "低热至中度发热，发热半天～1 天即出疹",
+            "皮疹": "面部始发，24 小时内遍布全身；淡红色细小斑丘疹",
+            "鉴别要点": "耳后、枕后淋巴结肿痛；皮疹消退快、不留色素；孕早期感染可致先天性风疹综合征"
+          },
+          "images": [
+            {
+              "file": "rubella_22142.webp",
+              "alt": "风疹皮疹",
+              "width": 1200,
+              "height": 790,
+              "source_label": "CDC PHIL 22142",
+              "license": "公有领域",
+              "dimensions": "2400×1580",
+              "caption": "患儿右前斜位观：面部、上肢与胸部可见斑片状皮疹。该男孩与其妹妹同时感染风疹病毒（德国麻疹）。",
+              "provider": "CDC",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=22142"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/22142/22142.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "rubella_22145.webp",
+              "alt": "风疹皮疹",
+              "width": 863,
+              "height": 1200,
+              "source_label": "CDC PHIL 22145",
+              "license": "公有领域",
+              "dimensions": "1726×2400",
+              "caption": "患儿前面观：面部、上肢与胸部的斑片状斑疹，为风疹（德国麻疹）感染所致。",
+              "provider": "CDC",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=22145"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/22145/22145.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "rubella_22146.webp",
+              "alt": "风疹皮疹",
+              "width": 1200,
+              "height": 790,
+              "source_label": "CDC PHIL 22146",
+              "license": "公有领域",
+              "dimensions": "2400×1580",
+              "caption": "患儿右侧位观：面部、上肢与胸部的斑片状斑疹，风疹病毒感染。",
+              "provider": "CDC",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=22146"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/22146/22146.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "rubella_22147.webp",
+              "alt": "风疹皮疹",
+              "width": 1200,
+              "height": 1075,
+              "source_label": "CDC PHIL 22147",
+              "license": "公有领域",
+              "dimensions": "2400×2150",
+              "caption": "患儿头颈部右侧位近观：面部斑片状斑疹，风疹病毒感染。",
+              "provider": "CDC",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=22147"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/22147/22147.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "rubella_24378.webp",
+              "alt": "风疹皮疹",
+              "width": 1200,
+              "height": 790,
+              "source_label": "CDC PHIL 24378",
+              "license": "公有领域",
+              "dimensions": "2400×1580",
+              "caption": "患儿头颈胸部右前斜位观：斑疹样皮疹，初疑为落基山斑疹热，后确诊为风疹（德国麻疹）。",
+              "provider": "CDC",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=24378"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/24378/24378.tif"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 5,
+          "search_text": "风疹 Rubella 低热至中度发热，发热半天～1 天即出疹 面部始发，24 小时内遍布全身；淡红色细小斑丘疹 耳后、枕后淋巴结肿痛；皮疹消退快、不留色素；孕早期感染可致先天性风疹综合征"
+        },
+        {
+          "id": "roseola",
+          "name": "幼儿急疹",
+          "english": "Roseola infantum (HHV-6/7)",
+          "facts": {
+            "发热": "持续高热 3–5 天，患儿一般状态尚可",
+            "皮疹": "躯干为主的玫瑰色斑丘疹，1–2 天自行消退，无脱屑与色素沉着",
+            "鉴别要点": "热退疹出为金标准——高热骤退的同时或稍后出疹，是与麻疹（热峰出疹）最直接的区别"
+          },
+          "images": [
+            {
+              "file": "roseola_pmc00_PMC10874238.webp",
+              "alt": "幼儿急疹皮疹",
+              "width": 750,
+              "height": 1000,
+              "source_label": "PMC10874238",
+              "license": "CC BY",
+              "dimensions": "750×1000",
+              "caption": "图1 幼儿急疹典型的「热退疹出」皮疹——高热骤退后出现的躯干部玫瑰色斑丘疹。",
+              "provider": "Cureus 2024",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10874238/"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 1,
+          "search_text": "幼儿急疹 Roseola infantum (HHV-6/7) 持续高热 3–5 天，患儿一般状态尚可 躯干为主的玫瑰色斑丘疹，1–2 天自行消退，无脱屑与色素沉着 热退疹出为金标准——高热骤退的同时或稍后出疹，是与麻疹（热峰出疹）最直接的区别"
+        },
+        {
+          "id": "varicella",
+          "name": "水痘",
+          "english": "Chickenpox (VZV)",
+          "facts": {
+            "发热": "低热，出疹与发热同期",
+            "皮疹": "斑疹 → 丘疹 → 疱疹 → 结痂「四世同堂」；向心性分布（躯干多、四肢少）",
+            "鉴别要点": "同一部位可同时见到各期皮损（多形性），是与天花、猴痘（演变同步）最关键的鉴别；瘙痒明显"
+          },
+          "images": [
+            {
+              "file": "varicella_book00_p93.webp",
+              "alt": "水痘皮疹",
+              "width": 441,
+              "height": 330,
+              "source_label": "教材 p93",
+              "license": "教材版权",
+              "dimensions": "441×330",
+              "caption": "图10-2 水痘：躯干部皮损，斑疹、丘疹、水疱、结痂各期同时存在",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            }
+          ],
+          "image_count": 1,
+          "search_text": "水痘 Chickenpox (VZV) 低热，出疹与发热同期 斑疹 → 丘疹 → 疱疹 → 结痂「四世同堂」；向心性分布（躯干多、四肢少） 同一部位可同时见到各期皮损（多形性），是与天花、猴痘（演变同步）最关键的鉴别；瘙痒明显"
+        },
+        {
+          "id": "zoster",
+          "name": "带状疱疹",
+          "english": "Herpes zoster",
+          "facts": {
+            "发热": "可低热；部分患者先有剧烈神经痛",
+            "皮疹": "沿单侧周围神经节段（皮节）带状分布的簇集性水疱，不越过身体中线",
+            "鉴别要点": "先痛后疹是特点；三叉神经眼支受累需急诊眼科处理"
+          },
+          "images": [
+            {
+              "file": "zoster_book00_p93.webp",
+              "alt": "带状疱疹皮疹",
+              "width": 898,
+              "height": 331,
+              "source_label": "教材 p93",
+              "license": "教材版权",
+              "dimensions": "898×331",
+              "caption": "图10-3 带状疱疹：A. 躯干沿皮节带状分布，不越过中线；B. 眼部带状疱疹",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            }
+          ],
+          "image_count": 1,
+          "search_text": "带状疱疹 Herpes zoster 可低热；部分患者先有剧烈神经痛 沿单侧周围神经节段（皮节）带状分布的簇集性水疱，不越过身体中线 先痛后疹是特点；三叉神经眼支受累需急诊眼科处理"
+        },
+        {
+          "id": "hfmd",
+          "name": "手足口病",
+          "english": "HFMD (EV71 / CoxA16)",
+          "facts": {
+            "发热": "中低热，重症可持续高热",
+            "皮疹": "手、足、口腔、臀部疱疹或斑丘疹；口腔黏膜溃疡",
+            "鉴别要点": "掌跖部位深在性水疱是特征；重症可并发脑炎、肺水肿——持续高热、肢体抖动、呼吸急促为预警信号。CoxA6 型可表现为泛发大疱及后期脱甲"
+          },
+          "images": [
+            {
+              "file": "hfmd_pmc00_PMC11270346.webp",
+              "alt": "手足口病皮疹",
+              "width": 712,
+              "height": 1066,
+              "source_label": "PMC11270346",
+              "license": "CC BY",
+              "dimensions": "712×1066",
+              "caption": "图1 A. 病例1，2月龄男婴，皮疹遍及全面部、躯干与上肢；B. 病例2，1岁健康女婴，腰背部皮疹，部分融合并结痂；C. 手足部皮损。柯萨奇病毒A6型所致手足口病。",
+              "provider": "Infectious disease reports 2024",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11270346/"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "hfmd_pmc01_PMC10846910.webp",
+              "alt": "手足口病皮疹",
+              "width": 750,
+              "height": 500,
+              "source_label": "PMC10846910",
+              "license": "CC BY",
+              "dimensions": "750×500",
+              "caption": "图1 首次发作：掌跖部多发红斑基础上的深在性水疱与丘疹。",
+              "provider": "Cureus 2024",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10846910/"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "hfmd_pmc02_PMC10846910.webp",
+              "alt": "手足口病皮疹",
+              "width": 750,
+              "height": 500,
+              "source_label": "PMC10846910",
+              "license": "CC BY",
+              "dimensions": "750×500",
+              "caption": "图2 复发时皮疹较首次为轻，但分布部位相同。",
+              "provider": "Cureus 2024",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10846910/"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "hfmd_pmc03_PMC10699830.webp",
+              "alt": "手足口病皮疹",
+              "width": 750,
+              "height": 625,
+              "source_label": "PMC10699830",
+              "license": "CC BY",
+              "dimensions": "750×625",
+              "caption": "图1 成人手足口病的口周皮损。",
+              "provider": "Cureus 2023",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10699830/"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "hfmd_pmc04_PMC10699830.webp",
+              "alt": "手足口病皮疹",
+              "width": 750,
+              "height": 563,
+              "source_label": "PMC10699830",
+              "license": "CC BY",
+              "dimensions": "750×563",
+              "caption": "图2 成人手足口病的手部皮损。",
+              "provider": "Cureus 2023",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10699830/"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 5,
+          "search_text": "手足口病 HFMD (EV71 / CoxA16) 中低热，重症可持续高热 手、足、口腔、臀部疱疹或斑丘疹；口腔黏膜溃疡 掌跖部位深在性水疱是特征；重症可并发脑炎、肺水肿——持续高热、肢体抖动、呼吸急促为预警信号。CoxA6 型可表现为泛发大疱及后期脱甲"
+        },
+        {
+          "id": "ebv",
+          "name": "传染性单核细胞增多症",
+          "english": "Infectious mononucleosis (EBV)",
+          "facts": {
+            "发热": "弛张高热，可持续 1–2 周",
+            "皮疹": "躯干部淡红色斑丘疹；使用阿莫西林/氨苄西林后皮疹显著加重",
+            "鉴别要点": "咽峡炎、扁桃体白色渗出、颈部淋巴结肿大、肝脾大；外周血异型淋巴细胞增多"
+          },
+          "images": [
+            {
+              "file": "ebv_1620.webp",
+              "alt": "传染性单核细胞增多症皮疹",
+              "width": 1200,
+              "height": 790,
+              "source_label": "CDC PHIL 1620",
+              "license": "公有领域",
+              "dimensions": "2400×1580",
+              "caption": "口腔内近观：硬腭黏膜与舌前背面均见炎症改变。传染性单核细胞增多症可在硬腭出现瘀点，为其特征性口腔体征。",
+              "provider": "CDC/ Emory Univ.; Dr. Sellers",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=1620"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/1620/1620.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "ebv_24828.webp",
+              "alt": "传染性单核细胞增多症皮疹",
+              "width": 816,
+              "height": 1200,
+              "source_label": "CDC PHIL 24828",
+              "license": "公有领域",
+              "dimensions": "1633×2400",
+              "caption": "颈部与下颌右侧位近观：EB 病毒所致传染性单核细胞增多症的斑片状斑丘疹（麻疹样皮疹）。",
+              "provider": "CDC/ Dr. Thomas F. Sellers, Emory University",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=24828"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/24828/24828.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "ebv_24918.webp",
+              "alt": "传染性单核细胞增多症皮疹",
+              "width": 1200,
+              "height": 817,
+              "source_label": "CDC PHIL 24918",
+              "license": "公有领域",
+              "dimensions": "2400×1633",
+              "caption": "同一传染性单核细胞增多症患者的皮肤近观（部位未标注），可见红斑性皮疹。",
+              "provider": "CDC/ Emory University, Dr. Thomas F. Sellers",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=24918"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/24918/24918.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "ebv_pmc00_PMC12553962.webp",
+              "alt": "传染性单核细胞增多症皮疹",
+              "width": 750,
+              "height": 702,
+              "source_label": "PMC12553962",
+              "license": "CC BY",
+              "dimensions": "750×702",
+              "caption": "图1 前躯干与上肢密集融合的红色斑丘疹，黏膜不受累。摄于完成 10 天阿莫西林疗程后 2 天入院时——EB 病毒感染者使用氨基青霉素后皮疹显著加重。",
+              "provider": "Cureus 2025",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12553962/"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "ebv_pmc01_PMC12553962.webp",
+              "alt": "传染性单核细胞增多症皮疹",
+              "width": 750,
+              "height": 1000,
+              "source_label": "PMC12553962",
+              "license": "CC BY",
+              "dimensions": "750×1000",
+              "caption": "图3 同一患儿背部融合的红斑性皮疹，摄于入院时。",
+              "provider": "Cureus 2025",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12553962/"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "ebv_pmc02_PMC12398297.webp",
+              "alt": "传染性单核细胞增多症皮疹",
+              "width": 750,
+              "height": 952,
+              "source_label": "PMC12398297",
+              "license": "CC BY",
+              "dimensions": "750×952",
+              "caption": "图1 24 岁男性，EB 病毒所致传染性单核细胞增多症，上肢出现红色斑丘疹（用药后诱发）。",
+              "provider": "Cureus 2025",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12398297/"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 6,
+          "search_text": "传染性单核细胞增多症 Infectious mononucleosis (EBV) 弛张高热，可持续 1–2 周 躯干部淡红色斑丘疹；使用阿莫西林/氨苄西林后皮疹显著加重 咽峡炎、扁桃体白色渗出、颈部淋巴结肿大、肝脾大；外周血异型淋巴细胞增多"
+        },
+        {
+          "id": "dengue",
+          "name": "登革热",
+          "english": "Dengue fever",
+          "facts": {
+            "发热": "突发高热，伴肌肉骨关节剧痛（「断骨热」）",
+            "皮疹": "躯干充血性斑丘疹，可有出血点；恢复期可见「红海中的白岛」样皮疹",
+            "鉴别要点": "白细胞与血小板下降为重要线索；束臂试验阳性。警惕重症登革热的血浆渗漏期"
+          },
+          "images": [
+            {
+              "file": "dengue_pmc00_PMC13189718.webp",
+              "alt": "登革热皮疹",
+              "width": 750,
+              "height": 720,
+              "source_label": "PMC13189718",
+              "license": "CC BY",
+              "dimensions": "750×720",
+              "caption": "图1 上肢斑丘疹：弥漫性红色皮损伴线状抓痕，提示皮肤划痕症，为登革热感染期的皮肤表现。",
+              "provider": "Cureus 2026",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13189718/"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "dengue_pmc01_PMC13189718.webp",
+              "alt": "登革热皮疹",
+              "width": 750,
+              "height": 534,
+              "source_label": "PMC13189718",
+              "license": "CC BY",
+              "dimensions": "750×534",
+              "caption": "图2 躯干泛发性斑丘疹：弥漫分布的红色斑疹与丘疹，为登革热危重期的皮肤表现。",
+              "provider": "Cureus 2026",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13189718/"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 2,
+          "search_text": "登革热 Dengue fever 突发高热，伴肌肉骨关节剧痛（「断骨热」） 躯干充血性斑丘疹，可有出血点；恢复期可见「红海中的白岛」样皮疹 白细胞与血小板下降为重要线索；束臂试验阳性。警惕重症登革热的血浆渗漏期"
+        },
+        {
+          "id": "mpox",
+          "name": "猴痘",
+          "english": "Mpox",
+          "facts": {
+            "发热": "发热、乏力，常伴明显淋巴结肿大",
+            "皮疹": "深在、坚实、界限清楚的丘疹 → 水疱 → 脓疱 → 结痂，常有中央脐凹",
+            "鉴别要点": "同一部位皮损演变同步；常累及手掌足底；淋巴结肿大是与天花的关键区别；近年流行中皮损常局限于生殖器/肛周"
+          },
+          "images": [
+            {
+              "file": "mpox_12761.webp",
+              "alt": "猴痘皮疹",
+              "width": 1200,
+              "height": 789,
+              "source_label": "CDC PHIL 12761",
+              "license": "公有领域",
+              "dimensions": "2400×1577",
+              "caption": "1997 年刚果民主共和国（原扎伊尔）猴痘疫情调查中拍摄：患者手掌部皮损。注意其斑丘疹形态与同属正痘病毒的天花皮疹高度相似。",
+              "provider": "CDC/ Brian W.J. Mahy, BSc, MA, PhD, ScD, DSc",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=12761"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/12761/12761.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "mpox_12763.webp",
+              "alt": "猴痘皮疹",
+              "width": 1200,
+              "height": 789,
+              "source_label": "CDC PHIL 12763",
+              "license": "公有领域",
+              "dimensions": "2400×1577",
+              "caption": "同次调查：患者手背部皮损，处于恢复期。即使在愈合阶段，其形态仍与天花的恢复期皮疹相似。",
+              "provider": "CDC/ Brian W.J. Mahy, BSc, MA, PhD, ScD, DSc",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=12763"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/12763/12763.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "mpox_12777.webp",
+              "alt": "猴痘皮疹",
+              "width": 791,
+              "height": 1200,
+              "source_label": "CDC PHIL 12777",
+              "license": "公有领域",
+              "dimensions": "1583×2400",
+              "caption": "同次调查：一名猴痘康复者的面部，可见永久性痘疤。",
+              "provider": "CDC/ Brian W.J. Mahy, BSc, MA, PhD, ScD, DSc",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=12777"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/12777/12777.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "mpox_12779.webp",
+              "alt": "猴痘皮疹",
+              "width": 1200,
+              "height": 782,
+              "source_label": "CDC PHIL 12779",
+              "license": "公有领域",
+              "dimensions": "2400×1564",
+              "caption": "同次调查：患者右上肢与躯干，皮肤可见活动期猴痘皮损，形态类似天花。",
+              "provider": "CDC/ Brian W.J. Mahy, BSc, MA, PhD, ScD, DSc",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=12779"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/12779/12779.tif"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 4,
+          "search_text": "猴痘 Mpox 发热、乏力，常伴明显淋巴结肿大 深在、坚实、界限清楚的丘疹 → 水疱 → 脓疱 → 结痂，常有中央脐凹 同一部位皮损演变同步；常累及手掌足底；淋巴结肿大是与天花的关键区别；近年流行中皮损常局限于生殖器/肛周"
+        }
+      ],
+      "disease_count": 9,
+      "image_count": 33
+    },
+    {
+      "id": "c1",
+      "title": "细菌感染性疾病",
+      "full_title": "二、细菌感染性疾病",
+      "diseases": [
+        {
+          "id": "scarlet",
+          "name": "猩红热",
+          "english": "Scarlet fever (GAS)",
+          "facts": {
+            "发热": "突发高热、咽痛",
+            "皮疹": "全身弥漫充血基础上的细小砂纸样丘疹；退疹后手足大片套状脱皮",
+            "鉴别要点": "口周苍白圈 + 草莓舌 + 腋窝腹股沟帕氏线（Pastia线）为经典组合；需抗生素治疗以防风湿热"
+          },
+          "images": [
+            {
+              "file": "scarlet_5163.webp",
+              "alt": "猩红热皮疹",
+              "width": 1200,
+              "height": 795,
+              "source_label": "CDC PHIL 5163",
+              "license": "公有领域",
+              "dimensions": "2400×1589",
+              "caption": "皮肤近观：前臂掌侧面的猩红热皮疹，由 A 群链球菌所致，可见弥漫充血基础上的细小丘疹。",
+              "provider": "CDC/ Dr. Andre J. Lebrun",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=5163"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/5163/5163.tif"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 1,
+          "search_text": "猩红热 Scarlet fever (GAS) 突发高热、咽痛 全身弥漫充血基础上的细小砂纸样丘疹；退疹后手足大片套状脱皮 口周苍白圈 + 草莓舌 + 腋窝腹股沟帕氏线（Pastia线）为经典组合；需抗生素治疗以防风湿热"
+        },
+        {
+          "id": "sepsis",
+          "name": "败血症 / 脓毒症",
+          "english": "Sepsis / purpura fulminans",
+          "facts": {
+            "发热": "持续弛张高热、畏寒寒战",
+            "皮疹": "瘀点、瘀斑、脓疱疹、迁徙性脓肿；重症进展为暴发性紫癜与皮肤坏死",
+            "鉴别要点": "常见于金黄色葡萄球菌、脑膜炎双球菌；急症——出现界限清楚的紫癜性坏死提示 DIC，须立即抗感染与器官支持"
+          },
+          "images": [
+            {
+              "file": "sepsis_2858.webp",
+              "alt": "败血症 / 脓毒症皮疹",
+              "width": 1200,
+              "height": 811,
+              "source_label": "CDC PHIL 2858",
+              "license": "公有领域",
+              "dimensions": "2400×1622",
+              "caption": "患者躯干的败血症性皮疹，由某革兰阴性菌自局部感染灶经血流全身播散所致。",
+              "provider": "CDC/ Dr. Thomas F. Sellers, Emory University",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=2858"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/2858/2858.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "sepsis_pmc00_PMC12596455.webp",
+              "alt": "败血症 / 脓毒症皮疹",
+              "width": 750,
+              "height": 1000,
+              "source_label": "PMC12596455",
+              "license": "CC BY",
+              "dimensions": "750×1000",
+              "caption": "图5 多发境界清楚的坏死性溃疡，中央为黑色焦痂，周边为红紫色边缘，符合暴发性紫癜表现（红色箭头）。",
+              "provider": "Cureus 2025",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12596455/"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "sepsis_pmc01_PMC12930323.webp",
+              "alt": "败血症 / 脓毒症皮疹",
+              "width": 750,
+              "height": 563,
+              "source_label": "PMC12930323",
+              "license": "CC BY",
+              "dimensions": "750×563",
+              "caption": "图1 ICU 住院第 4 天，右足紫癜性皮损伴指趾端缺血。",
+              "provider": "Cureus 2026",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12930323/"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "sepsis_pmc02_PMC12723175.webp",
+              "alt": "败血症 / 脓毒症皮疹",
+              "width": 600,
+              "height": 792,
+              "source_label": "PMC12723175",
+              "license": "CC BY",
+              "dimensions": "600×792",
+              "caption": "图2 脓毒症起病 4 天后：暴发性紫癜进行性加重，双手、双足、前臂与小腿出现境界清楚的皮肤坏死。",
+              "provider": "Case reports in infectious diseases 2025",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12723175/"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 4,
+          "search_text": "败血症 / 脓毒症 Sepsis / purpura fulminans 持续弛张高热、畏寒寒战 瘀点、瘀斑、脓疱疹、迁徙性脓肿；重症进展为暴发性紫癜与皮肤坏死 常见于金黄色葡萄球菌、脑膜炎双球菌；急症——出现界限清楚的紫癜性坏死提示 DIC，须立即抗感染与器官支持"
+        },
+        {
+          "id": "meningo",
+          "name": "流行性脑脊髓膜炎",
+          "english": "Meningococcemia",
+          "facts": {
+            "发热": "急骤高热、头痛呕吐、脑膜刺激征",
+            "皮疹": "迅速增多的瘀点瘀斑，压之不褪色，可融合坏死",
+            "鉴别要点": "最高危急症。发热 + 压之不褪色的瘀点必须按脑膜炎球菌血症处理，立即启动抗生素，不等培养结果"
+          },
+          "images": [
+            {
+              "file": "meningo_1333.webp",
+              "alt": "流行性脑脊髓膜炎皮疹",
+              "width": 1200,
+              "height": 792,
+              "source_label": "CDC PHIL 1333",
+              "license": "公有领域",
+              "dimensions": "2400×1584",
+              "caption": "男性患者右侧胸部近观：胸外侧区皮肤可见一处红色皮损，确定为脑膜炎球菌血症所致。",
+              "provider": "CDC/ Emory Univ.; Dr. Sellers",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=1333"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/1333/1333.tif"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 1,
+          "search_text": "流行性脑脊髓膜炎 Meningococcemia 急骤高热、头痛呕吐、脑膜刺激征 迅速增多的瘀点瘀斑，压之不褪色，可融合坏死 最高危急症。发热 + 压之不褪色的瘀点必须按脑膜炎球菌血症处理，立即启动抗生素，不等培养结果"
+        },
+        {
+          "id": "erysipelas",
+          "name": "丹毒",
+          "english": "Erysipelas",
+          "facts": {
+            "发热": "全身发热畏寒，局部高热",
+            "皮疹": "边界清楚的水肿性红斑，表面紧张发亮，可起水疱；好发于面部与下肢",
+            "鉴别要点": "由β溶血性链球菌经皮肤破损侵入；与蜂窝织炎的区别在于边界清晰、隆起且累及浅层淋巴管"
+          },
+          "images": [
+            {
+              "file": "erysipelas_book00_p102.webp",
+              "alt": "丹毒皮疹",
+              "width": 772,
+              "height": 355,
+              "source_label": "教材 p102",
+              "license": "教材版权",
+              "dimensions": "772×355",
+              "caption": "图11-5 丹毒：A. 面部；B. 下肢，境界清楚的水肿性红斑",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            }
+          ],
+          "image_count": 1,
+          "search_text": "丹毒 Erysipelas 全身发热畏寒，局部高热 边界清楚的水肿性红斑，表面紧张发亮，可起水疱；好发于面部与下肢 由β溶血性链球菌经皮肤破损侵入；与蜂窝织炎的区别在于边界清晰、隆起且累及浅层淋巴管"
+        },
+        {
+          "id": "typhoid",
+          "name": "伤寒 / 副伤寒",
+          "english": "Typhoid fever",
+          "facts": {
+            "发热": "阶梯样升温后持续高热",
+            "皮疹": "玫瑰疹：胸腹部数个淡红色、压之褪色的小斑丘疹，数量少（常＜20 个）",
+            "鉴别要点": "伴相对缓脉、腹胀、脾大；玫瑰疹出现于病程第 7–12 天，需仔细在胸腹部寻找"
+          },
+          "images": [
+            {
+              "file": "typhoid_pmc00_PMC11631300.webp",
+              "alt": "伤寒 / 副伤寒皮疹",
+              "width": 633,
+              "height": 455,
+              "source_label": "PMC11631300",
+              "license": "CC BY",
+              "dimensions": "633×455",
+              "caption": "图2 A、B：伤寒玫瑰疹——胸腹部数个淡红色、压之褪色的小斑丘疹。",
+              "provider": "Oxford medical case reports 2024",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11631300/"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 1,
+          "search_text": "伤寒 / 副伤寒 Typhoid fever 阶梯样升温后持续高热 玫瑰疹：胸腹部数个淡红色、压之褪色的小斑丘疹，数量少（常＜20 个） 伴相对缓脉、腹胀、脾大；玫瑰疹出现于病程第 7–12 天，需仔细在胸腹部寻找"
+        },
+        {
+          "id": "impetigo",
+          "name": "脓疱疮 / 细菌性毛囊炎",
+          "english": "Impetigo / folliculitis",
+          "facts": {
+            "发热": "浅表感染多无热，重者全身发热",
+            "皮疹": "以脓疱为主，破溃后形成蜜黄色厚痂；毛囊炎则为以毛囊为中心的脓疱",
+            "鉴别要点": "金黄色葡萄球菌与 A 群链球菌为主；儿童面部口周多见，接触传染性强"
+          },
+          "images": [
+            {
+              "file": "impetigo_book00_p100.webp",
+              "alt": "脓疱疮 / 细菌性毛囊炎皮疹",
+              "width": 601,
+              "height": 384,
+              "source_label": "教材 p100",
+              "license": "教材版权",
+              "dimensions": "601×384",
+              "caption": "图11-1 脓疱疮：A. 口鼻部损害，蜜黄色厚痂；B. 半月状积脓",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            },
+            {
+              "file": "impetigo_book01_p101.webp",
+              "alt": "脓疱疮 / 细菌性毛囊炎皮疹",
+              "width": 441,
+              "height": 297,
+              "source_label": "教材 p101",
+              "license": "教材版权",
+              "dimensions": "441×297",
+              "caption": "图11-3 毛囊炎：以毛囊为中心的炎性丘疹与脓疱",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            },
+            {
+              "file": "impetigo_book02_p115.webp",
+              "alt": "脓疱疮 / 细菌性毛囊炎皮疹",
+              "width": 441,
+              "height": 330,
+              "source_label": "教材 p115",
+              "license": "教材版权",
+              "dimensions": "441×330",
+              "caption": "图12-7 马拉色菌毛囊炎：胸背部密集的毛囊性丘疹",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            }
+          ],
+          "image_count": 3,
+          "search_text": "脓疱疮 / 细菌性毛囊炎 Impetigo / folliculitis 浅表感染多无热，重者全身发热 以脓疱为主，破溃后形成蜜黄色厚痂；毛囊炎则为以毛囊为中心的脓疱 金黄色葡萄球菌与 A 群链球菌为主；儿童面部口周多见，接触传染性强"
+        }
+      ],
+      "disease_count": 6,
+      "image_count": 11
+    },
+    {
+      "id": "c2",
+      "title": "非典型病原体、立克次体、螺旋体",
+      "full_title": "三、非典型病原体、立克次体、螺旋体",
+      "diseases": [
+        {
+          "id": "mirm",
+          "name": "支原体感染相关皮疹",
+          "english": "Mycoplasma-induced rash and mucositis",
+          "facts": {
+            "发热": "发热持久，伴刺激性干咳",
+            "皮疹": "躯干斑丘疹、荨麻疹样皮疹；可表现为多形红斑样靶形损害",
+            "鉴别要点": "MIRM / RIME：黏膜（口、眼、生殖器）受累显著而皮肤损害相对局限，是与 SJS 的重要区别，预后好得多"
+          },
+          "images": [
+            {
+              "file": "mirm_pmc00_PMC12176330.webp",
+              "alt": "支原体感染相关皮疹皮疹",
+              "width": 688,
+              "height": 822,
+              "source_label": "PMC12176330",
+              "license": "CC BY",
+              "dimensions": "688×822",
+              "caption": "图1 上肢与面部可见环形红斑，呈靶形外观，中央为水疱或大疱——支原体感染相关黏膜皮肤损害。",
+              "provider": "Einstein (Sao Paulo, Brazil) 2025",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12176330/"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "mirm_pmc01_PMC12268180.webp",
+              "alt": "支原体感染相关皮疹皮疹",
+              "width": 759,
+              "height": 564,
+              "source_label": "PMC12268180",
+              "license": "CC BY",
+              "dimensions": "759×564",
+              "caption": "图1 A–D：口腔黏膜融合的白色阿弗他样损害，呈疱疹样排列，伴轻度牙龈炎；E：阴囊皮肤三处中央结痂的环形斑块。支原体所致皮疹伴黏膜炎（MIRM）。",
+              "provider": "Anais brasileiros de dermatologia 2025",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12268180/"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "mirm_pmc02_PMC12718623.webp",
+              "alt": "支原体感染相关皮疹皮疹",
+              "width": 750,
+              "height": 369,
+              "source_label": "PMC12718623",
+              "license": "CC BY",
+              "dimensions": "750×369",
+              "caption": "图1 感染反应性黏膜皮肤疹（RIME）的黏膜皮肤表现：口唇重度黏膜炎伴出血性、结痂性糜烂，口周散在红色丘疹与靶形损害。",
+              "provider": "Cureus 2025",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12718623/"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 3,
+          "search_text": "支原体感染相关皮疹 Mycoplasma-induced rash and mucositis 发热持久，伴刺激性干咳 躯干斑丘疹、荨麻疹样皮疹；可表现为多形红斑样靶形损害 MIRM / RIME：黏膜（口、眼、生殖器）受累显著而皮肤损害相对局限，是与 SJS 的重要区别，预后好得多"
+        },
+        {
+          "id": "scrub",
+          "name": "恙虫病",
+          "english": "Scrub typhus",
+          "facts": {
+            "发热": "突发高热、头痛、肌痛",
+            "皮疹": "躯干四肢充血性斑丘疹；伴全身淋巴结肿大",
+            "鉴别要点": "特征性焦痂（eschar）——恙螨叮咬处的无痛性黑痂，好发于腋窝、腹股沟、腰际等隐蔽潮湿部位，必须全身仔细搜寻，是确诊的关键线索"
+          },
+          "images": [
+            {
+              "file": "scrub_pmc00_PMC13189720.webp",
+              "alt": "恙虫病皮疹",
+              "width": 767,
+              "height": 250,
+              "source_label": "PMC13189720",
+              "license": "CC BY",
+              "dimensions": "767×250",
+              "caption": "图2 患者左腋窝的焦痂，为恙螨叮咬痕迹，图示入院当日（d0）起 1 周内的演变过程（自左至右）。",
+              "provider": "Frontiers in medicine 2026",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13189720/"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "scrub_pmc01_PMC13173588.webp",
+              "alt": "恙虫病皮疹",
+              "width": 750,
+              "height": 1000,
+              "source_label": "PMC13173588",
+              "license": "CC BY",
+              "dimensions": "750×1000",
+              "caption": "图3 左腰部特征性焦痂——恙虫病的关键诊断线索。",
+              "provider": "Cureus 2026",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13173588/"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 2,
+          "search_text": "恙虫病 Scrub typhus 突发高热、头痛、肌痛 躯干四肢充血性斑丘疹；伴全身淋巴结肿大 特征性焦痂（eschar）——恙螨叮咬处的无痛性黑痂，好发于腋窝、腹股沟、腰际等隐蔽潮湿部位，必须全身仔细搜寻，是确诊的关键线索"
+        },
+        {
+          "id": "typhus",
+          "name": "斑疹伤寒",
+          "english": "Typhus fever",
+          "facts": {
+            "发热": "持续高热",
+            "皮疹": "躯干起始的瘀点样斑丘疹，向四肢蔓延",
+            "鉴别要点": "与恙虫病同属立克次体病但无焦痂；流行性斑疹伤寒由体虱传播，地方性由鼠蚤传播"
+          },
+          "images": [
+            {
+              "file": "typhus_18837.webp",
+              "alt": "斑疹伤寒皮疹",
+              "width": 1200,
+              "height": 790,
+              "source_label": "CDC PHIL 18837",
+              "license": "公有领域",
+              "dimensions": "2400×1580",
+              "caption": "危地马拉一名男性患者胸部的斑丘疹样皮疹，确诊为斑疹伤寒（流行性虱传斑疹伤寒）。",
+              "provider": "CDC/ Dr. D.S. Martin",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=18837"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/18837/18837.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "typhus_18838.webp",
+              "alt": "斑疹伤寒皮疹",
+              "width": 1200,
+              "height": 790,
+              "source_label": "CDC PHIL 18838",
+              "license": "公有领域",
+              "dimensions": "2400×1580",
+              "caption": "同一患者胸部皮疹的另一视角：流行性虱传斑疹伤寒的斑丘疹。",
+              "provider": "CDC/ Dr. D.S. Martin",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=18838"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/18838/18838.tif"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 2,
+          "search_text": "斑疹伤寒 Typhus fever 持续高热 躯干起始的瘀点样斑丘疹，向四肢蔓延 与恙虫病同属立克次体病但无焦痂；流行性斑疹伤寒由体虱传播，地方性由鼠蚤传播"
+        },
+        {
+          "id": "syphilis",
+          "name": "二期梅毒",
+          "english": "Secondary syphilis",
+          "facts": {
+            "发热": "可有低热",
+            "皮疹": "全身泛发铜红色斑丘疹，不痛不痒；伴黏膜斑、虫蚀状脱发",
+            "鉴别要点": "手掌足底特征性皮疹（掌跖梅毒疹）高度提示；有「万能模仿者」之称，泛发无痒性皮疹应常规查梅毒血清学"
+          },
+          "images": [
+            {
+              "file": "syphilis_book00_p235.webp",
+              "alt": "二期梅毒皮疹",
+              "width": 898,
+              "height": 603,
+              "source_label": "教材 p235",
+              "license": "教材版权",
+              "dimensions": "898×603",
+              "caption": "图29-2 二期梅毒：A. 躯干梅毒疹；B. 掌跖部梅毒疹；C. 肛周扁平湿疣",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            }
+          ],
+          "image_count": 1,
+          "search_text": "二期梅毒 Secondary syphilis 可有低热 全身泛发铜红色斑丘疹，不痛不痒；伴黏膜斑、虫蚀状脱发 手掌足底特征性皮疹（掌跖梅毒疹）高度提示；有「万能模仿者」之称，泛发无痒性皮疹应常规查梅毒血清学"
+        }
+      ],
+      "disease_count": 4,
+      "image_count": 8
+    },
+    {
+      "id": "c3",
+      "title": "真菌相关",
+      "full_title": "四、真菌相关",
+      "diseases": [
+        {
+          "id": "candida",
+          "name": "念珠菌 / 播散性真菌感染",
+          "english": "Candidiasis / disseminated fungal infection",
+          "facts": {
+            "发热": "发热，多见于免疫低下、ICU、长期激素或广谱抗生素使用者",
+            "皮疹": "皮肤黏膜念珠菌病表现为边界清楚的红斑伴卫星状丘疱疹；播散性感染可见多发脓疱、皮下结节与瘀斑",
+            "鉴别要点": "免疫抑制人群出现不明原因发热伴多发皮下结节，须考虑播散性真菌感染并行血培养与活检"
+          },
+          "images": [
+            {
+              "file": "candida_book00_p117.webp",
+              "alt": "念珠菌 / 播散性真菌感染皮疹",
+              "width": 898,
+              "height": 668,
+              "source_label": "教材 p117",
+              "license": "教材版权",
+              "dimensions": "898×668",
+              "caption": "图12-8 皮肤念珠菌病：A. 间擦疹；B. 肉芽肿；C. 口腔念珠菌病；D. 包皮龟头炎",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            }
+          ],
+          "image_count": 1,
+          "search_text": "念珠菌 / 播散性真菌感染 Candidiasis / disseminated fungal infection 发热，多见于免疫低下、ICU、长期激素或广谱抗生素使用者 皮肤黏膜念珠菌病表现为边界清楚的红斑伴卫星状丘疱疹；播散性感染可见多发脓疱、皮下结节与瘀斑 免疫抑制人群出现不明原因发热伴多发皮下结节，须考虑播散性真菌感染并行血培养与活检"
+        }
+      ],
+      "disease_count": 1,
+      "image_count": 1
+    },
+    {
+      "id": "c4",
+      "title": "药物相关性（高发）",
+      "full_title": "五、药物相关性（高发）",
+      "diseases": [
+        {
+          "id": "drug",
+          "name": "发疹型药疹",
+          "english": "Maculopapular drug eruption",
+          "facts": {
+            "发热": "用药后 5–14 天出现发热",
+            "皮疹": "全身对称性红色斑丘疹，瘙痒明显，常自躯干向四肢蔓延",
+            "鉴别要点": "最常见的药疹类型。需与病毒疹鉴别：药疹瘙痒更重、无前驱卡他症状、停药后好转"
+          },
+          "images": [
+            {
+              "file": "drug_book00_p142.webp",
+              "alt": "发疹型药疹皮疹",
+              "width": 473,
+              "height": 355,
+              "source_label": "教材 p142",
+              "license": "教材版权",
+              "dimensions": "473×355",
+              "caption": "图16-1 发疹型药疹：麻疹型／猩红热型，躯干弥漫对称的红色斑丘疹",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            }
+          ],
+          "image_count": 1,
+          "search_text": "发疹型药疹 Maculopapular drug eruption 用药后 5–14 天出现发热 全身对称性红色斑丘疹，瘙痒明显，常自躯干向四肢蔓延 最常见的药疹类型。需与病毒疹鉴别：药疹瘙痒更重、无前驱卡他症状、停药后好转"
+        },
+        {
+          "id": "sjs",
+          "name": "SJS / 中毒性表皮坏死松解症",
+          "english": "SJS / TEN",
+          "facts": {
+            "发热": "高热",
+            "皮疹": "眼、口、生殖器黏膜破溃；皮肤水疱、表皮成片剥脱，尼氏征阳性",
+            "鉴别要点": "急症。按剥脱面积分型：＜10% 为 SJS，＞30% 为 TEN。须立即停用可疑药物并转烧伤/重症单元"
+          },
+          "images": [
+            {
+              "file": "sjs_book00_p143.webp",
+              "alt": "SJS / 中毒性表皮坏死松解症皮疹",
+              "width": 898,
+              "height": 296,
+              "source_label": "教材 p143",
+              "license": "教材版权",
+              "dimensions": "898×296",
+              "caption": "图16-4 大疱性表皮松解型药疹（SJS／TEN）：表皮大片剥脱，黏膜受累",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            }
+          ],
+          "image_count": 1,
+          "search_text": "SJS / 中毒性表皮坏死松解症 SJS / TEN 高热 眼、口、生殖器黏膜破溃；皮肤水疱、表皮成片剥脱，尼氏征阳性 急症。按剥脱面积分型：＜10% 为 SJS，＞30% 为 TEN。须立即停用可疑药物并转烧伤/重症单元"
+        },
+        {
+          "id": "dress",
+          "name": "DRESS 综合征",
+          "english": "Drug reaction with eosinophilia and systemic symptoms",
+          "facts": {
+            "发热": "长期服药后起病，长时间高热",
+            "皮疹": "广泛皮疹常伴面部水肿；可进展为红皮病",
+            "鉴别要点": "嗜酸性粒细胞增多 + 淋巴结肿大 + 肝肾功能损伤为核心；潜伏期长（2–8 周），停药后仍可迁延数周"
+          },
+          "images": [
+            {
+              "file": "dress_pmc00_PMC13036578.webp",
+              "alt": "DRESS 综合征皮疹",
+              "width": 750,
+              "height": 881,
+              "source_label": "PMC13036578",
+              "license": "CC BY",
+              "dimensions": "750×881",
+              "caption": "图1 颈部与上躯干融合的红色斑片伴细薄鳞屑，皮肤皱褶处更为显著。免疫检查点抑制剂所致迟发型 DRESS。",
+              "provider": "Cureus 2026",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13036578/"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "dress_pmc01_PMC13036473.webp",
+              "alt": "DRESS 综合征皮疹",
+              "width": 750,
+              "height": 690,
+              "source_label": "PMC13036473",
+              "license": "CC BY",
+              "dimensions": "750×690",
+              "caption": "图1 病例1：面部受累，弥漫性红斑伴水肿——面部水肿是 DRESS 的特征性表现。",
+              "provider": "Cureus 2026",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13036473/"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "dress_pmc02_PMC13036473.webp",
+              "alt": "DRESS 综合征皮疹",
+              "width": 750,
+              "height": 911,
+              "source_label": "PMC13036473",
+              "license": "CC BY",
+              "dimensions": "750×911",
+              "caption": "图5 病例5：面部肿胀伴红斑，累及前额、鼻部与颧颊部。",
+              "provider": "Cureus 2026",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13036473/"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 3,
+          "search_text": "DRESS 综合征 Drug reaction with eosinophilia and systemic symptoms 长期服药后起病，长时间高热 广泛皮疹常伴面部水肿；可进展为红皮病 嗜酸性粒细胞增多 + 淋巴结肿大 + 肝肾功能损伤为核心；潜伏期长（2–8 周），停药后仍可迁延数周"
+        }
+      ],
+      "disease_count": 3,
+      "image_count": 5
+    },
+    {
+      "id": "c5",
+      "title": "风湿免疫、血管炎类",
+      "full_title": "六、风湿免疫、血管炎类",
+      "diseases": [
+        {
+          "id": "kawasaki",
+          "name": "川崎病",
+          "english": "Kawasaki disease",
+          "facts": {
+            "发热": "发热 ≥ 5 天且抗生素无效",
+            "皮疹": "多形性皮疹（无水疱）；手足硬性水肿，后期指端膜状脱皮",
+            "鉴别要点": "五联征：双侧非化脓性结膜充血、口唇干裂草莓舌、颈部淋巴结肿大、多形性皮疹、手足改变。须及早行心脏超声评估冠状动脉瘤"
+          },
+          "images": [
+            {
+              "file": "kawasaki_pmc00_PMC12199967.webp",
+              "alt": "川崎病皮疹",
+              "width": 738,
+              "height": 536,
+              "source_label": "PMC12199967",
+              "license": "CC BY",
+              "dimensions": "738×536",
+              "caption": "图1 川崎病的临床表现：A. 颈部淋巴结肿大；B. 口腔黏膜改变，可见草莓舌；C. 口唇皲裂；D. 皮疹；E. 手掌红斑伴肿胀。",
+              "provider": "Reports (MDPI) 2024",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12199967/"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 1,
+          "search_text": "川崎病 Kawasaki disease 发热 ≥ 5 天且抗生素无效 多形性皮疹（无水疱）；手足硬性水肿，后期指端膜状脱皮 五联征：双侧非化脓性结膜充血、口唇干裂草莓舌、颈部淋巴结肿大、多形性皮疹、手足改变。须及早行心脏超声评估冠状动脉瘤"
+        },
+        {
+          "id": "sle",
+          "name": "系统性红斑狼疮",
+          "english": "Systemic lupus erythematosus",
+          "facts": {
+            "发热": "长期低热或高热",
+            "皮疹": "面部蝶形红斑（累及双颊与鼻梁、不累及鼻唇沟）；光过敏",
+            "鉴别要点": "伴口腔溃疡、关节痛、多系统损害；ANA、抗 dsDNA 抗体为关键实验室依据"
+          },
+          "images": [
+            {
+              "file": "sle_book00_p167.webp",
+              "alt": "系统性红斑狼疮皮疹",
+              "width": 898,
+              "height": 284,
+              "source_label": "教材 p167",
+              "license": "教材版权",
+              "dimensions": "898×284",
+              "caption": "图20-5 系统性红斑狼疮：A. 面部蝶形红斑；B. 指端血管炎",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            },
+            {
+              "file": "sle_book01_p166.webp",
+              "alt": "系统性红斑狼疮皮疹",
+              "width": 898,
+              "height": 331,
+              "source_label": "教材 p166",
+              "license": "教材版权",
+              "dimensions": "898×331",
+              "caption": "图20-3 亚急性皮肤型红斑狼疮：环形红斑",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            },
+            {
+              "file": "sle_book02_p165.webp",
+              "alt": "系统性红斑狼疮皮疹",
+              "width": 818,
+              "height": 355,
+              "source_label": "教材 p165",
+              "license": "教材版权",
+              "dimensions": "818×355",
+              "caption": "图20-1 盘状红斑狼疮：境界清楚的盘状红斑伴黏着性鳞屑",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            },
+            {
+              "file": "sle_book03_p166.webp",
+              "alt": "系统性红斑狼疮皮疹",
+              "width": 898,
+              "height": 311,
+              "source_label": "教材 p166",
+              "license": "教材版权",
+              "dimensions": "898×311",
+              "caption": "图20-2 其他类型慢性皮肤型红斑狼疮",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            },
+            {
+              "file": "sle_book04_p167.webp",
+              "alt": "系统性红斑狼疮皮疹",
+              "width": 768,
+              "height": 365,
+              "source_label": "教材 p167",
+              "license": "教材版权",
+              "dimensions": "768×365",
+              "caption": "图20-4 新生儿红斑狼疮：A. 头面部环形红斑；B. 躯干皮损",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            }
+          ],
+          "image_count": 5,
+          "search_text": "系统性红斑狼疮 Systemic lupus erythematosus 长期低热或高热 面部蝶形红斑（累及双颊与鼻梁、不累及鼻唇沟）；光过敏 伴口腔溃疡、关节痛、多系统损害；ANA、抗 dsDNA 抗体为关键实验室依据"
+        },
+        {
+          "id": "hsp",
+          "name": "过敏性紫癜（IgA 血管炎）",
+          "english": "IgA vasculitis (Henoch-Schönlein purpura)",
+          "facts": {
+            "发热": "多数无发热，感染诱因后可有低热",
+            "皮疹": "下肢与臀部对称分布的可触及性紫癜，压之不褪色，分批出现",
+            "鉴别要点": "四联征：紫癜、关节痛、腹痛、肾损害。可触及是与血小板减少性紫癜的关键区别；需长期随访尿常规"
+          },
+          "images": [
+            {
+              "file": "hsp_book00_p182.webp",
+              "alt": "过敏性紫癜（IgA 血管炎）皮疹",
+              "width": 473,
+              "height": 355,
+              "source_label": "教材 p182",
+              "license": "教材版权",
+              "dimensions": "473×355",
+              "caption": "图22-1 IgA血管炎（过敏性紫癜）：双下肢对称分布的可触及性紫癜",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            }
+          ],
+          "image_count": 1,
+          "search_text": "过敏性紫癜（IgA 血管炎） IgA vasculitis (Henoch-Schönlein purpura) 多数无发热，感染诱因后可有低热 下肢与臀部对称分布的可触及性紫癜，压之不褪色，分批出现 四联征：紫癜、关节痛、腹痛、肾损害。可触及是与血小板减少性紫癜的关键区别；需长期随访尿常规"
+        },
+        {
+          "id": "still",
+          "name": "成人 Still 病",
+          "english": "Adult-onset Still's disease",
+          "facts": {
+            "发热": "反复高热，多为每日 1–2 次热峰",
+            "皮疹": "一过性橘红色（鲑鱼色）斑丘疹——发热时出现、退热后消失",
+            "鉴别要点": "皮疹与体温同步是最具特征性的表现；伴关节痛、咽痛、白细胞与铁蛋白显著升高。属排除性诊断"
+          },
+          "images": [
+            {
+              "file": "still_pmc00_PMC11932746.webp",
+              "alt": "成人 Still 病皮疹",
+              "width": 355,
+              "height": 298,
+              "source_label": "PMC11932746",
+              "license": "CC BY",
+              "dimensions": "355×298",
+              "caption": "图1 成人 Still 病的皮疹特征——一过性橘红色（鲑鱼色）斑丘疹，发热时出现、退热后消退。",
+              "provider": "International journal of hepatology 2025",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11932746/"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 1,
+          "search_text": "成人 Still 病 Adult-onset Still's disease 反复高热，多为每日 1–2 次热峰 一过性橘红色（鲑鱼色）斑丘疹——发热时出现、退热后消失 皮疹与体温同步是最具特征性的表现；伴关节痛、咽痛、白细胞与铁蛋白显著升高。属排除性诊断"
+        }
+      ],
+      "disease_count": 4,
+      "image_count": 8
+    },
+    {
+      "id": "c6",
+      "title": "血液系统、恶性疾病",
+      "full_title": "七、血液系统、恶性疾病",
+      "diseases": [
+        {
+          "id": "lymphoma",
+          "name": "白血病 / 淋巴瘤皮肤浸润",
+          "english": "Leukemia cutis / cutaneous lymphoma",
+          "facts": {
+            "发热": "反复或周期性发热",
+            "皮疹": "白血病可见出血点、瘀斑与苍白；白血病皮肤浸润表现为紫红色丘疹结节；蕈样肉芽肿（皮肤 T 细胞淋巴瘤）呈斑片—斑块—肿瘤三期演变",
+            "鉴别要点": "伴淋巴结、肝脾肿大与血象异常。慢性、进行性、治疗抵抗的皮损须活检排除血液系统恶性病"
+          },
+          "images": [
+            {
+              "file": "lymphoma_14667.webp",
+              "alt": "白血病 / 淋巴瘤皮肤浸润皮疹",
+              "width": 1200,
+              "height": 790,
+              "source_label": "CDC PHIL 14667",
+              "license": "公有领域",
+              "dimensions": "2400×1579",
+              "caption": "对一例疑似梅毒患者行鉴别诊断后，确认其皮损为蕈样肉芽肿——一种原发于皮肤的 T 细胞非霍奇金淋巴瘤。",
+              "provider": "CDC/ Renelle Woodall",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=14667"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/14667/14667.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "lymphoma_15467.webp",
+              "alt": "白血病 / 淋巴瘤皮肤浸润皮疹",
+              "width": 1200,
+              "height": 790,
+              "source_label": "CDC PHIL 15467",
+              "license": "公有领域",
+              "dimensions": "2400×1580",
+              "caption": "患者皮损确诊为蕈样肉芽肿（又称 Alibert-Bazin 综合征），为原发于皮肤的 T 细胞非霍奇金淋巴瘤，呈斑片—斑块—肿瘤三期演变。",
+              "provider": "CDC/ Richard S. Hibbits",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=15467"
+                },
+                {
+                  "label": "原始档",
+                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/15467/15467.tif"
+                }
+              ],
+              "textbook": false
+            },
+            {
+              "file": "lymphoma_pmc00_PMC13138237.webp",
+              "alt": "白血病 / 淋巴瘤皮肤浸润皮疹",
+              "width": 719,
+              "height": 719,
+              "source_label": "PMC13138237",
+              "license": "CC BY",
+              "dimensions": "719×719",
+              "caption": "图1 弥漫分布的丘疹结节性皮损，中央糜烂结痂，累及肩部（A）、背部（B）与上肢（C）；愈合期环形皮损呈周边色素沉着、中央色素减退。急性 T 细胞白血病／淋巴瘤的白血病皮肤浸润。",
+              "provider": "JAAD case reports 2026",
+              "links": [
+                {
+                  "label": "出处",
+                  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13138237/"
+                }
+              ],
+              "textbook": false
+            }
+          ],
+          "image_count": 3,
+          "search_text": "白血病 / 淋巴瘤皮肤浸润 Leukemia cutis / cutaneous lymphoma 反复或周期性发热 白血病可见出血点、瘀斑与苍白；白血病皮肤浸润表现为紫红色丘疹结节；蕈样肉芽肿（皮肤 T 细胞淋巴瘤）呈斑片—斑块—肿瘤三期演变 伴淋巴结、肝脾肿大与血象异常。慢性、进行性、治疗抵抗的皮损须活检排除血液系统恶性病"
+        }
+      ],
+      "disease_count": 1,
+      "image_count": 3
+    },
+    {
+      "id": "c7",
+      "title": "过敏性及其他",
+      "full_title": "八、过敏性及其他",
+      "diseases": [
+        {
+          "id": "urticaria",
+          "name": "急性荨麻疹",
+          "english": "Acute urticaria",
+          "facts": {
+            "发热": "可有低热",
+            "皮疹": "风团：隆起的红色或苍白色水肿性斑块，剧烈瘙痒",
+            "鉴别要点": "单个风团 24 小时内消退且不留痕迹——这是与其他皮疹最可靠的区别；伴喉头水肿或呼吸困难为急症"
+          },
+          "images": [
+            {
+              "file": "urticaria_book00_p137.webp",
+              "alt": "急性荨麻疹皮疹",
+              "width": 898,
+              "height": 331,
+              "source_label": "教材 p137",
+              "license": "教材版权",
+              "dimensions": "898×331",
+              "caption": "图15-1 急性荨麻疹：A. 风团；B. 橘皮样表现",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            },
+            {
+              "file": "urticaria_book01_p138.webp",
+              "alt": "急性荨麻疹皮疹",
+              "width": 441,
+              "height": 330,
+              "source_label": "教材 p138",
+              "license": "教材版权",
+              "dimensions": "441×330",
+              "caption": "图15-3 胆碱能性荨麻疹：针尖至米粒大小的风团",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            }
+          ],
+          "image_count": 2,
+          "search_text": "急性荨麻疹 Acute urticaria 可有低热 风团：隆起的红色或苍白色水肿性斑块，剧烈瘙痒 单个风团 24 小时内消退且不留痕迹——这是与其他皮疹最可靠的区别；伴喉头水肿或呼吸困难为急症"
+        },
+        {
+          "id": "em",
+          "name": "多形红斑",
+          "english": "Erythema multiforme",
+          "facts": {
+            "发热": "感染或药物诱发，可有发热",
+            "皮疹": "典型靶形（虹膜样）红斑——三环结构，好发于四肢远端与手足背",
+            "鉴别要点": "多由 HSV 或支原体感染诱发；重症伴黏膜受累时需与 SJS 鉴别（EM 皮损以肢端为主、表皮剥脱少）"
+          },
+          "images": [
+            {
+              "file": "em_book00_p161.webp",
+              "alt": "多形红斑皮疹",
+              "width": 800,
+              "height": 503,
+              "source_label": "教材 p161",
+              "license": "教材版权",
+              "dimensions": "800×503",
+              "caption": "图19-7 多形红斑：A. 靶形红斑；B. 水疱和大疱；C. 重症型累及黏膜",
+              "provider": "皮肤性病学（第10版）· 张学军、崔勇、高兴华 主编 · 人民卫生出版社 2024",
+              "links": [],
+              "textbook": true
+            }
+          ],
+          "image_count": 1,
+          "search_text": "多形红斑 Erythema multiforme 感染或药物诱发，可有发热 典型靶形（虹膜样）红斑——三环结构，好发于四肢远端与手足背 多由 HSV 或支原体感染诱发；重症伴黏膜受累时需与 SJS 鉴别（EM 皮损以肢端为主、表皮剥脱少）"
+        }
+      ],
+      "disease_count": 2,
+      "image_count": 3
+    }
+  ]
+}

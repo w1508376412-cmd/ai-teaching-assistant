@@ -1,51 +1,55 @@
-# AI 教学助手 - 流行病学与卫生统计
+# 现场辨证 · 临床流行病教学工作台
 
-这是一个为公共卫生课程设计的 AI 教学工作台，采用 **FastAPI + 原生 HTML/CSS/JavaScript**，包含知识库问答、互动案例模拟和教师内容管理。
+面向公共卫生、口岸卫生检疫与临床流行病学教学的一体化工作台。项目采用 **FastAPI + 原生 HTML/CSS/JavaScript**，不依赖 Streamlit。
 
 ## 功能模块
 
-1.  **知识库问答 (RAG Prototype):** 学生可以基于老师上传的讲义、教材内容进行提问。AI 会优先根据知识库内容进行回答。
-2.  **案例模拟训练:** 沉浸式案例学习。AI 扮演引导员，带学生一步步完成突发事件调查、数据分析等任务。
-3.  **教师管理端:** 老师可以直接在界面上更新知识库 Markdown 文档或上传 JSON 格式的案例。
+1. **教学总览**：用“观察 → 鉴别 → 查证 → 决策”串联完整学习路径。
+2. **临床皮疹图谱**：收录 8 个疾病类别、30 个病种和 72 张临床图像；支持病名与症状检索、疾病类别筛选、皮损形态筛选、病种详情和 2–3 病种并排鉴别。
+3. **AI 鉴别训练**：根据学员的皮损观察记录，在完整图谱或已选择候选病种中梳理支持证据、冲突证据、下一步验证与危重红旗。
+4. **知识库问答**：把图谱病种一键带入问答，结合课程资料与相关图谱摘要回答；后端会先检索相关材料，避免把整个知识库一次性塞入模型。
+5. **案例推演**：支持决策判断题和分阶段引导案例，提供基于 SOP 的教学反馈。
+6. **教师管理**：通过受保护入口上传知识文档、维护案例，以及从参考材料生成案例。
 
-## 目录结构
+> 图谱和 AI 输出仅用于教学训练，不能替代面诊、病理或实验室诊断。
 
-- `knowledge_base/`: 存放 Markdown 格式的课程资料。
-- `cases/`: 存放 JSON 格式的模拟案例。
-- `src/main.py`: FastAPI 后端和 API 入口。
-- `src/static/`: 独立网页前端。
+## 技术结构
 
-## 如何运行
+```text
+├── assets/rash-atlas/
+│   ├── atlas.json          # 结构化病种、鉴别要点与逐图来源
+│   ├── images/             # 72 张网页尺寸 WebP 图片
+│   └── sources.csv         # 图片来源清单
+├── cases/                  # JSON 教学案例
+├── knowledge_base/         # Markdown 课程资料
+├── scripts/
+│   └── import_rash_atlas.py
+├── src/
+│   ├── main.py             # FastAPI、AI 接口与教师接口
+│   └── static/             # 独立网页前端
+├── Dockerfile
+└── requirements.txt
+```
 
-### 1. 安装依赖
+## 本地运行
+
 建议使用 Python 3.11+。
+
 ```bash
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
+uvicorn src.main:app --host 127.0.0.1 --port 8501
 ```
 
-### 2. 启动应用
-```bash
-uvicorn src.main:app --host 0.0.0.0 --port 8501
-```
+浏览器访问：`http://127.0.0.1:8501`
 
-浏览器访问 `http://127.0.0.1:8501`。
+教师管理入口：`http://127.0.0.1:8501/?admin=true`
 
-### 3. 配置 API
-请通过环境变量配置 API Key（支持 DeepSeek、智谱 AI 等 OpenAI 兼容接口）：
-```bash
-export DEEPSEEK_API_KEY="你的 API Key"
-export OPENAI_BASE_URL="https://api.deepseek.com"
-export MODEL_NAME="deepseek-v4-flash"
-export ADMIN_PASSWORD="教师管理密码"
-```
+不要直接双击 `src/static/index.html`。页面依赖后端接口和 `/assets` 静态资源路径，必须通过 FastAPI 地址打开。
 
-教师管理入口为 `http://127.0.0.1:8501/?admin=true`。
+## 环境变量
 
-### 4. 部署到 Zeabur
-
-项目根目录已经包含 `Dockerfile`。将代码推送到 GitHub 后，在 Zeabur 中选择 **GitHub** 部署此仓库。Zeabur 会自动使用 Dockerfile 构建并启动应用。
-
-在 Zeabur 服务的环境变量中设置：
 ```text
 DEEPSEEK_API_KEY=你的 API Key
 OPENAI_BASE_URL=https://api.deepseek.com
@@ -53,8 +57,30 @@ MODEL_NAME=deepseek-v4-flash
 ADMIN_PASSWORD=请设置一个安全密码
 ```
 
-部署完成后，在 Zeabur 服务的 Networking / Domains 中生成访问域名。
+未配置 `DEEPSEEK_API_KEY` 时，图谱检索、图片查看和并排比较仍可使用；AI 问答、鉴别训练与案例反馈会提示等待配置。未配置 `ADMIN_PASSWORD` 时，教师管理功能保持关闭。
 
-## 如何添加案例
+## 图谱数据更新
 
-案例以 JSON 格式存储在 `cases/` 目录下。系统同时支持 `interactive_v2` 决策判断格式和包含 `stages` 的分步推演格式，具体结构可参考现有案例文件。
+独立图谱网站的内容可通过导入脚本重新生成结构化资源：
+
+```bash
+python scripts/import_rash_atlas.py \
+  "/path/to/rash-atlas" \
+  "assets/rash-atlas"
+```
+
+脚本只读取源项目，复制网页尺寸图片并生成 `atlas.json`；不会修改原图谱项目。
+
+## 图片来源与许可
+
+- **CDC PHIL**：仅收录经原站核对为公有领域的图像。
+- **PubMed Central**：仅收录 CC BY / CC0 开放许可文献配图。
+- **《皮肤性病学》第 10 版（人民卫生出版社，2024）**：版权归出版社与原作者，仅供个人教学参考。
+
+网页病种详情会逐图显示来源、许可和原始链接。完整清单见 `assets/rash-atlas/sources.csv`。
+
+## Zeabur 部署
+
+项目根目录包含 `Dockerfile`，推送到 GitHub 后可在 Zeabur 中直接按仓库部署。服务监听 Zeabur 提供的 `PORT` 环境变量。
+
+部署后在 Zeabur 服务中配置上述环境变量，并在 Networking / Domains 中生成访问域名。

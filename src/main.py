@@ -3,6 +3,7 @@ import json
 import os
 import re
 import tempfile
+from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
@@ -20,6 +21,8 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 KNOWLEDGE_DIR = ROOT_DIR / "knowledge_base"
 CASES_DIR = ROOT_DIR / "cases"
 ASSETS_DIR = ROOT_DIR / "assets"
+RASH_ATLAS_DIR = ASSETS_DIR / "rash-atlas"
+RASH_ATLAS_PATH = RASH_ATLAS_DIR / "atlas.json"
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 for directory in (KNOWLEDGE_DIR, CASES_DIR):
@@ -31,9 +34,9 @@ MODEL_NAME = os.getenv("MODEL_NAME", "deepseek-v4-flash")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
 
 app = FastAPI(
-    title="口岸卫生检疫教学工作台",
-    description="知识库问答、现场案例推演与教师内容管理",
-    version="2.0.0",
+    title="现场辨证 · 临床流行病教学工作台",
+    description="临床皮疹图谱、知识库问答、现场案例推演与教师内容管理",
+    version="3.0.0",
 )
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
@@ -57,6 +60,11 @@ class DecisionRequest(BaseModel):
 class StageCoachRequest(BaseModel):
     stage_index: int = Field(ge=0)
     messages: list[ChatMessage] = Field(min_length=1, max_length=30)
+
+
+class RashDifferentialRequest(BaseModel):
+    description: str = Field(min_length=4, max_length=4000)
+    candidate_ids: list[str] = Field(default_factory=list, max_length=5)
 
 
 def get_client() -> OpenAI:
@@ -85,6 +93,82 @@ def load_knowledge() -> dict[str, str]:
     return documents
 
 
+def query_terms(query: str) -> set[str]:
+    stopwords = {
+        "什么",
+        "如何",
+        "哪些",
+        "一下",
+        "请问",
+        "可以",
+        "应该",
+        "需要",
+        "进行",
+        "以及",
+        "这个",
+        "一个",
+    }
+    terms: set[str] = set()
+    for token in re.findall(r"[\u4e00-\u9fff]+|[a-z0-9][a-z0-9\-]+", query.lower()):
+        if token in stopwords:
+            continue
+        if re.fullmatch(r"[\u4e00-\u9fff]+", token):
+            if 2 <= len(token) <= 8:
+                terms.add(token)
+            if len(token) > 3:
+                for size in (2, 3, 4):
+                    terms.update(token[index : index + size] for index in range(len(token) - size + 1))
+        elif len(token) >= 2:
+            terms.add(token)
+    return {term for term in terms if term not in stopwords}
+
+
+def knowledge_chunks() -> list[tuple[str, str]]:
+    chunks: list[tuple[str, str]] = []
+    for name, content in load_knowledge().items():
+        paragraphs = [part.strip() for part in re.split(r"\n{2,}", content) if part.strip()]
+        current: list[str] = []
+        current_length = 0
+        for paragraph in paragraphs:
+            sections = [
+                paragraph[index : index + 2600]
+                for index in range(0, len(paragraph), 2600)
+            ]
+            for section in sections:
+                if current and current_length + len(section) > 2800:
+                    chunks.append((name, "\n\n".join(current)))
+                    current = []
+                    current_length = 0
+                current.append(section)
+                current_length += len(section)
+        if current:
+            chunks.append((name, "\n\n".join(current)))
+    return chunks
+
+
+def select_knowledge_context(query: str, max_characters: int = 36000) -> str:
+    terms = query_terms(query)
+    ranked: list[tuple[int, str, str]] = []
+    for name, chunk in knowledge_chunks():
+        searchable = f"{name}\n{chunk}".lower()
+        score = sum((len(term) ** 2) * searchable.count(term) for term in terms)
+        ranked.append((score, name, chunk))
+    ranked.sort(key=lambda item: item[0], reverse=True)
+    candidates = [item for item in ranked if item[0] > 0][:14]
+    if not candidates:
+        candidates = ranked[:5]
+
+    selected: list[str] = []
+    character_count = 0
+    for _, name, chunk in candidates:
+        block = f"[来源：{name}]\n{chunk}"
+        if selected and character_count + len(block) > max_characters:
+            continue
+        selected.append(block)
+        character_count += len(block)
+    return "\n\n---\n\n".join(selected)
+
+
 def load_cases() -> list[dict]:
     cases: list[dict] = []
     for file in sorted(CASES_DIR.glob("*.json")):
@@ -104,6 +188,48 @@ def load_cases() -> list[dict]:
                 }
             )
     return cases
+
+
+@lru_cache(maxsize=1)
+def load_rash_atlas() -> dict:
+    try:
+        return json.loads(RASH_ATLAS_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=503, detail="皮疹图谱数据暂不可用。") from exc
+
+
+def atlas_diseases() -> list[dict]:
+    return [
+        {**disease, "category": category.get("title", "未分类")}
+        for category in load_rash_atlas().get("categories", [])
+        for disease in category.get("diseases", [])
+    ]
+
+
+def atlas_reference(diseases: list[dict] | None = None) -> str:
+    selected = diseases if diseases is not None else atlas_diseases()
+    lines: list[str] = []
+    for disease in selected:
+        facts = disease.get("facts", {})
+        fact_text = "；".join(f"{key}：{value}" for key, value in facts.items())
+        lines.append(
+            f"- {disease.get('name', '')}（{disease.get('english', '')}，"
+            f"{disease.get('category', '')}）：{fact_text}"
+        )
+    return "\n".join(lines)
+
+
+def select_atlas_diseases(query: str, limit: int = 10) -> list[dict]:
+    terms = query_terms(query)
+    ranked: list[tuple[int, dict]] = []
+    for disease in atlas_diseases():
+        searchable = f"{disease.get('name', '')} {disease.get('english', '')} {disease.get('search_text', '')}".lower()
+        score = sum((len(term) ** 2) * searchable.count(term) for term in terms)
+        if disease.get("name") and disease["name"] in query:
+            score += 1000
+        ranked.append((score, disease))
+    ranked.sort(key=lambda item: item[0], reverse=True)
+    return [disease for score, disease in ranked if score > 0][:limit]
 
 
 def find_case(case_id: str) -> dict:
@@ -181,12 +307,56 @@ def health() -> dict:
 
 @app.get("/api/config")
 def config() -> dict:
+    atlas_summary = load_rash_atlas().get("summary", {})
     return {
         "ai_configured": bool(API_KEY),
         "admin_configured": bool(ADMIN_PASSWORD),
         "model": MODEL_NAME,
         "knowledge_count": len(load_knowledge()),
         "case_count": len(load_cases()),
+        "atlas_disease_count": atlas_summary.get("disease_count", 0),
+        "atlas_image_count": atlas_summary.get("image_count", 0),
+    }
+
+
+@app.get("/api/rash-atlas")
+def rash_atlas() -> dict:
+    return load_rash_atlas()
+
+
+@app.post("/api/rash-atlas/differential")
+def rash_differential(request: RashDifferentialRequest) -> dict:
+    all_diseases = atlas_diseases()
+    requested_ids = set(request.candidate_ids)
+    selected = [disease for disease in all_diseases if disease.get("id") in requested_ids]
+    reference = atlas_reference(selected or all_diseases)
+    scope = (
+        "仅比较学员选中的候选病种"
+        if selected
+        else "从图谱收录病种中提出优先鉴别方向"
+    )
+    system_prompt = f"""你是临床皮疹鉴别教学导师，任务是训练观察与证据推理，不是在线诊断。
+请严格依据下方图谱摘要分析学员描述，{scope}。
+
+图谱摘要：
+{reference}
+
+回答格式：
+1. 先用一句话概括当前最有区分度的线索。
+2. 按“支持线索 / 不吻合或缺失线索 / 下一步验证”比较优先候选，最多 4 个。
+3. 单列“需要立即升级处置的红旗”，没有足够信息时明确写出仍需询问什么。
+4. 不给确定诊断，不开具处方，不虚构图谱中没有的患者信息；控制在 700 字以内。
+5. 结尾注明“仅供教学训练，不能替代面诊、病理或实验室诊断”。"""
+    answer = complete(
+        [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": request.description},
+        ]
+    )
+    return {
+        "answer": answer,
+        "candidate_count": len(selected),
+        "scope": "selected" if selected else "atlas",
     }
 
 
@@ -203,14 +373,19 @@ def knowledge_index() -> dict:
 
 @app.post("/api/chat/knowledge")
 def knowledge_chat(request: KnowledgeChatRequest) -> dict:
-    context = "\n\n".join(load_knowledge().values())
+    latest_question = request.messages[-1].content
+    context = select_knowledge_context(latest_question)
+    rash_context = atlas_reference(select_atlas_diseases(latest_question))
     system_prompt = f"""你是一个专业的口岸卫生检疫与现场流行病学教学助手。
-请严格优先根据下方知识库回答学员问题；知识库没有依据时，明确说明依据不足。回答应直接、专业、便于教学，不要在结尾添加扩展建议。
+请严格优先根据下方知识库与皮疹图谱摘要回答学员问题；材料没有依据时，明确说明依据不足。回答应直接、专业、便于教学，不要在结尾添加扩展建议。
 
 图片规则：只有当学员专门询问猴痘皮疹形态、特点或演变时，回答中才可包含标记 [显示猴痘皮疹图]。普通定义或症状列表不得包含该标记。
 
 知识库内容：
-{context}"""
+{context}
+
+皮疹图谱摘要：
+{rash_context}"""
     answer = complete(
         [
             {"role": "system", "content": system_prompt},
@@ -267,7 +442,16 @@ def coach_stage(case_id: str, request: StageCoachRequest) -> dict:
     if request.stage_index >= len(stages):
         raise HTTPException(status_code=400, detail="案例阶段不存在。")
     stage = stages[request.stage_index]
-    context = "\n\n".join(load_knowledge().values())
+    retrieval_query = " ".join(
+        [
+            str(case.get("title", "")),
+            str(case.get("background", "")),
+            str(stage.get("title", "")),
+            str(stage.get("task", "")),
+            request.messages[-1].content,
+        ]
+    )
+    context = select_knowledge_context(retrieval_query)
     system_prompt = f"""你是专业的口岸卫生检疫案例教学引导员。
 案例：《{case.get('title', '未知')}》
 当前阶段：第 {stage.get('step', request.stage_index + 1)} 步 — {stage.get('title', '')}
