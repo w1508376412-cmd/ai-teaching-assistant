@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b1f33" />
+    <meta
+      name="description"
+      content="面向口岸卫生检疫与现场流行病学教学的知识问答和案例推演工作台"
+    />
+    <title>疫学现场 · 教学工作台</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <a class="brand" href="/" aria-label="返回知识问答首页">
+          <span class="brand-mark" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+          <span>
+            <strong>疫学现场</strong>
+            <small>教学工作台</small>
+          </span>
+        </a>
+
+        <nav class="primary-nav" aria-label="主导航">
+          <p class="nav-label">学习模块</p>
+          <button class="nav-item is-active" type="button" data-view="knowledge">
+            <span class="nav-index">A</span>
+            <span><strong>知识问答</strong><small>查证规范与指南</small></span>
+          </button>
+          <button class="nav-item" type="button" data-view="cases">
+            <span class="nav-index">B</span>
+            <span><strong>案例推演</strong><small>训练现场判断</small></span>
+          </button>
+          <button class="nav-item is-hidden" id="adminNav" type="button" data-view="admin">
+            <span class="nav-index">C</span>
+            <span><strong>教师管理</strong><small>维护教学材料</small></span>
+          </button>
+        </nav>
+
+        <div class="system-card" aria-live="polite">
+          <div class="system-status">
+            <span class="status-dot" id="aiStatusDot"></span>
+            <span><strong id="aiStatusText">正在检查服务</strong><small id="modelLabel">—</small></span>
+          </div>
+          <div class="system-counts">
+            <span><strong id="knowledgeCount">—</strong> 份指南</span>
+            <span><strong id="caseCount">—</strong> 个案例</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-stage">
+        <header class="topbar">
+          <button class="menu-button" id="menuButton" type="button" aria-label="打开导航" aria-expanded="false">
+            <span></span><span></span>
+          </button>
+          <div>
+            <span class="topbar-kicker">PORT HEALTH / TRAINING DESK</span>
+            <strong id="topbarTitle">知识问答</strong>
+          </div>
+          <div class="live-stamp"><span></span> 教学环境</div>
+        </header>
+
+        <section class="workspace-view is-active" id="view-knowledge" data-title="知识问答">
+          <div class="workspace-head">
+            <div class="field-index" aria-hidden="true">A</div>
+            <div class="workspace-copy">
+              <span class="eyebrow">REFERENCE FIRST · 依据优先</span>
+              <h1>先查证据，<br />再下判断。</h1>
+              <p>围绕传染病临床表现、流行病学特征、口岸处置与检测方法提问。回答会优先引用当前知识库。</p>
+            </div>
+            <div class="brief-card">
+              <span class="brief-label">本模块任务</span>
+              <strong>把规范变成可执行判断</strong>
+              <p>描述场景越具体，得到的教学反馈越准确。</p>
+              <div class="brief-rule"><span></span><span></span><span></span></div>
+            </div>
+          </div>
+
+          <div class="chat-workbench">
+            <div class="chat-toolbar">
+              <div>
+                <span class="section-code">FIELD LOG</span>
+                <strong>问答记录</strong>
+              </div>
+              <button class="text-button" id="clearChat" type="button">清空记录</button>
+            </div>
+            <div class="chat-feed" id="chatFeed" aria-live="polite">
+              <article class="message assistant-message">
+                <div class="message-marker"><span></span></div>
+                <div class="message-body">
+                  <div class="message-meta"><strong>教学助手</strong><span>知识库已就绪</span></div>
+                  <p>请给我一个具体问题。例如：入境旅客发热并伴有离心性皮疹，现场排查应关注哪些线索？</p>
+                </div>
+              </article>
+            </div>
+            <div class="prompt-shelf" aria-label="示例问题">
+              <span>可以这样问</span>
+              <button type="button" data-prompt="猴痘皮疹在不同阶段有哪些形态特点？">猴痘皮疹如何演变？</button>
+              <button type="button" data-prompt="口岸发现疑似蚊媒传染病旅客时，应采取哪些卫生检疫措施？">蚊媒传染病如何处置？</button>
+              <button type="button" data-prompt="登革热和基孔肯雅热在临床表现上如何鉴别？">如何鉴别登革热？</button>
+            </div>
+            <form class="composer" id="chatForm">
+              <label class="sr-only" for="chatInput">输入问题</label>
+              <textarea id="chatInput" rows="1" maxlength="4000" placeholder="描述你要查证的问题…" required></textarea>
+              <button class="send-button" type="submit">
+                <span>发送问题</span><span aria-hidden="true">↗</span>
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <section class="workspace-view" id="view-cases" data-title="案例推演">
+          <div class="workspace-head case-head">
+            <div class="field-index" aria-hidden="true">B</div>
+            <div class="workspace-copy">
+              <span class="eyebrow">DECISION DRILL · 决策训练</span>
+              <h1>像在现场一样，<br />逐项排查。</h1>
+              <p>阅读病例线索，选择可能疾病、处置措施和检测方法，再获取基于规范的反馈。</p>
+            </div>
+            <div class="case-selector-card">
+              <label for="caseSelect">当前案例</label>
+              <select id="caseSelect"><option>正在加载案例…</option></select>
+              <button class="outline-button" id="nextCase" type="button">进入下一案例 <span>→</span></button>
+            </div>
+          </div>
+
+          <div class="case-empty is-hidden" id="caseEmpty">案例库目前为空，请联系教师添加案例。</div>
+          <div class="case-workspace" id="caseWorkspace">
+            <article class="dossier">
+              <div class="dossier-head">
+                <span class="section-code">CASE DOSSIER</span>
+                <span class="case-sequence" id="caseSequence">01 / 01</span>
+              </div>
+              <h2 id="caseTitle">—</h2>
+              <div class="background-note"><span>背景</span><p id="caseBackground">—</p></div>
+              <div class="patient-grid" id="patientGrid"></div>
+            </article>
+
+            <section class="decision-board" id="decisionBoard">
+              <div class="board-head">
+                <div><span class="section-code">YOUR DECISION</span><h2>提交现场判断</h2></div>
+                <p>可多选。系统会同时检查准确性和完整性。</p>
+              </div>
+              <form id="decisionForm">
+                <fieldset class="decision-group">
+                  <legend><span>01</span><strong>可能的传染病</strong><small>根据临床表现与流行病学史</small></legend>
+                  <div class="option-grid" id="diseaseOptions"></div>
+                </fieldset>
+                <fieldset class="decision-group">
+                  <legend><span>02</span><strong>拟采取的处置措施</strong><small>限定在口岸卫生检疫职责内</small></legend>
+                  <div class="option-grid" id="measureOptions"></div>
+                </fieldset>
+                <fieldset class="decision-group">
+                  <legend><span>03</span><strong>建议的诊断方法</strong><small>选择必要且适配的实验室检测</small></legend>
+                  <div class="option-grid" id="treatmentOptions"></div>
+                </fieldset>
+                <button class="primary-button" type="submit">提交判断并获取反馈 <span>↗</span></button>
+              </form>
+              <div class="feedback-panel is-hidden" id="decisionFeedback" aria-live="polite"></div>
+            </section>
+
+            <section class="stage-board is-hidden" id="stageBoard">
+              <div class="board-head"><div><span class="section-code">GUIDED SIMULATION</span><h2 id="stageTitle">—</h2></div></div>
+              <div class="stage-task" id="stageTask"></div>
+              <div class="stage-data is-hidden" id="stageData"></div>
+              <div class="stage-chat" id="stageChat"></div>
+              <form class="composer stage-composer" id="stageForm">
+                <label class="sr-only" for="stageInput">输入你的判断</label>
+                <textarea id="stageInput" rows="1" maxlength="4000" placeholder="写下你的判断和理由…" required></textarea>
+                <button class="send-button" type="submit"><span>提交思路</span><span>↗</span></button>
+              </form>
+              <button class="outline-button" id="nextStage" type="button">进入下一步 <span>→</span></button>
+            </section>
+          </div>
+        </section>
+
+        <section class="workspace-view" id="view-admin" data-title="教师管理">
+          <div class="workspace-head admin-head">
+            <div class="field-index" aria-hidden="true">C</div>
+            <div class="workspace-copy">
+              <span class="eyebrow">CONTENT CONTROL · 教学维护</span>
+              <h1>更新材料，<br />保持课程鲜活。</h1>
+              <p>上传指南进入知识库，或让 AI 将 SOP 转换为交互式教学案例。</p>
+            </div>
+          </div>
+
+          <div class="admin-unlock" id="adminUnlock">
+            <span class="lock-symbol" aria-hidden="true">C</span>
+            <div><span class="section-code">RESTRICTED AREA</span><h2>验证教师身份</h2><p>请输入 Zeabur 环境变量中配置的教师管理密码。</p></div>
+            <form id="adminLoginForm">
+              <label for="adminPassword">教师管理密码</label>
+              <div class="password-row"><input id="adminPassword" type="password" autocomplete="current-password" required /><button type="submit">进入管理</button></div>
+            </form>
+          </div>
+
+          <div class="admin-dashboard is-hidden" id="adminDashboard">
+            <section class="admin-panel">
+              <div class="panel-heading"><div><span class="section-code">KNOWLEDGE BASE</span><h2>知识库文档</h2></div><span id="adminDocCount">0 份</span></div>
+              <div class="content-list" id="documentList"></div>
+              <form class="upload-zone" id="knowledgeUploadForm">
+                <label for="knowledgeFile"><strong>添加参考文档</strong><span>支持 Markdown、Word 与 PDF</span></label>
+                <input id="knowledgeFile" type="file" accept=".md,.doc,.docx,.pdf" required />
+                <button class="outline-button" type="submit">处理并加入知识库</button>
+              </form>
+            </section>
+
+            <section class="admin-panel">
+              <div class="panel-heading"><div><span class="section-code">CASE LIBRARY</span><h2>案例库</h2></div><span id="adminCaseCount">0 个</span></div>
+              <div class="content-list" id="caseList"></div>
+              <form class="upload-zone" id="caseGenerateForm">
+                <label for="caseSourceFile"><strong>从文档生成案例</strong><span>AI 将按海关卫生检疫职责设计决策题</span></label>
+                <input id="caseSourceFile" type="file" accept=".md,.doc,.docx,.pdf" required />
+                <button class="outline-button" type="submit">分析文档并生成案例</button>
+              </form>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="sidebar-scrim" id="sidebarScrim"></div>
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>

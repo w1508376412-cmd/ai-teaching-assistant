@@ -1,6 +1,6 @@
 # AI 教学助手 - 流行病学与卫生统计
 
-这是一个为公共卫生课程设计的 AI 教学助手原型，包含**知识库问答**和**互动案例模拟**两大核心功能。
+这是一个为公共卫生课程设计的 AI 教学工作台，采用 **FastAPI + 原生 HTML/CSS/JavaScript**，包含知识库问答、互动案例模拟和教师内容管理。
 
 ## 功能模块
 
@@ -12,20 +12,23 @@
 
 - `knowledge_base/`: 存放 Markdown 格式的课程资料。
 - `cases/`: 存放 JSON 格式的模拟案例。
-- `src/app.py`: Streamlit 应用主程序。
+- `src/main.py`: FastAPI 后端和 API 入口。
+- `src/static/`: 独立网页前端。
 
 ## 如何运行
 
 ### 1. 安装依赖
-建议使用 Python 3.9+。
+建议使用 Python 3.11+。
 ```bash
-pip install streamlit openai
+pip install -r requirements.txt
 ```
 
 ### 2. 启动应用
 ```bash
-streamlit run src/app.py
+uvicorn src.main:app --host 0.0.0.0 --port 8501
 ```
+
+浏览器访问 `http://127.0.0.1:8501`。
 
 ### 3. 配置 API
 请通过环境变量配置 API Key（支持 DeepSeek、智谱 AI 等 OpenAI 兼容接口）：
@@ -33,7 +36,10 @@ streamlit run src/app.py
 export DEEPSEEK_API_KEY="你的 API Key"
 export OPENAI_BASE_URL="https://api.deepseek.com"
 export MODEL_NAME="deepseek-v4-flash"
+export ADMIN_PASSWORD="教师管理密码"
 ```
+
+教师管理入口为 `http://127.0.0.1:8501/?admin=true`。
 
 ### 4. 部署到 Zeabur
 
@@ -44,11 +50,11 @@ export MODEL_NAME="deepseek-v4-flash"
 DEEPSEEK_API_KEY=你的 API Key
 OPENAI_BASE_URL=https://api.deepseek.com
 MODEL_NAME=deepseek-v4-flash
+ADMIN_PASSWORD=请设置一个安全密码
 ```
 
 部署完成后，在 Zeabur 服务的 Networking / Domains 中生成访问域名。
 
 ## 如何添加案例
 
-案例以 JSON 格式存储在 `cases/` 目录下。每个案例包含 `id`, `title`, `background`, `stages` (步骤), 和 `answers_summary`。
-具体格式可参考 `cases/food_poisoning.json`。
+案例以 JSON 格式存储在 `cases/` 目录下。系统同时支持 `interactive_v2` 决策判断格式和包含 `stages` 的分步推演格式，具体结构可参考现有案例文件。
