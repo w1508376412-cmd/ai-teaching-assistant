@@ -1,5 +1,6 @@
 import io
 import json
+import mimetypes
 import os
 import re
 import tempfile
@@ -32,6 +33,9 @@ API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.deepseek.com")
 MODEL_NAME = os.getenv("MODEL_NAME", "deepseek-v4-flash")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
+
+mimetypes.add_type("image/webp", ".webp")
+mimetypes.add_type("image/svg+xml", ".svg")
 
 app = FastAPI(
     title="现场辨证 · 临床流行病教学工作台",
