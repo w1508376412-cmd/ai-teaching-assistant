@@ -24,11 +24,29 @@ pip install streamlit openai
 
 ### 2. 启动应用
 ```bash
-streamlit run ai-teaching-assistant/src/app.py
+streamlit run src/app.py
 ```
 
 ### 3. 配置 API
-启动后，在侧边栏输入你的国内大模型 API Key（支持 DeepSeek, 智谱 AI 等 OpenAI 兼容接口）。
+请通过环境变量配置 API Key（支持 DeepSeek、智谱 AI 等 OpenAI 兼容接口）：
+```bash
+export DEEPSEEK_API_KEY="你的 API Key"
+export OPENAI_BASE_URL="https://api.deepseek.com"
+export MODEL_NAME="deepseek-v4-flash"
+```
+
+### 4. 部署到 Zeabur
+
+项目根目录已经包含 `Dockerfile`。将代码推送到 GitHub 后，在 Zeabur 中选择 **GitHub** 部署此仓库。Zeabur 会自动使用 Dockerfile 构建并启动应用。
+
+在 Zeabur 服务的环境变量中设置：
+```text
+DEEPSEEK_API_KEY=你的 API Key
+OPENAI_BASE_URL=https://api.deepseek.com
+MODEL_NAME=deepseek-v4-flash
+```
+
+部署完成后，在 Zeabur 服务的 Networking / Domains 中生成访问域名。
 
 ## 如何添加案例
 

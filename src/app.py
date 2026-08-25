@@ -17,14 +17,17 @@ CASES_DIR = Path(__file__).parent.parent / "cases"
 ASSETS_DIR = Path(__file__).parent.parent / "assets"
 
 # --- Configuration & Defaults ---
-DEFAULT_API_KEY = "sk-b6b9822caa6b4ef28f4c785887fd6c37"
-DEFAULT_BASE_URL = "https://api.deepseek.com"
-DEFAULT_MODEL_NAME = "deepseek-v4-flash"
+DEFAULT_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+DEFAULT_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.deepseek.com")
+DEFAULT_MODEL_NAME = os.getenv("MODEL_NAME", "deepseek-v4-flash")
 
 def get_api_client():
-    # Priority: session_state (if set via secret) > Defaults
+    # Priority: session_state (if set via secret) > environment variables
     api_key = st.session_state.get("api_key", DEFAULT_API_KEY)
     base_url = st.session_state.get("base_url", DEFAULT_BASE_URL)
+    if not api_key:
+        st.error("请先在 Zeabur 环境变量中设置 DEEPSEEK_API_KEY。")
+        return None
     return OpenAI(api_key=api_key, base_url=base_url)
 
 # --- Sidebar ---
