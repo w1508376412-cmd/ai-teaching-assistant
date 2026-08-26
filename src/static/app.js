@@ -90,12 +90,8 @@ const els = {
   adminDashboard: $("#adminDashboard"),
   adminLoginForm: $("#adminLoginForm"),
   adminPassword: $("#adminPassword"),
-  documentList: $("#documentList"),
   caseList: $("#caseList"),
-  adminDocCount: $("#adminDocCount"),
   adminCaseCount: $("#adminCaseCount"),
-  knowledgeUploadForm: $("#knowledgeUploadForm"),
-  knowledgeFile: $("#knowledgeFile"),
   caseGenerateForm: $("#caseGenerateForm"),
   caseSourceFile: $("#caseSourceFile"),
   toast: $("#toast"),
@@ -117,6 +113,36 @@ function richText(value = "") {
     .replace(/^\s*[-•]\s+(.+)$/gm, "· $1")
     .replace(/\n\n/g, "</p><p>")
     .replace(/\n/g, "<br>");
+}
+
+function safeExternalUrl(value = "") {
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol) ? escapeHtml(url.href) : "#";
+  } catch {
+    return "#";
+  }
+}
+
+function citationMarkup(citations = []) {
+  if (!citations.length) return "";
+  const items = citations.map((citation) => {
+    const id = /^K\d+$/.test(citation.id || "") ? citation.id : "K?";
+    const href = safeExternalUrl(citation.source);
+    const title = [citation.disease, citation.document, citation.section].filter(Boolean).join(" · ");
+    return `<li id="citation-${id}"><a href="${href}" target="_blank" rel="noopener noreferrer"><span>[${id}]</span><strong>${escapeHtml(title)}</strong></a><p>${escapeHtml(citation.excerpt || "")}</p></li>`;
+  }).join("");
+  return `<aside class="message-citations" aria-label="回答引用依据"><div class="citation-heading"><strong>引用依据</strong><span>${citations.length} 条</span></div><ol>${items}</ol></aside>`;
+}
+
+function citedRichText(content = "", citations = []) {
+  let html = richText(content);
+  citations.forEach((citation) => {
+    const id = citation.id || "";
+    if (!/^K\d+$/.test(id)) return;
+    html = html.replaceAll(`[${id}]`, `<a class="inline-citation" href="#citation-${id}" aria-label="查看引用 ${id}">[${id}]</a>`);
+  });
+  return html;
 }
 
 function errorMessage(error) {
@@ -408,7 +434,7 @@ function appendMessage(role, content, options = {}) {
   if (options.loading) article.dataset.loading = "true";
   const body = options.loading
     ? '<span class="loading-dots" aria-label="正在生成回答"><i></i><i></i><i></i></span>'
-    : `<div class="message-copy"><p>${richText(content)}</p></div>${options.showImage ? '<figure class="message-figure"><img class="message-image" src="/assets/rash-atlas/images/mpox_12761.webp" alt="猴痘皮疹典型临床特征参考图"><figcaption>图谱参考 · 猴痘典型皮损形态</figcaption></figure>' : ""}`;
+    : `<div class="message-copy"><p>${citedRichText(content, options.citations || [])}</p></div>${citationMarkup(options.citations || [])}${options.showImage ? '<figure class="message-figure"><img class="message-image" src="/assets/rash-atlas/images/mpox_12761.webp" alt="猴痘皮疹典型临床特征参考图"><figcaption>图谱参考 · 猴痘典型皮损形态</figcaption></figure>' : ""}`;
   article.innerHTML = `<div class="message-body"><div class="message-meta"><strong>${role === "user" ? "学员提问" : "教学助手"}</strong><span>${role === "user" ? "待查证线索" : "依据反馈"}</span></div>${body}</div>`;
   els.chatFeed.append(article);
   els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
@@ -433,7 +459,7 @@ async function sendKnowledgeQuestion(prompt) {
     });
     loading.remove();
     state.qaMessages.push({ role: "assistant", content: data.answer });
-    appendMessage("assistant", data.answer, { showImage: data.show_mpox_image });
+    appendMessage("assistant", data.answer, { showImage: data.show_mpox_image, citations: data.citations || [] });
   } catch (error) {
     loading.remove();
     appendMessage("assistant", `无法完成回答：${errorMessage(error)}`);
@@ -596,11 +622,7 @@ async function loadAdminContent() {
   const data = await adminApi("/api/admin/content");
   els.adminUnlock.classList.add("is-hidden");
   els.adminDashboard.classList.remove("is-hidden");
-  els.adminDocCount.textContent = `${data.documents.length} 份`;
   els.adminCaseCount.textContent = `${data.cases.length} 个`;
-  els.documentList.innerHTML = data.documents.length
-    ? data.documents.map((doc) => `<div class="content-row"><div><strong title="${escapeHtml(doc.name)}">${escapeHtml(doc.name)}.md</strong><small>${doc.characters.toLocaleString()} 字符</small></div><button class="delete-button" type="button" data-delete-doc="${escapeHtml(doc.name)}">移除</button></div>`).join("")
-    : '<div class="empty-row">知识库目前为空</div>';
   els.caseList.innerHTML = data.cases.length
     ? data.cases.map((item) => `<div class="content-row"><div><strong title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</strong><small>${escapeHtml(item.id || "未知 ID")}${item.error ? " · 文件损坏" : ""}</small></div><button class="delete-button" type="button" data-delete-case="${escapeHtml(item.filename)}">移除</button></div>`).join("")
     : '<div class="empty-row">案例库目前为空</div>';
@@ -741,21 +763,7 @@ function bindEvents() {
       setBusy(button, false);
     }
   });
-  els.knowledgeUploadForm.addEventListener("submit", (event) => { event.preventDefault(); uploadAdminFile(els.knowledgeUploadForm, els.knowledgeFile, "/api/admin/knowledge", "正在处理文档…"); });
   els.caseGenerateForm.addEventListener("submit", (event) => { event.preventDefault(); uploadAdminFile(els.caseGenerateForm, els.caseSourceFile, "/api/admin/cases/generate", "正在生成案例…"); });
-  els.documentList.addEventListener("click", async (event) => {
-    const button = event.target.closest("[data-delete-doc]");
-    if (!button || !confirm(`确认移除《${button.dataset.deleteDoc}》？`)) return;
-    setBusy(button, true, "移除中");
-    try {
-      const data = await adminApi(`/api/admin/knowledge/${encodeURIComponent(button.dataset.deleteDoc)}`, { method: "DELETE" });
-      toast(data.message);
-      await Promise.all([loadAdminContent(), refreshPublicData()]);
-    } catch (error) {
-      toast(errorMessage(error), true);
-      setBusy(button, false);
-    }
-  });
   els.caseList.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-delete-case]");
     if (!button || !confirm("确认移除这个案例？")) return;

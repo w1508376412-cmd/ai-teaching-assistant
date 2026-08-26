@@ -5287,3 +5287,105 @@ body {
 #view-knowledge .composer textarea::placeholder {
   color: transparent;
 }
+
+/* Verifiable RAG evidence attached to each assistant response. */
+#view-knowledge .inline-citation {
+  display: inline-flex;
+  margin: 0 2px;
+  color: var(--consult-orange);
+  font-family: var(--utility);
+  font-size: 0.82em;
+  font-weight: 750;
+  text-decoration: none;
+  vertical-align: 0.08em;
+}
+
+#view-knowledge .inline-citation:hover,
+#view-knowledge .inline-citation:focus-visible {
+  text-decoration: underline;
+}
+
+#view-knowledge .message-citations {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e8e8e4;
+}
+
+#view-knowledge .citation-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 9px;
+  color: #565651;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+}
+
+#view-knowledge .citation-heading span {
+  color: #8b8b85;
+  font-family: var(--utility);
+}
+
+#view-knowledge .message-citations ol {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#view-knowledge .message-citations li {
+  padding: 10px 12px;
+  background: #f5f5f2;
+  border-radius: 10px;
+  scroll-margin-bottom: 110px;
+}
+
+#view-knowledge .message-citations a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 9px;
+  align-items: baseline;
+  color: #242422;
+  text-decoration: none;
+}
+
+#view-knowledge .message-citations a:hover strong {
+  color: var(--consult-orange);
+}
+
+#view-knowledge .message-citations a span {
+  color: var(--consult-orange);
+  font-family: var(--utility);
+  font-size: 9px;
+  font-weight: 750;
+}
+
+#view-knowledge .message-citations a strong {
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#view-knowledge .message-citations p {
+  display: -webkit-box;
+  margin: 6px 0 0 35px;
+  overflow: hidden;
+  color: #6e6e68;
+  font-size: 9px;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+#view-admin .admin-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 760px) {
+  #view-knowledge .message-citations p {
+    margin-left: 0;
+  }
+}
