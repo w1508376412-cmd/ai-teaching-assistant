@@ -5309,3 +5309,12 @@ body {
   height: 34px;
   border-radius: 7px;
 }
+
+.sidebar .atlas-controls,
+.sidebar .atlas-search,
+.sidebar .atlas-search > div,
+.sidebar .filter-group,
+.sidebar .category-filters,
+.sidebar .morph-filters {
+  width: 100%;
+}
