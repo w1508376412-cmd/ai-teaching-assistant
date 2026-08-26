@@ -31,6 +31,7 @@ const state = {
 
 const els = {
   sidebar: $("#sidebar"),
+  sidebarAtlasTools: $("#sidebarAtlasTools"),
   sidebarScrim: $("#sidebarScrim"),
   menuButton: $("#menuButton"),
   topbarTitle: $("#topbarTitle"),
@@ -177,6 +178,9 @@ function switchView(viewName, updateUrl = true) {
   if (!target) return;
   $$(".workspace-view").forEach((view) => view.classList.toggle("is-active", view === target));
   $$(".nav-item").forEach((button) => button.classList.toggle("is-active", button.dataset.view === viewName));
+  const atlasToolsVisible = viewName === "atlas";
+  els.sidebar.classList.toggle("has-atlas-tools", atlasToolsVisible);
+  els.sidebarAtlasTools.setAttribute("aria-hidden", String(!atlasToolsVisible));
   els.topbarTitle.textContent = target.dataset.title || "教学工作台";
   renderCompareDock();
   openSidebar(false);

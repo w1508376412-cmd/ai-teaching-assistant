@@ -7,7 +7,7 @@
     <meta name="description" content="融合临床皮疹图谱、知识库问答与现场案例推演的公共卫生教学工作台" />
     <title>现场辨证 · 临床流行病教学工作台</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260826-2" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260826-3" />
   </head>
   <body>
     <a class="skip-link" href="#mainContent">跳到主要内容</a>
@@ -26,6 +26,17 @@
           <button class="nav-item" type="button" data-view="cases"><span class="nav-index">03</span><span><strong>案例推演</strong></span></button>
           <button class="nav-item is-hidden" id="adminNav" type="button" data-view="admin"><span class="nav-index">04</span><span><strong>教师管理</strong></span></button>
         </nav>
+
+        <section class="sidebar-atlas-tools" id="sidebarAtlasTools" aria-label="图谱筛选">
+          <div class="sidebar-tools-heading"><span class="section-code">ATLAS FILTERS</span><strong>图谱筛选</strong></div>
+          <div class="atlas-controls">
+            <label class="atlas-search" for="atlasSearch"><span>检索病名或临床线索</span><div><i aria-hidden="true">⌕</i><input id="atlasSearch" type="search" placeholder="例如：耳后、离心性、水疱…" autocomplete="off" /></div></label>
+            <fieldset class="filter-group"><legend>疾病类别</legend><div class="category-filters" id="categoryFilters"></div></fieldset>
+            <fieldset class="filter-group"><legend>皮损形态带</legend><div class="morph-filters" id="morphologyFilters"></div></fieldset>
+            <button class="reset-filter" id="resetAtlasFilters" type="button">重置全部条件 <span>↺</span></button>
+            <div class="atlas-provenance"><span class="section-code">IMAGE SOURCES</span><p>CDC PHIL · 公有领域</p><p>PMC · CC BY / CC0</p><p>《皮肤性病学》第 10 版 · 教学参考</p></div>
+          </div>
+        </section>
       </aside>
 
       <div class="main-stage">
@@ -37,21 +48,7 @@
 
         <main id="mainContent">
           <section class="workspace-view" id="view-atlas" data-title="皮疹图谱">
-            <div class="module-intro atlas-intro">
-              <div class="module-number" aria-hidden="true">02</div>
-              <div><span class="eyebrow">CLINICAL RASH ATLAS · 皮损鉴别训练</span><h1>先描述所见，<br />再缩小范围。</h1></div>
-              <div class="module-note"><strong>教学用途声明</strong><p>图谱不能替代面诊、病理或实验室诊断。教材图片仅供个人教学参考。</p></div>
-            </div>
-
             <div class="atlas-workbench">
-              <aside class="atlas-controls" aria-label="图谱筛选">
-                <label class="atlas-search" for="atlasSearch"><span>检索病名或临床线索</span><div><i aria-hidden="true">⌕</i><input id="atlasSearch" type="search" placeholder="例如：耳后、离心性、水疱…" autocomplete="off" /></div></label>
-                <fieldset class="filter-group"><legend>疾病类别</legend><div class="category-filters" id="categoryFilters"></div></fieldset>
-                <fieldset class="filter-group"><legend>皮损形态带</legend><div class="morph-filters" id="morphologyFilters"></div></fieldset>
-                <button class="reset-filter" id="resetAtlasFilters" type="button">重置全部条件 <span>↺</span></button>
-                <div class="atlas-provenance"><span class="section-code">IMAGE SOURCES</span><p>CDC PHIL · 公有领域</p><p>PMC · CC BY / CC0</p><p>《皮肤性病学》第 10 版 · 教学参考</p></div>
-              </aside>
-
               <div class="atlas-results">
                 <div class="results-toolbar"><div><strong id="atlasResultCount">正在载入图谱…</strong><span id="atlasActiveFilter">全部类别 · 全部形态</span></div><p>点开病种查看完整鉴别要点；勾选 2–3 个病种可并排比较。</p></div>
                 <div class="disease-grid" id="diseaseGrid" aria-live="polite"></div>
@@ -67,8 +64,6 @@
           </section>
 
           <section class="workspace-view is-active" id="view-knowledge" data-title="知识问答">
-            <div class="module-intro knowledge-intro"><div class="module-number" aria-hidden="true">01</div><div><span class="eyebrow">REFERENCE FIRST · 依据优先</span><h1>带着线索提问，<br />让依据说话。</h1></div><div class="module-note"><strong>提问提示</strong><p>写明人群、时间、暴露史、皮损分布与现场目标，反馈会更准确。</p></div></div>
-
             <div class="knowledge-layout">
               <aside class="question-brief"><span class="section-code">QUESTION FRAME</span><h2>一个好问题，应包含什么？</h2><ol><li><b>对象</b><span>年龄、人群与基础情况</span></li><li><b>时间</b><span>发热、出疹与暴露顺序</span></li><li><b>所见</b><span>形态、分布、演变与伴随表现</span></li><li><b>任务</b><span>鉴别、采样还是现场处置</span></li></ol><button class="line-button" type="button" data-view="atlas">回到图谱核对 <span>→</span></button></aside>
               <div class="chat-workbench">
@@ -81,9 +76,9 @@
           </section>
 
           <section class="workspace-view" id="view-cases" data-title="案例推演">
-            <div class="module-intro case-intro"><div class="module-number" aria-hidden="true">03</div><div><span class="eyebrow">DECISION DRILL · 决策训练</span><h1>像在现场一样，<br />逐项排查。</h1></div><div class="case-selector-card"><label for="caseSelect">当前案例</label><select id="caseSelect"><option>正在加载案例…</option></select><button class="line-button" id="nextCase" type="button">进入下一案例 <span>→</span></button></div></div>
             <div class="case-empty is-hidden" id="caseEmpty">案例库目前为空，请联系教师添加案例。</div>
             <div class="case-workspace" id="caseWorkspace">
+              <div class="case-commandbar"><div><span class="section-code">CASE LIBRARY</span><strong>案例选择</strong></div><label for="caseSelect"><span>当前案例</span><select id="caseSelect"><option>正在加载案例…</option></select></label><button class="line-button" id="nextCase" type="button">进入下一案例 <span>→</span></button></div>
               <article class="dossier"><div class="dossier-head"><span class="section-code">CASE DOSSIER</span><span class="case-sequence" id="caseSequence">01 / 01</span></div><h2 id="caseTitle">正在加载案例</h2><p id="caseBackground">—</p><div class="patient-grid" id="patientGrid"></div></article>
               <section class="decision-board" id="decisionBoard"><form id="decisionForm"><div class="decision-column"><div class="decision-heading"><span>01</span><div><strong>可能疾病</strong><small>POSSIBLE DISEASES</small></div></div><div class="option-list" id="diseaseOptions"></div></div><div class="decision-column"><div class="decision-heading"><span>02</span><div><strong>现场处置</strong><small>FIELD MEASURES</small></div></div><div class="option-list" id="measureOptions"></div></div><div class="decision-column"><div class="decision-heading"><span>03</span><div><strong>诊断方法</strong><small>DIAGNOSTICS</small></div></div><div class="option-list" id="treatmentOptions"></div></div><button class="solid-button evaluate-button" type="submit">提交判断 <span>↗</span></button></form><div class="decision-feedback is-hidden" id="decisionFeedback"></div></section>
               <section class="stage-board is-hidden" id="stageBoard"><div class="stage-brief"><span class="section-code">CURRENT ASSIGNMENT</span><h2 id="stageTitle">当前任务</h2><div class="stage-task" id="stageTask"></div><div class="stage-data is-hidden" id="stageData"></div></div><div class="stage-dialogue"><div class="chat-feed compact" id="stageChat"></div><form class="composer" id="stageForm"><label class="sr-only" for="stageInput">输入处置思路</label><textarea id="stageInput" rows="1" maxlength="4000" placeholder="写下你的判断和处置思路…" required></textarea><button class="send-button" type="submit"><span>提交思路</span><span>↗</span></button></form><button class="line-button" id="nextStage" type="button">进入下一步 <span>→</span></button></div></section>
@@ -107,6 +102,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="sidebar-scrim" id="sidebarScrim"></div>
-    <script src="/static/app.js?v=20260826-2" defer></script>
+    <script src="/static/app.js?v=20260826-3" defer></script>
   </body>
 </html>
