@@ -7,7 +7,7 @@
     <meta name="description" content="融合临床皮疹图谱、知识库问答与现场案例推演的公共卫生教学工作台" />
     <title>AI教学工具 · 临床流行病教学工作台</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260826-8" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260827-2" />
   </head>
   <body>
     <a class="skip-link" href="#mainContent">跳到主要内容</a>
@@ -20,7 +20,6 @@
         </button>
 
         <nav class="primary-nav" aria-label="主导航">
-          <span class="nav-label">学习路径 / LEARNING PATH</span>
           <button class="nav-item is-active" type="button" data-view="knowledge"><span class="nav-index">01</span><span><strong>知识问答</strong></span></button>
           <button class="nav-item" type="button" data-view="atlas"><span class="nav-index">02</span><span><strong>皮疹图谱</strong></span></button>
           <button class="nav-item" type="button" data-view="cases"><span class="nav-index">03</span><span><strong>案例推演</strong></span></button>
@@ -30,7 +29,7 @@
         <section class="sidebar-atlas-tools" id="sidebarAtlasTools" aria-label="图谱筛选">
           <div class="sidebar-tools-heading"><span class="section-code">ATLAS FILTERS</span><strong>图谱筛选</strong></div>
           <div class="atlas-controls">
-            <label class="atlas-search" for="atlasSearch"><span>检索病名或临床线索</span><div><i aria-hidden="true">⌕</i><input id="atlasSearch" type="search" placeholder="例如：耳后、离心性、水疱…" autocomplete="off" /></div></label>
+            <label class="atlas-search" for="atlasSearch"><span>检索疾病名称和皮疹特征</span><div><i aria-hidden="true">⌕</i><input id="atlasSearch" type="search" placeholder="" autocomplete="off" /></div></label>
             <fieldset class="filter-group"><legend>疾病类别</legend><div class="category-filters" id="categoryFilters"></div></fieldset>
             <fieldset class="filter-group"><legend>皮损形态带</legend><div class="morph-filters" id="morphologyFilters"></div></fieldset>
             <button class="reset-filter" id="resetAtlasFilters" type="button">重置全部条件 <span>↺</span></button>
@@ -42,24 +41,18 @@
         <header class="topbar">
           <button class="menu-button" id="menuButton" type="button" aria-label="打开导航" aria-expanded="false"><span></span><span></span></button>
           <div class="topbar-context"><span class="topbar-kicker">PORT HEALTH / CLINICAL TRAINING</span><strong id="topbarTitle">知识问答</strong></div>
-          <div class="topbar-actions"><button class="top-search" type="button" data-view="atlas"><span aria-hidden="true">⌕</span> 检索病种</button><div class="live-stamp"><span></span> 教学环境</div></div>
+          <div class="topbar-actions"><button class="top-search" type="button" data-view="atlas"><span aria-hidden="true">⌕</span> 检索病种</button></div>
         </header>
 
         <main id="mainContent">
           <section class="workspace-view" id="view-atlas" data-title="皮疹图谱">
             <div class="atlas-workbench">
               <div class="atlas-results">
-                <div class="results-toolbar"><div><strong id="atlasResultCount">正在载入图谱…</strong><span id="atlasActiveFilter">全部类别 · 全部形态</span></div><p>点开病种查看完整鉴别要点；勾选 2–3 个病种可并排比较。</p></div>
                 <div class="disease-grid" id="diseaseGrid" aria-live="polite"></div>
                 <div class="atlas-empty is-hidden" id="atlasEmpty"><span>NO MATCH</span><h3>没有找到完全匹配的病种</h3><p>试试减少关键词，或清除一个形态条件。</p></div>
               </div>
             </div>
 
-            <section class="differential-lab" aria-labelledby="differentialTitle">
-              <div class="lab-copy"><span class="section-code">AI DIFFERENTIAL LAB</span><h2 id="differentialTitle">把观察写清楚，训练鉴别思路。</h2><p>描述皮损形态、分布、演变、发热关系与伴随症状。若已加入比较病种，AI 会优先在这些候选中寻找支持与冲突证据。</p><div class="candidate-summary" id="differentialCandidates">当前未限定候选病种，将在完整图谱中分析。</div></div>
-              <form class="lab-form" id="differentialForm"><label for="differentialInput">观察记录</label><textarea id="differentialInput" rows="5" maxlength="4000" required placeholder="例如：成人，发热第 3 天出现皮疹，由躯干向四肢扩展，压之褪色，伴结膜充血，无明显瘙痒……"></textarea><div><small>结果仅用于教学训练，不构成诊断。</small><button class="solid-button" type="submit">生成鉴别框架 <span>↗</span></button></div></form>
-              <div class="lab-result is-hidden" id="differentialResult" aria-live="polite"></div>
-            </section>
           </section>
 
           <section class="workspace-view is-active" id="view-knowledge" data-title="知识问答">
@@ -100,6 +93,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="sidebar-scrim" id="sidebarScrim"></div>
-    <script src="/static/app.js?v=20260826-8" defer></script>
+    <script src="/static/app.js?v=20260827-2" defer></script>
   </body>
 </html>

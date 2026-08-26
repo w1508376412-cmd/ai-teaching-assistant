@@ -40,8 +40,6 @@ const els = {
   categoryFilters: $("#categoryFilters"),
   morphologyFilters: $("#morphologyFilters"),
   resetAtlasFilters: $("#resetAtlasFilters"),
-  atlasResultCount: $("#atlasResultCount"),
-  atlasActiveFilter: $("#atlasActiveFilter"),
   diseaseGrid: $("#diseaseGrid"),
   atlasEmpty: $("#atlasEmpty"),
   compareDock: $("#compareDock"),
@@ -56,10 +54,6 @@ const els = {
   imageDialog: $("#imageDialog"),
   lightboxImage: $("#lightboxImage"),
   lightboxCaption: $("#lightboxCaption"),
-  differentialCandidates: $("#differentialCandidates"),
-  differentialForm: $("#differentialForm"),
-  differentialInput: $("#differentialInput"),
-  differentialResult: $("#differentialResult"),
   chatFeed: $("#chatFeed"),
   chatForm: $("#chatForm"),
   chatInput: $("#chatInput"),
@@ -215,14 +209,13 @@ function filteredDiseases() {
 }
 
 function renderAtlasFilters() {
-  const allButton = `<button type="button" data-category="all" class="${state.atlasCategory === "all" ? "is-active" : ""}"><span>全部类别</span><b>${state.diseases.length}</b></button>`;
+  const allButton = `<button type="button" data-category="all" class="${state.atlasCategory === "all" ? "is-active" : ""}"><span>全部类别</span></button>`;
   els.categoryFilters.innerHTML = allButton + (state.atlas?.categories || []).map((category) =>
-    `<button type="button" data-category="${escapeHtml(category.id)}" class="${state.atlasCategory === category.id ? "is-active" : ""}"><span>${escapeHtml(category.title)}</span><b>${category.disease_count}</b></button>`,
+    `<button type="button" data-category="${escapeHtml(category.id)}" class="${state.atlasCategory === category.id ? "is-active" : ""}"><span>${escapeHtml(category.title.replace("（高发）", ""))}</span></button>`,
   ).join("");
 
   els.morphologyFilters.innerHTML = MORPHOLOGIES.map((morphology) => {
-    const count = state.diseases.filter((disease) => matchesMorphology(disease, morphology.id)).length;
-    return `<button type="button" data-morph="${morphology.id}" class="${state.atlasMorphology === morphology.id ? "is-active" : ""}"><span>${escapeHtml(morphology.label)}</span><b>${count}</b></button>`;
+    return `<button type="button" data-morph="${morphology.id}" class="${state.atlasMorphology === morphology.id ? "is-active" : ""}"><span>${escapeHtml(morphology.label)}</span></button>`;
   }).join("");
 }
 
@@ -255,10 +248,6 @@ function renderAtlas() {
   els.diseaseGrid.innerHTML = diseases.map(diseaseCardMarkup).join("");
   els.diseaseGrid.classList.toggle("is-hidden", !diseases.length);
   els.atlasEmpty.classList.toggle("is-hidden", Boolean(diseases.length));
-  els.atlasResultCount.textContent = `找到 ${diseases.length} 个病种`;
-  const category = state.atlasCategory === "all" ? "全部类别" : state.atlas.categories.find((item) => item.id === state.atlasCategory)?.title || "全部类别";
-  const morphology = MORPHOLOGIES.find((item) => item.id === state.atlasMorphology)?.label || "全部形态";
-  els.atlasActiveFilter.textContent = `${category} · ${morphology}${state.atlasQuery ? ` · “${state.atlasQuery}”` : ""}`;
 }
 
 function resetAtlasFilters() {
@@ -289,9 +278,6 @@ function renderCompareDock() {
   els.compareNames.textContent = selected.map((item) => item.name).join(" · ") || "尚未选择病种";
   els.openCompare.disabled = selected.length < 2;
   $$('[data-compare]').forEach((input) => { input.checked = state.compareIds.has(input.dataset.compare); });
-  els.differentialCandidates.textContent = selected.length
-    ? `当前候选：${selected.map((item) => item.name).join("、")}。AI 将优先比较这些病种。`
-    : "当前未限定候选病种，将在完整图谱中分析。";
   const detailButton = $("[data-toggle-detail-compare]", els.diseaseDialogContent);
   if (detailButton) {
     const inCompare = state.compareIds.has(detailButton.dataset.toggleDetailCompare);
@@ -368,30 +354,6 @@ function askAboutComparison() {
   autosize(els.chatInput);
   els.chatInput.focus();
   toast("候选病种已带入问答。 ");
-}
-
-async function submitDifferential(event) {
-  event.preventDefault();
-  const description = els.differentialInput.value.trim();
-  if (!description) return;
-  const button = $("button[type='submit']", els.differentialForm);
-  setBusy(button, true, "正在梳理线索…");
-  els.differentialResult.classList.remove("is-hidden");
-  els.differentialResult.innerHTML = '<span class="loading-dots" aria-label="正在生成"><i></i><i></i><i></i></span>';
-  try {
-    const data = await api("/api/rash-atlas/differential", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ description, candidate_ids: [...state.compareIds] }),
-    });
-    els.differentialResult.innerHTML = `<h3>鉴别训练反馈</h3><p>${richText(data.answer)}</p>`;
-    els.differentialResult.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  } catch (error) {
-    els.differentialResult.innerHTML = `<h3>暂未生成</h3><p>${escapeHtml(errorMessage(error))}</p>`;
-    toast(errorMessage(error), true);
-  } finally {
-    setBusy(button, false);
-  }
 }
 
 function initialChatMarkup() {
@@ -667,7 +629,6 @@ function bindEvents() {
     renderCompareDock();
   });
   els.openCompare.addEventListener("click", openComparison);
-  els.differentialForm.addEventListener("submit", submitDifferential);
 
   els.diseaseDialogContent.addEventListener("click", (event) => {
     const lightbox = event.target.closest("[data-lightbox-disease]");
@@ -761,7 +722,6 @@ async function init() {
   try {
     await Promise.all([refreshPublicData(), loadAtlas()]);
   } catch (error) {
-    els.atlasResultCount.textContent = "图谱载入失败";
     toast(errorMessage(error), true);
   }
 
