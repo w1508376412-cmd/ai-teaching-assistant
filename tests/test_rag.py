@@ -15,10 +15,10 @@ class StructuredRAGTests(unittest.TestCase):
 
     def test_corpus_statistics(self):
         stats = self.rag.stats()
-        self.assertEqual(stats["chunks"], 180)
-        self.assertEqual(stats["diseases"], 29)
-        self.assertEqual(stats["documents"], 59)
-        self.assertEqual(stats["sources"], 16)
+        self.assertEqual(stats["chunks"], 267)
+        self.assertEqual(stats["diseases"], 33)
+        self.assertEqual(stats["documents"], 70)
+        self.assertEqual(stats["sources"], 20)
 
     def test_mpox_query_returns_mpox_evidence(self):
         results = self.rag.search("猴痘潜伏期和皮疹演变有什么特点？")
