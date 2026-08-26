@@ -694,6 +694,12 @@ function bindEvents() {
   }));
 
   els.chatInput.addEventListener("input", () => autosize(els.chatInput));
+  els.chatInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      sendKnowledgeQuestion(els.chatInput.value);
+    }
+  });
   els.chatForm.addEventListener("submit", (event) => { event.preventDefault(); sendKnowledgeQuestion(els.chatInput.value); });
   $$('[data-prompt]').forEach((button) => button.addEventListener("click", () => sendKnowledgeQuestion(button.dataset.prompt)));
   els.clearChat?.addEventListener("click", () => {

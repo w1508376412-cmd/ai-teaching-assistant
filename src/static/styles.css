@@ -5243,3 +5243,47 @@ body {
     min-height: 46px;
   }
 }
+
+/* Final interaction pass — neutral learner bubbles and keyboard-first input. */
+#view-knowledge .user-message .message-body {
+  color: #20201f;
+  background: #fff;
+  border: 1px solid #e0e1dd;
+  box-shadow: 0 12px 28px rgba(25, 25, 25, 0.045);
+}
+
+#view-knowledge .user-message .message-meta strong,
+#view-knowledge .user-message .message-copy,
+#view-knowledge .user-message .message-copy strong {
+  color: #20201f;
+}
+
+#view-knowledge .user-message .message-meta span {
+  color: var(--consult-muted);
+  background: #f0f0ed;
+}
+
+#view-knowledge .composer {
+  grid-template-columns: 1fr;
+}
+
+#view-knowledge .composer textarea,
+#view-knowledge .composer textarea:focus,
+#view-knowledge .composer textarea:focus-visible {
+  outline: none !important;
+  outline-offset: 0;
+  box-shadow: none;
+}
+
+#view-knowledge .composer:focus-within {
+  border-color: #dfe0dc;
+  box-shadow: 0 12px 28px rgba(25, 25, 25, 0.06);
+}
+
+#view-knowledge .composer-field {
+  width: 100%;
+}
+
+#view-knowledge .composer textarea::placeholder {
+  color: transparent;
+}
