@@ -5065,3 +5065,181 @@ body {
     transition: none;
   }
 }
+
+/* Knowledge consult — edge-to-edge bubbles and capsule composer. */
+#view-knowledge {
+  background: #eef0ed;
+}
+
+#view-knowledge .knowledge-layout {
+  min-height: calc(100dvh - 76px);
+  padding: 0;
+}
+
+#view-knowledge .chat-workbench {
+  width: 100%;
+  min-height: calc(100dvh - 76px);
+  grid-template-rows: minmax(0, 1fr) auto;
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+#view-knowledge .chat-feed {
+  padding: 42px clamp(28px, 6vw, 92px) 48px;
+  background: #eef0ed;
+}
+
+#view-knowledge .message,
+#view-knowledge .user-message {
+  display: block;
+  width: min(88%, 820px);
+  margin-left: 0;
+}
+
+#view-knowledge .message + .message {
+  margin-top: 28px;
+}
+
+#view-knowledge .message-body,
+#view-knowledge .user-message .message-body {
+  position: relative;
+  padding: 22px 24px 23px;
+  color: #20201f;
+  background: #fff;
+  border: 1px solid #e0e1dd;
+  border-radius: 27px 27px 27px 8px;
+  box-shadow: 0 12px 28px rgba(25, 25, 25, 0.045);
+}
+
+#view-knowledge .assistant-message .message-body::before {
+  display: none;
+}
+
+#view-knowledge .user-message {
+  margin-left: auto;
+}
+
+#view-knowledge .user-message .message-body {
+  color: #fff;
+  background: var(--consult-orange);
+  border: 0;
+  border-radius: 27px 8px 27px 27px;
+  box-shadow: 0 12px 24px rgba(242, 85, 10, 0.14);
+}
+
+#view-knowledge .user-message .message-meta strong,
+#view-knowledge .user-message .message-copy,
+#view-knowledge .user-message .message-copy strong {
+  color: #fff;
+}
+
+#view-knowledge .chat-input-dock {
+  padding: 19px clamp(20px, 5vw, 72px) 25px;
+  background: #eef0ed;
+  border-top: 0;
+}
+
+#view-knowledge .composer {
+  grid-template-columns: minmax(0, 1fr) 52px;
+  gap: 10px;
+  min-height: 70px;
+  padding: 10px 10px 10px 24px;
+  background: #fff;
+  border: 1px solid #dfe0dc;
+  border-radius: 999px;
+  box-shadow: 0 12px 28px rgba(25, 25, 25, 0.06);
+}
+
+#view-knowledge .composer-field {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+#view-knowledge .composer textarea {
+  min-height: 40px;
+  padding: 8px 0;
+  border: 0;
+  font-size: 12px;
+}
+
+#view-knowledge .composer textarea::placeholder {
+  color: #a0a09b;
+}
+
+#view-knowledge .send-button,
+#view-knowledge .send-button:hover {
+  display: grid;
+  width: 52px;
+  min-width: 52px;
+  height: 52px;
+  min-height: 52px;
+  padding: 0;
+  place-items: center;
+  color: #fff;
+  background: var(--consult-ink);
+  border-radius: 50%;
+  font-size: 0;
+  transform: none;
+}
+
+#view-knowledge .send-button span:first-child {
+  display: none;
+}
+
+#view-knowledge .send-button span:last-child {
+  font-size: 20px;
+  line-height: 1;
+}
+
+#view-knowledge .send-button:hover {
+  background: var(--consult-orange);
+}
+
+@media (max-width: 760px) {
+  #view-knowledge .knowledge-layout,
+  #view-knowledge .chat-workbench {
+    min-height: calc(100dvh - 66px);
+  }
+
+  #view-knowledge .chat-feed {
+    padding: 25px 16px 32px;
+  }
+
+  #view-knowledge .message,
+  #view-knowledge .user-message {
+    width: 94%;
+  }
+
+  #view-knowledge .message-body,
+  #view-knowledge .user-message .message-body {
+    padding: 18px 17px 19px;
+    border-radius: 23px 23px 23px 7px;
+  }
+
+  #view-knowledge .user-message .message-body {
+    border-radius: 23px 7px 23px 23px;
+  }
+
+  #view-knowledge .chat-input-dock {
+    padding: 12px 14px 17px;
+  }
+
+  #view-knowledge .composer {
+    min-height: 62px;
+    grid-template-columns: minmax(0, 1fr) 46px;
+    padding-left: 18px;
+  }
+
+  #view-knowledge .send-button,
+  #view-knowledge .send-button:hover {
+    width: 46px;
+    min-width: 46px;
+    height: 46px;
+    min-height: 46px;
+  }
+}

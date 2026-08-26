@@ -399,7 +399,7 @@ async function submitDifferential(event) {
 }
 
 function initialChatMarkup() {
-  return `<article class="message assistant-message"><div class="message-avatar" aria-hidden="true">AI</div><div class="message-body"><div class="message-meta"><strong>教学助手</strong><span>会诊准备就绪</span></div><div class="message-copy"><p>请描述一个具体的临床或现场问题。我会先核对知识库与图谱，再给出可追溯的教学反馈。</p></div><div class="message-hint"><span>鉴别诊断</span><span>采样建议</span><span>现场处置</span></div></div></article>`;
+  return `<article class="message assistant-message"><div class="message-body"><div class="message-meta"><strong>教学助手</strong><span>会诊准备就绪</span></div><div class="message-copy"><p>请描述一个具体的临床或现场问题。我会先核对知识库与图谱，再给出可追溯的教学反馈。</p></div><div class="message-hint"><span>鉴别诊断</span><span>采样建议</span><span>现场处置</span></div></div></article>`;
 }
 
 function appendMessage(role, content, options = {}) {
@@ -409,7 +409,7 @@ function appendMessage(role, content, options = {}) {
   const body = options.loading
     ? '<span class="loading-dots" aria-label="正在生成回答"><i></i><i></i><i></i></span>'
     : `<div class="message-copy"><p>${richText(content)}</p></div>${options.showImage ? '<figure class="message-figure"><img class="message-image" src="/assets/rash-atlas/images/mpox_12761.webp" alt="猴痘皮疹典型临床特征参考图"><figcaption>图谱参考 · 猴痘典型皮损形态</figcaption></figure>' : ""}`;
-  article.innerHTML = `<div class="message-avatar" aria-hidden="true">${role === "user" ? "你" : "AI"}</div><div class="message-body"><div class="message-meta"><strong>${role === "user" ? "学员提问" : "教学助手"}</strong><span>${role === "user" ? "待查证线索" : "依据反馈"}</span></div>${body}</div>`;
+  article.innerHTML = `<div class="message-body"><div class="message-meta"><strong>${role === "user" ? "学员提问" : "教学助手"}</strong><span>${role === "user" ? "待查证线索" : "依据反馈"}</span></div>${body}</div>`;
   els.chatFeed.append(article);
   els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
   return article;
@@ -696,7 +696,7 @@ function bindEvents() {
   els.chatInput.addEventListener("input", () => autosize(els.chatInput));
   els.chatForm.addEventListener("submit", (event) => { event.preventDefault(); sendKnowledgeQuestion(els.chatInput.value); });
   $$('[data-prompt]').forEach((button) => button.addEventListener("click", () => sendKnowledgeQuestion(button.dataset.prompt)));
-  els.clearChat.addEventListener("click", () => {
+  els.clearChat?.addEventListener("click", () => {
     state.qaMessages = [];
     els.chatFeed.innerHTML = initialChatMarkup();
     toast("问答记录已清空");
