@@ -13,18 +13,6 @@ const MORPHOLOGIES = [
   { id: "nodule", label: "结节 / 斑块", short: "结节", terms: ["结节", "斑块", "肿块", "浸润"] },
 ];
 
-const SUGGESTED_QUESTIONS = [
-  "猴痘的潜伏期和传染期如何区分？",
-  "埃博拉病毒病有哪些早期识别线索？",
-  "登革热与基孔肯雅热如何初步鉴别？",
-  "麻疹的出疹顺序和典型皮疹是什么？",
-  "入境旅客发热伴皮疹，现场排查应先问什么？",
-  "急性出血性结膜炎需要关注哪些传播风险？",
-  "尼帕病毒病的主要暴露史有哪些？",
-  "拉沙热的早期症状和隔离要点是什么？",
-  "手足口病出现哪些表现需要升级处置？",
-];
-
 const state = {
   config: null,
   atlas: null,
@@ -119,64 +107,12 @@ function escapeHtml(value = "") {
 }
 
 function richText(value = "") {
-  const lines = escapeHtml(value).replaceAll("\r", "").split("\n");
-  const blocks = [];
-  let paragraph = [];
-  let listType = null;
-  let listItems = [];
-
-  const inline = (text) => text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  const flushParagraph = () => {
-    if (!paragraph.length) return;
-    blocks.push(`<p>${paragraph.map(inline).join("<br>")}</p>`);
-    paragraph = [];
-  };
-  const flushList = () => {
-    if (!listItems.length) return;
-    blocks.push(`<${listType}>${listItems.map((item) => `<li>${inline(item)}</li>`).join("")}</${listType}>`);
-    listItems = [];
-    listType = null;
-  };
-
-  lines.forEach((line) => {
-    const trimmed = line.trim();
-    if (!trimmed) {
-      flushParagraph();
-      flushList();
-      return;
-    }
-
-    const heading = trimmed.match(/^#{1,3}\s+(.+)$/);
-    if (heading) {
-      flushParagraph();
-      flushList();
-      blocks.push(`<h4 class="answer-heading">${inline(heading[1])}</h4>`);
-      return;
-    }
-
-    const section = trimmed.match(/^((?:\d+[.)、]|[一二三四五六七八九十百]+、))\s*(.+)$/);
-    if (section) {
-      flushParagraph();
-      flushList();
-      blocks.push(`<h4 class="answer-section-title"><span>${section[1]}</span>${inline(section[2])}</h4>`);
-      return;
-    }
-
-    const bullet = trimmed.match(/^(?:[-•·*])\s+(.+)$/);
-    if (bullet) {
-      flushParagraph();
-      if (listType !== "ul") flushList();
-      listType = "ul";
-      listItems.push(bullet[1]);
-      return;
-    }
-
-    paragraph.push(trimmed);
-  });
-
-  flushParagraph();
-  flushList();
-  return blocks.join("");
+  return escapeHtml(value)
+    .replace(/^###\s+(.+)$/gm, "<strong>$1</strong>")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/^\s*[-•]\s+(.+)$/gm, "· $1")
+    .replace(/\n\n/g, "</p><p>")
+    .replace(/\n/g, "<br>");
 }
 
 function errorMessage(error) {
@@ -459,9 +395,7 @@ async function submitDifferential(event) {
 }
 
 function initialChatMarkup() {
-  const questions = [...SUGGESTED_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, 3);
-  const buttons = questions.map((question) => `<button type="button" data-prompt="${escapeHtml(question)}">${escapeHtml(question)}<span aria-hidden="true">↗</span></button>`).join("");
-  return `<article class="message assistant-message suggestion-message"><div class="message-body"><div class="question-intro"><span>你可能想问的问题</span><strong>选择一个问题开始</strong></div><div class="question-suggestions">${buttons}</div></div></article>`;
+  return `<article class="message assistant-message"><div class="message-body"><div class="message-copy"><p>请描述一个具体的临床或现场问题。我会先核对知识库与图谱，再给出教学反馈。</p></div><div class="message-hint"><span>鉴别诊断</span><span>采样建议</span><span>现场处置</span></div></div></article>`;
 }
 
 function appendMessage(role, content, options = {}) {
@@ -759,10 +693,7 @@ function bindEvents() {
     }
   });
   els.chatForm.addEventListener("submit", (event) => { event.preventDefault(); sendKnowledgeQuestion(els.chatInput.value); });
-  els.chatFeed.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-prompt]");
-    if (button) sendKnowledgeQuestion(button.dataset.prompt);
-  });
+  $$('[data-prompt]').forEach((button) => button.addEventListener("click", () => sendKnowledgeQuestion(button.dataset.prompt)));
   els.clearChat?.addEventListener("click", () => {
     state.qaMessages = [];
     els.chatFeed.innerHTML = initialChatMarkup();
@@ -824,7 +755,6 @@ function bindEvents() {
 }
 
 async function init() {
-  els.chatFeed.innerHTML = initialChatMarkup();
   const adminRequested = new URLSearchParams(location.search).get("admin") === "true";
   if (adminRequested) els.adminNav.classList.remove("is-hidden");
   bindEvents();
