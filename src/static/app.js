@@ -35,15 +35,6 @@ const els = {
   menuButton: $("#menuButton"),
   topbarTitle: $("#topbarTitle"),
   adminNav: $("#adminNav"),
-  aiStatusDot: $("#aiStatusDot"),
-  aiStatusText: $("#aiStatusText"),
-  modelLabel: $("#modelLabel"),
-  atlasCount: $("#atlasCount"),
-  imageCount: $("#imageCount"),
-  caseCount: $("#caseCount"),
-  homeDiseaseCount: $("#homeDiseaseCount"),
-  homeImageCount: $("#homeImageCount"),
-  homeCategoryCount: $("#homeCategoryCount"),
   atlasSearch: $("#atlasSearch"),
   categoryFilters: $("#categoryFilters"),
   morphologyFilters: $("#morphologyFilters"),
@@ -191,7 +182,7 @@ function switchView(viewName, updateUrl = true) {
   openSidebar(false);
   window.scrollTo({ top: 0, behavior: "smooth" });
   if (updateUrl) {
-    const hash = viewName === "home" ? "" : `#${viewName}`;
+    const hash = viewName === "knowledge" ? "" : `#${viewName}`;
     history.replaceState(null, "", `${location.pathname}${location.search}${hash}`);
   }
 }
@@ -268,15 +259,6 @@ function renderAtlas() {
   const category = state.atlasCategory === "all" ? "全部类别" : state.atlas.categories.find((item) => item.id === state.atlasCategory)?.title || "全部类别";
   const morphology = MORPHOLOGIES.find((item) => item.id === state.atlasMorphology)?.label || "全部形态";
   els.atlasActiveFilter.textContent = `${category} · ${morphology}${state.atlasQuery ? ` · “${state.atlasQuery}”` : ""}`;
-}
-
-function applyHomeMorphology(morphologyId) {
-  state.atlasMorphology = morphologyId;
-  state.atlasCategory = "all";
-  state.atlasQuery = "";
-  els.atlasSearch.value = "";
-  renderAtlas();
-  switchView("atlas");
 }
 
 function resetAtlasFilters() {
@@ -620,22 +602,11 @@ async function loadAdminContent() {
     : '<div class="empty-row">案例库目前为空</div>';
 }
 
-function updateConfig(config) {
-  els.aiStatusDot.classList.toggle("is-ready", config.ai_configured);
-  els.aiStatusDot.classList.toggle("is-error", !config.ai_configured);
-  els.aiStatusText.textContent = config.ai_configured ? "AI 服务已连接" : "等待配置 API Key";
-  els.modelLabel.textContent = config.model || "MODEL UNSET";
-  els.atlasCount.textContent = config.atlas_disease_count ?? "—";
-  els.imageCount.textContent = config.atlas_image_count ?? "—";
-  els.caseCount.textContent = config.case_count ?? "—";
-}
-
 async function refreshPublicData() {
   const [config, caseData] = await Promise.all([api("/api/config"), api("/api/cases")]);
   state.config = config;
   state.cases = caseData.cases || [];
   if (state.currentCaseIndex >= state.cases.length) state.currentCaseIndex = 0;
-  updateConfig(config);
   renderCases();
 }
 
@@ -643,9 +614,6 @@ async function loadAtlas() {
   const atlas = await api("/api/rash-atlas");
   state.atlas = atlas;
   state.diseases = flattenAtlas(atlas);
-  els.homeDiseaseCount.textContent = atlas.summary?.disease_count ?? state.diseases.length;
-  els.homeImageCount.textContent = atlas.summary?.image_count ?? "—";
-  els.homeCategoryCount.textContent = atlas.summary?.category_count ?? atlas.categories?.length ?? "—";
   renderAtlas();
 }
 
@@ -672,12 +640,6 @@ function bindEvents() {
   $$('[data-view]').forEach((button) => button.addEventListener("click", () => switchView(button.dataset.view)));
   els.menuButton.addEventListener("click", () => openSidebar(!els.sidebar.classList.contains("is-open")));
   els.sidebarScrim.addEventListener("click", () => openSidebar(false));
-
-  $("#homeMorphologyFilters").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-morph]");
-    if (button) applyHomeMorphology(button.dataset.morph);
-  });
-  $$('[data-open-disease]').forEach((button) => button.addEventListener("click", () => openDisease(button.dataset.openDisease)));
 
   els.atlasSearch.addEventListener("input", () => {
     state.atlasQuery = els.atlasSearch.value;
@@ -811,8 +773,6 @@ async function init() {
   try {
     await Promise.all([refreshPublicData(), loadAtlas()]);
   } catch (error) {
-    els.aiStatusDot.classList.add("is-error");
-    els.aiStatusText.textContent = "服务状态异常";
     els.atlasResultCount.textContent = "图谱载入失败";
     toast(errorMessage(error), true);
   }

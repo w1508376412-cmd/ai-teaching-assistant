@@ -4291,3 +4291,27 @@ dialog::backdrop {
     border-radius: 0;
   }
 }
+
+/* Sidebar simplification and non-obscuring page header. */
+.nav-item {
+  min-height: 50px;
+  align-items: center;
+}
+
+.nav-item > span:last-child {
+  display: flex;
+  align-items: center;
+}
+
+.nav-item strong {
+  line-height: 1.25;
+}
+
+.topbar {
+  position: relative;
+  top: auto;
+}
+
+.atlas-controls {
+  top: var(--canvas-gap);
+}

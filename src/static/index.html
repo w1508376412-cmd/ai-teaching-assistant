@@ -14,78 +14,28 @@
 
     <div class="app-shell">
       <aside class="sidebar" id="sidebar">
-        <button class="brand" type="button" data-view="home" aria-label="返回教学总览">
+        <button class="brand" type="button" data-view="knowledge" aria-label="返回知识问答">
           <span class="brand-mark" aria-hidden="true"><i></i><b></b></span>
           <span class="brand-copy"><strong>现场辨证</strong><small>CLINICAL FIELDNOTE</small></span>
         </button>
 
         <nav class="primary-nav" aria-label="主导航">
           <span class="nav-label">学习路径 / LEARNING PATH</span>
-          <button class="nav-item is-active" type="button" data-view="home"><span class="nav-index">01</span><span><strong>教学总览</strong><small>从观察到行动</small></span></button>
-          <button class="nav-item" type="button" data-view="atlas"><span class="nav-index">02</span><span><strong>皮疹图谱</strong><small>辨形态 · 做鉴别</small></span></button>
-          <button class="nav-item" type="button" data-view="knowledge"><span class="nav-index">03</span><span><strong>知识问答</strong><small>查规范 · 问依据</small></span></button>
-          <button class="nav-item" type="button" data-view="cases"><span class="nav-index">04</span><span><strong>案例推演</strong><small>练判断 · 定处置</small></span></button>
-          <button class="nav-item is-hidden" id="adminNav" type="button" data-view="admin"><span class="nav-index">05</span><span><strong>教师管理</strong><small>维护教学材料</small></span></button>
+          <button class="nav-item is-active" type="button" data-view="knowledge"><span class="nav-index">01</span><span><strong>知识问答</strong></span></button>
+          <button class="nav-item" type="button" data-view="atlas"><span class="nav-index">02</span><span><strong>皮疹图谱</strong></span></button>
+          <button class="nav-item" type="button" data-view="cases"><span class="nav-index">03</span><span><strong>案例推演</strong></span></button>
+          <button class="nav-item is-hidden" id="adminNav" type="button" data-view="admin"><span class="nav-index">04</span><span><strong>教师管理</strong></span></button>
         </nav>
-
-        <div class="system-card" aria-live="polite">
-          <div class="system-status"><span class="status-dot" id="aiStatusDot"></span><span><strong id="aiStatusText">正在检查服务</strong><small id="modelLabel">—</small></span></div>
-          <div class="system-counts"><span><strong id="atlasCount">—</strong> 病种</span><span><strong id="imageCount">—</strong> 图像</span><span><strong id="caseCount">—</strong> 案例</span></div>
-        </div>
-        <p class="sidebar-note">教学辅助，不替代临床诊断。<br />遇危重信号请立即升级处置。</p>
       </aside>
 
       <div class="main-stage">
         <header class="topbar">
           <button class="menu-button" id="menuButton" type="button" aria-label="打开导航" aria-expanded="false"><span></span><span></span></button>
-          <div class="topbar-context"><span class="topbar-kicker">PORT HEALTH / CLINICAL TRAINING</span><strong id="topbarTitle">教学总览</strong></div>
+          <div class="topbar-context"><span class="topbar-kicker">PORT HEALTH / CLINICAL TRAINING</span><strong id="topbarTitle">知识问答</strong></div>
           <div class="topbar-actions"><button class="top-search" type="button" data-view="atlas"><span aria-hidden="true">⌕</span> 检索病种</button><div class="live-stamp"><span></span> 教学环境</div></div>
         </header>
 
         <main id="mainContent">
-          <section class="workspace-view is-active" id="view-home" data-title="教学总览">
-            <div class="home-hero">
-              <div class="hero-copy">
-                <span class="eyebrow">OBSERVE · DIFFERENTIATE · ACT</span>
-                <h1>从皮损形态，<br />到现场处置。</h1>
-                <p class="hero-lede">把临床图像、鉴别线索、规范依据与案例决策放进同一条学习路径。先描述所见，再寻找证据，最后形成可执行判断。</p>
-                <div class="hero-actions"><button class="solid-button" type="button" data-view="atlas">进入皮疹图谱 <span>↗</span></button><button class="line-button" type="button" data-view="cases">开始案例推演 <span>→</span></button></div>
-                <div class="hero-meta" aria-label="图谱概况"><span><strong id="homeDiseaseCount">30</strong><small>收录病种</small></span><span><strong id="homeImageCount">72</strong><small>临床图像</small></span><span><strong id="homeCategoryCount">8</strong><small>疾病类别</small></span></div>
-              </div>
-
-              <div class="evidence-board" aria-label="临床皮疹图像预览">
-                <div class="board-label"><span>VISUAL EVIDENCE / 视觉证据</span><b>01—04</b></div>
-                <button class="evidence-image evidence-a" type="button" data-open-disease="measles"><img src="/assets/rash-atlas/images/measles_16469.webp" alt="麻疹皮疹教学图像" /><span><b>麻疹</b><small>融合性斑丘疹</small></span></button>
-                <button class="evidence-image evidence-b" type="button" data-open-disease="mpox"><img src="/assets/rash-atlas/images/mpox_12761.webp" alt="猴痘皮疹教学图像" /><span><b>猴痘</b><small>深在性疱疹</small></span></button>
-                <button class="evidence-image evidence-c" type="button" data-open-disease="dengue"><img src="/assets/rash-atlas/images/dengue_pmc00_PMC13189718.webp" alt="登革热皮疹教学图像" /><span><b>登革热</b><small>红斑与出血点</small></span></button>
-                <button class="evidence-image evidence-d" type="button" data-open-disease="hfmd"><img src="/assets/rash-atlas/images/hfmd_pmc00_PMC11270346.webp" alt="手足口病皮疹教学图像" /><span><b>手足口病</b><small>掌跖疱疹</small></span></button>
-              </div>
-            </div>
-
-            <section class="morphology-ribbon" aria-labelledby="morphologyTitle">
-              <div class="ribbon-heading"><span class="section-code">MORPHOLOGY INDEX</span><h2 id="morphologyTitle">你首先看到了什么？</h2><p>从皮损形态进入图谱，比直接猜病名更接近真实的临床推理。</p></div>
-              <div class="ribbon-options" id="homeMorphologyFilters">
-                <button type="button" data-morph="maculopapular"><i></i><span><b>斑 / 斑丘疹</b><small>MACULE · PAPULE</small></span></button>
-                <button type="button" data-morph="vesicle"><i></i><span><b>水疱 / 大疱</b><small>VESICLE · BULLA</small></span></button>
-                <button type="button" data-morph="purpura"><i></i><span><b>紫癜 / 瘀点</b><small>PURPURA · PETECHIA</small></span></button>
-                <button type="button" data-morph="wheal"><i></i><span><b>风团 / 水肿</b><small>WHEAL · EDEMA</small></span></button>
-                <button type="button" data-morph="mucosa"><i></i><span><b>黏膜受累</b><small>MUCOSAL SIGN</small></span></button>
-                <button type="button" data-morph="scale"><i></i><span><b>结痂 / 脱屑</b><small>CRUST · SCALE</small></span></button>
-              </div>
-            </section>
-
-            <section class="learning-route" aria-labelledby="routeTitle">
-              <div class="section-heading"><div><span class="section-code">ONE CONNECTED WORKFLOW</span><h2 id="routeTitle">一条完整的教学链路</h2></div><p>每个模块不是孤立页面，而是同一次判断的不同阶段。</p></div>
-              <div class="route-grid">
-                <button class="route-card" type="button" data-view="atlas"><span class="route-number">01</span><span class="route-accent"></span><h3>看图辨形</h3><p>按病种、类别和皮损形态浏览 72 张临床图像，保留每张图的许可与来源。</p><b>打开图谱 <span>↗</span></b></button>
-                <button class="route-card" type="button" data-view="knowledge"><span class="route-number">02</span><span class="route-accent"></span><h3>追问证据</h3><p>把图谱中的疑点直接交给教学助手，结合课程知识库核对表现、流行病学与处置规范。</p><b>询问助手 <span>↗</span></b></button>
-                <button class="route-card" type="button" data-view="cases"><span class="route-number">03</span><span class="route-accent"></span><h3>形成决策</h3><p>在不先揭示答案的案例里选择疾病、采样与现场措施，获得基于 SOP 的反馈。</p><b>进入推演 <span>↗</span></b></button>
-              </div>
-            </section>
-
-            <section class="source-ledger"><div><span class="section-code">SOURCE LEDGER</span><h2>证据有出处，图像有边界。</h2></div><p>图谱汇集 CDC PHIL 公有领域图像、PubMed Central 开放许可文献配图，以及仅供教学参考的教材图片。详情页逐图标明出处与许可。</p><button class="line-button" type="button" data-view="atlas">查看来源说明 <span>→</span></button></section>
-          </section>
-
           <section class="workspace-view" id="view-atlas" data-title="皮疹图谱">
             <div class="module-intro atlas-intro">
               <div class="module-number" aria-hidden="true">02</div>
@@ -116,8 +66,8 @@
             </section>
           </section>
 
-          <section class="workspace-view" id="view-knowledge" data-title="知识问答">
-            <div class="module-intro knowledge-intro"><div class="module-number" aria-hidden="true">03</div><div><span class="eyebrow">REFERENCE FIRST · 依据优先</span><h1>带着线索提问，<br />让依据说话。</h1></div><div class="module-note"><strong>提问提示</strong><p>写明人群、时间、暴露史、皮损分布与现场目标，反馈会更准确。</p></div></div>
+          <section class="workspace-view is-active" id="view-knowledge" data-title="知识问答">
+            <div class="module-intro knowledge-intro"><div class="module-number" aria-hidden="true">01</div><div><span class="eyebrow">REFERENCE FIRST · 依据优先</span><h1>带着线索提问，<br />让依据说话。</h1></div><div class="module-note"><strong>提问提示</strong><p>写明人群、时间、暴露史、皮损分布与现场目标，反馈会更准确。</p></div></div>
 
             <div class="knowledge-layout">
               <aside class="question-brief"><span class="section-code">QUESTION FRAME</span><h2>一个好问题，应包含什么？</h2><ol><li><b>对象</b><span>年龄、人群与基础情况</span></li><li><b>时间</b><span>发热、出疹与暴露顺序</span></li><li><b>所见</b><span>形态、分布、演变与伴随表现</span></li><li><b>任务</b><span>鉴别、采样还是现场处置</span></li></ol><button class="line-button" type="button" data-view="atlas">回到图谱核对 <span>→</span></button></aside>
@@ -131,7 +81,7 @@
           </section>
 
           <section class="workspace-view" id="view-cases" data-title="案例推演">
-            <div class="module-intro case-intro"><div class="module-number" aria-hidden="true">04</div><div><span class="eyebrow">DECISION DRILL · 决策训练</span><h1>像在现场一样，<br />逐项排查。</h1></div><div class="case-selector-card"><label for="caseSelect">当前案例</label><select id="caseSelect"><option>正在加载案例…</option></select><button class="line-button" id="nextCase" type="button">进入下一案例 <span>→</span></button></div></div>
+            <div class="module-intro case-intro"><div class="module-number" aria-hidden="true">03</div><div><span class="eyebrow">DECISION DRILL · 决策训练</span><h1>像在现场一样，<br />逐项排查。</h1></div><div class="case-selector-card"><label for="caseSelect">当前案例</label><select id="caseSelect"><option>正在加载案例…</option></select><button class="line-button" id="nextCase" type="button">进入下一案例 <span>→</span></button></div></div>
             <div class="case-empty is-hidden" id="caseEmpty">案例库目前为空，请联系教师添加案例。</div>
             <div class="case-workspace" id="caseWorkspace">
               <article class="dossier"><div class="dossier-head"><span class="section-code">CASE DOSSIER</span><span class="case-sequence" id="caseSequence">01 / 01</span></div><h2 id="caseTitle">正在加载案例</h2><p id="caseBackground">—</p><div class="patient-grid" id="patientGrid"></div></article>
@@ -141,7 +91,7 @@
           </section>
 
           <section class="workspace-view" id="view-admin" data-title="教师管理">
-            <div class="module-intro admin-intro"><div class="module-number" aria-hidden="true">05</div><div><span class="eyebrow">FACULTY CONTROL · 内容维护</span><h1>维护依据，<br />更新训练。</h1></div><div class="module-note"><strong>受保护入口</strong><p>知识库和案例变更会立即影响教学内容，请仅由授权教师操作。</p></div></div>
+            <div class="module-intro admin-intro"><div class="module-number" aria-hidden="true">04</div><div><span class="eyebrow">FACULTY CONTROL · 内容维护</span><h1>维护依据，<br />更新训练。</h1></div><div class="module-note"><strong>受保护入口</strong><p>知识库和案例变更会立即影响教学内容，请仅由授权教师操作。</p></div></div>
             <div class="admin-unlock" id="adminUnlock"><form id="adminLoginForm"><span class="section-code">FACULTY ACCESS</span><h2>验证教师身份</h2><p>请输入部署环境中设置的管理密码。</p><label for="adminPassword">管理密码</label><input id="adminPassword" type="password" autocomplete="current-password" required /><button class="solid-button" type="submit">进入管理台 <span>→</span></button></form></div>
             <div class="admin-dashboard is-hidden" id="adminDashboard"><div class="admin-summary"><div><span>知识文档</span><strong id="adminDocCount">—</strong></div><div><span>训练案例</span><strong id="adminCaseCount">—</strong></div></div><div class="admin-grid"><section class="admin-panel"><div class="panel-head"><div><span class="section-code">KNOWLEDGE BASE</span><h2>知识库文档</h2></div></div><div class="content-list" id="documentList"></div><form class="upload-form" id="knowledgeUploadForm"><label for="knowledgeFile">添加文档</label><input id="knowledgeFile" type="file" accept=".md,.doc,.docx,.pdf" required /><small>支持 Markdown、Word 与 PDF</small><button class="line-button" type="submit">解析并加入知识库</button></form></section><section class="admin-panel"><div class="panel-head"><div><span class="section-code">CASE LIBRARY</span><h2>案例训练库</h2></div></div><div class="content-list" id="caseList"></div><form class="upload-form" id="caseGenerateForm"><label for="caseSourceFile">从参考材料生成案例</label><input id="caseSourceFile" type="file" accept=".md,.doc,.docx,.pdf" required /><small>AI 将按口岸卫生检疫场景生成决策题</small><button class="line-button" type="submit">分析文档并生成案例</button></form></section></div></div>
           </section>
