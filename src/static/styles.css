@@ -5291,3 +5291,21 @@ body {
 #view-admin .admin-grid {
   grid-template-columns: minmax(0, 1fr);
 }
+
+/* Atlas sidebar: quiet active states without decorative status dots. */
+.sidebar .nav-item.is-active::before,
+.sidebar .category-filters button.is-active::before,
+.sidebar .morph-filters button.is-active::before {
+  display: none;
+}
+
+.sidebar .nav-item.is-active,
+.sidebar .category-filters button.is-active,
+.sidebar .morph-filters button.is-active {
+  box-shadow: 0 7px 18px rgba(25, 25, 25, 0.08);
+}
+
+.sidebar .atlas-search input {
+  height: 34px;
+  border-radius: 7px;
+}

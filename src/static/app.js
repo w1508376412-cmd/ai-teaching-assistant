@@ -39,7 +39,6 @@ const els = {
   atlasSearch: $("#atlasSearch"),
   categoryFilters: $("#categoryFilters"),
   morphologyFilters: $("#morphologyFilters"),
-  resetAtlasFilters: $("#resetAtlasFilters"),
   diseaseGrid: $("#diseaseGrid"),
   atlasEmpty: $("#atlasEmpty"),
   compareDock: $("#compareDock"),
@@ -248,14 +247,6 @@ function renderAtlas() {
   els.diseaseGrid.innerHTML = diseases.map(diseaseCardMarkup).join("");
   els.diseaseGrid.classList.toggle("is-hidden", !diseases.length);
   els.atlasEmpty.classList.toggle("is-hidden", Boolean(diseases.length));
-}
-
-function resetAtlasFilters() {
-  state.atlasQuery = "";
-  state.atlasCategory = "all";
-  state.atlasMorphology = "all";
-  els.atlasSearch.value = "";
-  renderAtlas();
 }
 
 function setCompare(id, selected) {
@@ -615,7 +606,6 @@ function bindEvents() {
     state.atlasMorphology = button.dataset.morph;
     renderAtlas();
   });
-  els.resetAtlasFilters.addEventListener("click", resetAtlasFilters);
   els.diseaseGrid.addEventListener("click", (event) => {
     const openButton = event.target.closest("[data-open-disease]");
     if (openButton) openDisease(openButton.dataset.openDisease);
