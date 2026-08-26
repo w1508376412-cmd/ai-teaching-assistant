@@ -4600,3 +4600,468 @@ body {
     display: none;
   }
 }
+
+/* Knowledge consult — clinical evidence workspace. */
+#view-knowledge {
+  --consult-ink: #171717;
+  --consult-muted: #74746f;
+  --consult-canvas: #e9eae7;
+  --consult-card: #ffffff;
+  --consult-line: #deded9;
+  --consult-orange: #f2550a;
+}
+
+#view-knowledge .knowledge-layout {
+  min-height: calc(100dvh - 76px);
+  padding: 26px 38px 34px;
+}
+
+#view-knowledge .chat-workbench {
+  display: grid;
+  width: min(100%, 1120px);
+  min-height: calc(100dvh - 136px);
+  grid-template-rows: auto minmax(360px, 1fr) auto;
+  margin: 0 auto;
+  overflow: hidden;
+  background: var(--consult-canvas);
+  border: 1px solid #d9d9d4;
+  border-radius: 22px;
+  box-shadow: 0 22px 60px rgba(24, 24, 24, 0.08);
+}
+
+#view-knowledge .chat-toolbar {
+  min-height: 100px;
+  padding: 20px 24px;
+  background: rgba(255, 255, 255, 0.88);
+  border-bottom: 1px solid var(--consult-line);
+  backdrop-filter: blur(18px);
+}
+
+#view-knowledge .assistant-lockup,
+#view-knowledge .chat-toolbar-actions,
+#view-knowledge .knowledge-ready {
+  display: flex;
+  align-items: center;
+}
+
+#view-knowledge .assistant-lockup {
+  gap: 14px;
+}
+
+#view-knowledge .console-sigil {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #fff;
+  background: var(--consult-ink);
+  border-radius: 14px;
+  font-family: var(--utility);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  box-shadow: inset 0 -3px 0 var(--consult-orange);
+}
+
+#view-knowledge .chat-toolbar .section-code {
+  margin-bottom: 3px;
+  color: var(--consult-orange);
+  font-size: 8px;
+}
+
+#view-knowledge .chat-toolbar strong {
+  color: var(--consult-ink);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+#view-knowledge .chat-toolbar p {
+  margin: 3px 0 0;
+  color: var(--consult-muted);
+  font-size: 10px;
+}
+
+#view-knowledge .chat-toolbar-actions {
+  gap: 10px;
+}
+
+#view-knowledge .knowledge-ready {
+  gap: 7px;
+  padding: 7px 10px;
+  color: #4e6655;
+  background: #edf5ee;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+#view-knowledge .knowledge-ready i {
+  width: 7px;
+  height: 7px;
+  background: #71a879;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(113, 168, 121, 0.13);
+}
+
+#view-knowledge .chat-toolbar .text-button {
+  padding: 7px 3px;
+  color: var(--consult-muted);
+  border-bottom: 1px solid #c7c7c2;
+  font-size: 9px;
+}
+
+#view-knowledge .chat-toolbar .text-button:hover {
+  color: var(--consult-orange);
+  border-color: var(--consult-orange);
+}
+
+#view-knowledge .chat-feed {
+  min-height: 0;
+  max-height: none;
+  padding: 30px clamp(22px, 4vw, 48px) 38px;
+  overscroll-behavior: contain;
+  scrollbar-color: #c9c9c4 transparent;
+  scrollbar-width: thin;
+}
+
+#view-knowledge .message {
+  display: grid;
+  width: min(92%, 820px);
+  max-width: none;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 13px;
+  align-items: start;
+}
+
+#view-knowledge .message + .message {
+  margin-top: 26px;
+}
+
+#view-knowledge .message-avatar {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  color: #fff;
+  background: var(--consult-ink);
+  border-radius: 12px;
+  font-family: var(--utility);
+  font-size: 10px;
+  font-weight: 700;
+  box-shadow: inset 0 -3px 0 var(--consult-orange);
+}
+
+#view-knowledge .message-body {
+  position: relative;
+  min-width: 0;
+  padding: 19px 21px 20px;
+  color: var(--consult-ink);
+  background: var(--consult-card);
+  border: 1px solid var(--consult-line);
+  border-radius: 4px 16px 16px;
+  box-shadow: 0 8px 24px rgba(24, 24, 24, 0.045);
+}
+
+#view-knowledge .assistant-message .message-body::before {
+  position: absolute;
+  top: 17px;
+  bottom: 17px;
+  left: -1px;
+  width: 3px;
+  content: "";
+  background: var(--consult-orange);
+  border-radius: 0 3px 3px 0;
+}
+
+#view-knowledge .message-meta {
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+#view-knowledge .message-meta strong {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+#view-knowledge .message-meta span {
+  padding: 3px 7px;
+  color: var(--consult-muted);
+  background: #f0f0ed;
+  border-radius: 999px;
+  font-family: var(--body);
+  font-size: 8px;
+}
+
+#view-knowledge .message-copy {
+  color: #2a2a28;
+  font-size: 12px;
+  line-height: 1.9;
+}
+
+#view-knowledge .message-copy p {
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+#view-knowledge .message-copy p + p {
+  margin-top: 12px;
+}
+
+#view-knowledge .message-copy strong {
+  color: var(--consult-ink);
+  font-weight: 750;
+}
+
+#view-knowledge .message-hint {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+#view-knowledge .message-hint span {
+  padding: 5px 8px;
+  color: #676762;
+  background: #f1f1ee;
+  border-radius: 7px;
+  font-size: 8px;
+}
+
+#view-knowledge .user-message {
+  width: min(72%, 620px);
+  grid-template-columns: minmax(0, 1fr) 38px;
+  margin-left: auto;
+}
+
+#view-knowledge .user-message .message-avatar {
+  grid-column: 2;
+  grid-row: 1;
+  color: var(--consult-ink);
+  background: #fff;
+  border: 1px solid #d7d7d2;
+  box-shadow: inset 0 -3px 0 #d7d7d2;
+}
+
+#view-knowledge .user-message .message-body {
+  grid-column: 1;
+  grid-row: 1;
+  padding: 17px 19px;
+  color: #fff;
+  background: var(--consult-ink);
+  border: 0;
+  border-radius: 16px 4px 16px 16px;
+  box-shadow: 0 10px 24px rgba(23, 23, 23, 0.11);
+}
+
+#view-knowledge .user-message .message-meta strong,
+#view-knowledge .user-message .message-copy,
+#view-knowledge .user-message .message-copy strong {
+  color: #fff;
+}
+
+#view-knowledge .user-message .message-meta span {
+  color: #c8c8c3;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#view-knowledge .message-figure {
+  margin: 18px 0 0;
+  overflow: hidden;
+  background: #f0f0ed;
+  border-radius: 12px;
+}
+
+#view-knowledge .message-image {
+  width: 100%;
+  max-height: 300px;
+  margin: 0;
+  object-fit: cover;
+  border: 0;
+}
+
+#view-knowledge .message-figure figcaption {
+  padding: 9px 12px;
+  color: var(--consult-muted);
+  font-family: var(--utility);
+  font-size: 8px;
+}
+
+#view-knowledge .loading-dots {
+  min-height: 28px;
+  align-items: center;
+}
+
+#view-knowledge .chat-input-dock {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  border-top: 1px solid var(--consult-line);
+}
+
+#view-knowledge .prompt-shelf {
+  gap: 7px;
+  padding: 0 4px 10px;
+  border: 0;
+}
+
+#view-knowledge .prompt-shelf > span {
+  margin-right: 3px;
+  color: #92928d;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+#view-knowledge .prompt-shelf button {
+  padding: 6px 9px;
+  color: #52524e;
+  background: #efefec;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 9px;
+}
+
+#view-knowledge .prompt-shelf button:hover {
+  color: var(--consult-orange);
+  background: #fff;
+  border-color: #e2e2dd;
+}
+
+#view-knowledge .composer {
+  grid-template-columns: minmax(0, 1fr) 128px;
+  gap: 12px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #d8d8d3;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(24, 24, 24, 0.06);
+}
+
+#view-knowledge .composer-field {
+  min-width: 0;
+}
+
+#view-knowledge .composer-field label,
+#view-knowledge .composer-field small {
+  display: block;
+}
+
+#view-knowledge .composer-field label {
+  margin-bottom: 4px;
+  color: var(--consult-ink);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+#view-knowledge .composer textarea {
+  min-height: 33px;
+  padding: 5px 0;
+  border: 0;
+  font-size: 12px;
+}
+
+#view-knowledge .composer textarea::placeholder {
+  color: #a2a29d;
+}
+
+#view-knowledge .composer-field small {
+  margin-top: 3px;
+  color: #a0a09b;
+  font-size: 8px;
+}
+
+#view-knowledge .send-button {
+  min-width: 0;
+  min-height: 54px;
+  align-self: stretch;
+  padding: 12px 14px;
+  color: #fff;
+  background: var(--consult-orange);
+  border-radius: 11px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+#view-knowledge .send-button:hover {
+  background: var(--consult-ink);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 760px) {
+  #view-knowledge .knowledge-layout {
+    min-height: calc(100dvh - 66px);
+    padding: 14px 14px 20px;
+  }
+
+  #view-knowledge .chat-workbench {
+    min-height: calc(100dvh - 100px);
+    border-radius: 16px;
+  }
+
+  #view-knowledge .chat-toolbar {
+    min-height: 82px;
+    padding: 14px;
+  }
+
+  #view-knowledge .console-sigil,
+  #view-knowledge .knowledge-ready {
+    display: none;
+  }
+
+  #view-knowledge .chat-toolbar p {
+    display: none;
+  }
+
+  #view-knowledge .chat-feed {
+    padding: 20px 14px 28px;
+  }
+
+  #view-knowledge .message,
+  #view-knowledge .user-message {
+    width: 100%;
+  }
+
+  #view-knowledge .message {
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: 9px;
+  }
+
+  #view-knowledge .user-message {
+    grid-template-columns: minmax(0, 1fr) 32px;
+  }
+
+  #view-knowledge .message-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+
+  #view-knowledge .message-body,
+  #view-knowledge .user-message .message-body {
+    padding: 15px;
+  }
+
+  #view-knowledge .prompt-shelf > span {
+    display: none;
+  }
+
+  #view-knowledge .composer {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  #view-knowledge .send-button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #view-knowledge .message,
+  #view-knowledge .send-button {
+    animation: none;
+    transition: none;
+  }
+}
