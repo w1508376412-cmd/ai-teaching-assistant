@@ -115,36 +115,6 @@ function richText(value = "") {
     .replace(/\n/g, "<br>");
 }
 
-function safeExternalUrl(value = "") {
-  try {
-    const url = new URL(value);
-    return ["http:", "https:"].includes(url.protocol) ? escapeHtml(url.href) : "#";
-  } catch {
-    return "#";
-  }
-}
-
-function citationMarkup(citations = []) {
-  if (!citations.length) return "";
-  const items = citations.map((citation) => {
-    const id = /^K\d+$/.test(citation.id || "") ? citation.id : "K?";
-    const href = safeExternalUrl(citation.source);
-    const title = [citation.disease, citation.document, citation.section].filter(Boolean).join(" · ");
-    return `<li id="citation-${id}"><a href="${href}" target="_blank" rel="noopener noreferrer"><span>[${id}]</span><strong>${escapeHtml(title)}</strong></a><p>${escapeHtml(citation.excerpt || "")}</p></li>`;
-  }).join("");
-  return `<aside class="message-citations" aria-label="回答引用依据"><div class="citation-heading"><strong>引用依据</strong><span>${citations.length} 条</span></div><ol>${items}</ol></aside>`;
-}
-
-function citedRichText(content = "", citations = []) {
-  let html = richText(content);
-  citations.forEach((citation) => {
-    const id = citation.id || "";
-    if (!/^K\d+$/.test(id)) return;
-    html = html.replaceAll(`[${id}]`, `<a class="inline-citation" href="#citation-${id}" aria-label="查看引用 ${id}">[${id}]</a>`);
-  });
-  return html;
-}
-
 function errorMessage(error) {
   return error?.message || "操作未完成，请稍后重试。";
 }
@@ -425,7 +395,7 @@ async function submitDifferential(event) {
 }
 
 function initialChatMarkup() {
-  return `<article class="message assistant-message"><div class="message-body"><div class="message-meta"><strong>教学助手</strong><span>会诊准备就绪</span></div><div class="message-copy"><p>请描述一个具体的临床或现场问题。我会先核对知识库与图谱，再给出可追溯的教学反馈。</p></div><div class="message-hint"><span>鉴别诊断</span><span>采样建议</span><span>现场处置</span></div></div></article>`;
+  return `<article class="message assistant-message"><div class="message-body"><div class="message-copy"><p>请描述一个具体的临床或现场问题。我会先核对知识库与图谱，再给出教学反馈。</p></div><div class="message-hint"><span>鉴别诊断</span><span>采样建议</span><span>现场处置</span></div></div></article>`;
 }
 
 function appendMessage(role, content, options = {}) {
@@ -434,8 +404,8 @@ function appendMessage(role, content, options = {}) {
   if (options.loading) article.dataset.loading = "true";
   const body = options.loading
     ? '<span class="loading-dots" aria-label="正在生成回答"><i></i><i></i><i></i></span>'
-    : `<div class="message-copy"><p>${citedRichText(content, options.citations || [])}</p></div>${citationMarkup(options.citations || [])}${options.showImage ? '<figure class="message-figure"><img class="message-image" src="/assets/rash-atlas/images/mpox_12761.webp" alt="猴痘皮疹典型临床特征参考图"><figcaption>图谱参考 · 猴痘典型皮损形态</figcaption></figure>' : ""}`;
-  article.innerHTML = `<div class="message-body"><div class="message-meta"><strong>${role === "user" ? "学员提问" : "教学助手"}</strong><span>${role === "user" ? "待查证线索" : "依据反馈"}</span></div>${body}</div>`;
+    : `<div class="message-copy"><p>${richText(content)}</p></div>${options.showImage ? '<figure class="message-figure"><img class="message-image" src="/assets/rash-atlas/images/mpox_12761.webp" alt="猴痘皮疹典型临床特征参考图"><figcaption>图谱参考 · 猴痘典型皮损形态</figcaption></figure>' : ""}`;
+  article.innerHTML = `<div class="message-body">${body}</div>`;
   els.chatFeed.append(article);
   els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
   return article;
@@ -459,7 +429,7 @@ async function sendKnowledgeQuestion(prompt) {
     });
     loading.remove();
     state.qaMessages.push({ role: "assistant", content: data.answer });
-    appendMessage("assistant", data.answer, { showImage: data.show_mpox_image, citations: data.citations || [] });
+    appendMessage("assistant", data.answer, { showImage: data.show_mpox_image });
   } catch (error) {
     loading.remove();
     appendMessage("assistant", `无法完成回答：${errorMessage(error)}`);

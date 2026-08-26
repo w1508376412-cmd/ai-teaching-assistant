@@ -415,11 +415,10 @@ def knowledge_chat(request: KnowledgeChatRequest) -> dict:
     system_prompt = f"""你是一个专业的口岸卫生检疫与现场流行病学教学助手。
 请严格依据下方 RAG 检索证据回答学员问题；证据没有覆盖的内容必须明确说明依据不足，不能依靠记忆补写。
 
-引用规则：
-1. 每个关键事实或结论后标注对应引用，如 [K1]；同一结论可使用多个引用，如 [K1][K3]。
-2. 只能使用证据中已有的引用编号，不得编造编号、文献或 URL。
-3. 若证据之间存在差异，明确指出差异并分别引用。
-4. 回答应直接、专业、便于教学，不要在结尾添加扩展建议。
+回答规则：
+1. 回答应直接、专业、便于教学，不要显示来源编号、引用卡片或 [K#] 标注。
+2. 若证据之间存在差异，明确指出差异；证据没有覆盖的内容必须说明依据不足。
+3. 不要在结尾添加扩展建议。
 
 图片规则：只有当学员专门询问猴痘皮疹形态、特点或演变时，回答中才可包含标记 [显示猴痘皮疹图]。普通定义或症状列表不得包含该标记。
 
@@ -431,17 +430,11 @@ RAG 检索证据：
             *[message.model_dump() for message in request.messages],
         ]
     )
-    cleaned_answer = answer.replace("[显示猴痘皮疹图]", "").strip()
-    allowed_labels = {citation["id"] for citation in citations}
-    used_labels = set(re.findall(r"\[(K\d+)\]", cleaned_answer)) & allowed_labels
-    if citations and not used_labels:
-        cleaned_answer += "\n\n依据：" + " ".join(
-            f"[{citation['id']}]" for citation in citations[:3]
-        )
+    cleaned_answer = answer.replace("[显示猴痘皮疹图]", "")
+    cleaned_answer = re.sub(r"\s*\[K\d+\]", "", cleaned_answer).strip()
     return {
         "answer": cleaned_answer,
         "show_mpox_image": "[显示猴痘皮疹图]" in answer,
-        "citations": citations,
         "retrieval": retrieval,
     }
 

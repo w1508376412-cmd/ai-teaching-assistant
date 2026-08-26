@@ -6,7 +6,7 @@ import src.main as main
 
 
 class KnowledgeAPIIntegrationTests(unittest.TestCase):
-    def test_answer_returns_reranked_verifiable_citations(self):
+    def test_answer_hides_citation_markers_but_keeps_reranking(self):
         request = main.KnowledgeChatRequest(
             messages=[main.ChatMessage(role="user", content="猴痘潜伏期多久？")]
         )
@@ -24,10 +24,8 @@ class KnowledgeAPIIntegrationTests(unittest.TestCase):
         ):
             result = main.knowledge_chat(request)
 
-        self.assertIn("[K1]", result["answer"])
+        self.assertNotIn("[K1]", result["answer"])
         self.assertEqual(result["retrieval"]["reranker"], "llm-reranker")
-        self.assertGreater(len(result["citations"]), 0)
-        self.assertTrue(result["citations"][0]["source"].startswith("https://"))
 
 
 if __name__ == "__main__":
