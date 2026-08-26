@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#082f31" />
     <meta name="description" content="融合临床皮疹图谱、知识库问答与现场案例推演的公共卫生教学工作台" />
-    <title>现场辨证 · 临床流行病教学工作台</title>
+    <title>AI教学工具 · 临床流行病教学工作台</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260826-3" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260826-4" />
   </head>
   <body>
     <a class="skip-link" href="#mainContent">跳到主要内容</a>
@@ -16,7 +16,7 @@
       <aside class="sidebar" id="sidebar">
         <button class="brand" type="button" data-view="knowledge" aria-label="返回知识问答">
           <span class="brand-mark" aria-hidden="true"><i></i><b></b></span>
-          <span class="brand-copy"><strong>现场辨证</strong><small>CLINICAL FIELDNOTE</small></span>
+          <span class="brand-copy"><strong>AI教学工具</strong><small>AI TEACHING ASSISTANT</small></span>
         </button>
 
         <nav class="primary-nav" aria-label="主导航">
@@ -34,7 +34,6 @@
             <fieldset class="filter-group"><legend>疾病类别</legend><div class="category-filters" id="categoryFilters"></div></fieldset>
             <fieldset class="filter-group"><legend>皮损形态带</legend><div class="morph-filters" id="morphologyFilters"></div></fieldset>
             <button class="reset-filter" id="resetAtlasFilters" type="button">重置全部条件 <span>↺</span></button>
-            <div class="atlas-provenance"><span class="section-code">IMAGE SOURCES</span><p>CDC PHIL · 公有领域</p><p>PMC · CC BY / CC0</p><p>《皮肤性病学》第 10 版 · 教学参考</p></div>
           </div>
         </section>
       </aside>
@@ -65,7 +64,6 @@
 
           <section class="workspace-view is-active" id="view-knowledge" data-title="知识问答">
             <div class="knowledge-layout">
-              <aside class="question-brief"><span class="section-code">QUESTION FRAME</span><h2>一个好问题，应包含什么？</h2><ol><li><b>对象</b><span>年龄、人群与基础情况</span></li><li><b>时间</b><span>发热、出疹与暴露顺序</span></li><li><b>所见</b><span>形态、分布、演变与伴随表现</span></li><li><b>任务</b><span>鉴别、采样还是现场处置</span></li></ol><button class="line-button" type="button" data-view="atlas">回到图谱核对 <span>→</span></button></aside>
               <div class="chat-workbench">
                 <div class="chat-toolbar"><div><span class="section-code">FIELD LOG</span><strong>问答记录</strong></div><button class="text-button" id="clearChat" type="button">清空记录</button></div>
                 <div class="chat-feed" id="chatFeed" aria-live="polite"><article class="message assistant-message"><div class="message-marker"><span></span></div><div class="message-body"><div class="message-meta"><strong>教学助手</strong><span>图谱与知识库已连接</span></div><p>请给我一个具体问题。例如：入境旅客发热并伴有离心性皮疹，现场排查应关注哪些线索？</p></div></article></div>
@@ -102,6 +100,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="sidebar-scrim" id="sidebarScrim"></div>
-    <script src="/static/app.js?v=20260826-3" defer></script>
+    <script src="/static/app.js?v=20260826-4" defer></script>
   </body>
 </html>
