@@ -296,9 +296,9 @@ function openDisease(id) {
     <header class="disease-detail-head"><span class="detail-kicker">${escapeHtml(disease.category)} / DISEASE NOTE</span><h2 id="diseaseDialogTitle">${escapeHtml(disease.name)}<small>${escapeHtml(disease.english || "")}</small></h2></header>
     <div class="detail-actions"><button class="solid-button" type="button" data-ask-disease="${escapeHtml(disease.id)}">带到 AI 问答 <span>↗</span></button><button class="line-button" type="button" data-toggle-detail-compare="${escapeHtml(disease.id)}">${inCompare ? "移出" : "加入"}并排比较 <span>${inCompare ? "−" : "+"}</span></button></div>
     <section class="detail-facts" aria-label="${escapeHtml(disease.name)}鉴别要点">${facts}</section>
-    <div class="detail-gallery-title"><h3>临床图像</h3><span>${disease.image_count} 张 · 逐图标注来源</span></div>
+    <div class="detail-gallery-title"><h3>皮疹特征</h3></div>
     <div class="detail-gallery">${figures}</div>
-    <div class="detail-notice">${escapeHtml(state.atlas.notice)}</div>`;
+`;
   els.diseaseDialog.showModal();
 }
 
