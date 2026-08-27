@@ -419,7 +419,7 @@ function askAboutComparison() {
 }
 
 function initialChatMarkup() {
-  return `<section class="knowledge-guide" id="knowledgeGuide" aria-labelledby="knowledgeGuideTitle"><span class="knowledge-guide-kicker">EVIDENCE-GROUNDED Q&amp;A</span><h2 id="knowledgeGuideTitle">基于依据的知识问答</h2><p>可围绕疾病的临床表现、鉴别线索、采样检测与现场处置提问。回答会优先核对课程知识库；资料没有覆盖时，将明确提示依据不足。</p><div class="knowledge-guide-topics" aria-label="可提问范围"><span>临床表现与病程</span><span>鉴别与检测</span><span>防控与处置</span></div><small>在下方输入问题，按 Enter 发送；Shift + Enter 换行。</small></section>`;
+  return `<section class="knowledge-guide message assistant-message" id="knowledgeGuide" role="note" aria-label="知识问答说明"><div class="message-body"><div class="message-copy"><p>本AI教学工具根据权威诊疗指南和防控方案构建知识库，答案基于该权威知识库进行回答。在下方搜索框输入问题，按Enter发送，Shift+Enter换行。</p></div></div></section>`;
 }
 
 function appendMessage(role, content, options = {}) {
