@@ -21,11 +21,15 @@ class KnowledgeAPIIntegrationTests(unittest.TestCase):
 
         with patch.object(main, "API_KEY", "test-key"), patch.object(
             main, "complete", side_effect=responses
-        ):
+        ) as mocked_complete:
             result = main.knowledge_chat(request)
 
         self.assertNotIn("[K1]", result["answer"])
         self.assertEqual(result["retrieval"]["reranker"], "llm-reranker")
+        answer_prompt = mocked_complete.call_args_list[-1].args[0][0]["content"]
+        self.assertIn("先判断问题复杂度", answer_prompt)
+        self.assertIn("简单事实", answer_prompt)
+        self.assertIn("### 一、标题", answer_prompt)
 
 
 if __name__ == "__main__":

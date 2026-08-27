@@ -4069,6 +4069,59 @@ dialog::backdrop {
   }
 }
 
+/* Knowledge answers: hierarchy appears only when the response actually needs it. */
+#view-knowledge .assistant-message .message-copy h3 {
+  margin: 22px 0 8px;
+  color: var(--consult-ink);
+  font-size: 14px;
+  font-weight: 780;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+#view-knowledge .assistant-message .message-copy h3:first-child {
+  margin-top: 0;
+}
+
+#view-knowledge .assistant-message .message-copy p + h3,
+#view-knowledge .assistant-message .message-copy ol + h3,
+#view-knowledge .assistant-message .message-copy ul + h3 {
+  padding-top: 3px;
+}
+
+#view-knowledge .assistant-message .message-copy ol,
+#view-knowledge .assistant-message .message-copy ul {
+  margin: 8px 0 15px;
+  padding-left: 1.55em;
+}
+
+#view-knowledge .assistant-message .message-copy li {
+  padding-left: 0.22em;
+  line-height: 1.85;
+}
+
+#view-knowledge .assistant-message .message-copy li + li {
+  margin-top: 5px;
+}
+
+#view-knowledge .assistant-message .message-copy li::marker {
+  color: var(--consult-orange);
+  font-weight: 750;
+}
+
+#view-knowledge .assistant-message .message-copy h3 + p,
+#view-knowledge .assistant-message .message-copy h3 + ol,
+#view-knowledge .assistant-message .message-copy h3 + ul {
+  margin-top: 0;
+}
+
+@media (max-width: 760px) {
+  #view-knowledge .assistant-message .message-copy h3 {
+    margin-top: 18px;
+    font-size: 13px;
+  }
+}
+
 @media (max-width: 760px) {
   body {
     padding: 0;

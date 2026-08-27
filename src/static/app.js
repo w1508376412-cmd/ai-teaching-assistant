@@ -116,6 +116,66 @@ function richText(value = "") {
     .replace(/\n/g, "<br>");
 }
 
+function inlineAnswerText(value = "") {
+  return escapeHtml(value).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+function structuredAnswer(value = "") {
+  const lines = String(value).replace(/\r\n?/g, "\n").split("\n");
+  const blocks = [];
+  let paragraph = [];
+  let listType = "";
+  let listItems = [];
+
+  const flushParagraph = () => {
+    if (!paragraph.length) return;
+    blocks.push(`<p>${paragraph.map(inlineAnswerText).join("<br>")}</p>`);
+    paragraph = [];
+  };
+
+  const flushList = () => {
+    if (!listItems.length) return;
+    blocks.push(`<${listType}>${listItems.map((item) => `<li>${inlineAnswerText(item)}</li>`).join("")}</${listType}>`);
+    listType = "";
+    listItems = [];
+  };
+
+  lines.forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushParagraph();
+      flushList();
+      return;
+    }
+
+    const heading = trimmed.match(/^#{2,4}\s+(.+)$/) || trimmed.match(/^([一二三四五六七八九十]+[、.]\s*.+)$/);
+    if (heading) {
+      flushParagraph();
+      flushList();
+      blocks.push(`<h3>${inlineAnswerText(heading[1])}</h3>`);
+      return;
+    }
+
+    const orderedItem = trimmed.match(/^\d+[.)、]\s*(.+)$/);
+    const unorderedItem = trimmed.match(/^[-•]\s+(.+)$/);
+    if (orderedItem || unorderedItem) {
+      flushParagraph();
+      const nextListType = orderedItem ? "ol" : "ul";
+      if (listType && listType !== nextListType) flushList();
+      listType = nextListType;
+      listItems.push((orderedItem || unorderedItem)[1]);
+      return;
+    }
+
+    flushList();
+    paragraph.push(trimmed);
+  });
+
+  flushParagraph();
+  flushList();
+  return blocks.join("");
+}
+
 function errorMessage(error) {
   return error?.message || "操作未完成，请稍后重试。";
 }
@@ -366,7 +426,7 @@ function appendMessage(role, content, options = {}) {
   if (options.loading) article.dataset.loading = "true";
   const body = options.loading
     ? '<span class="loading-dots" aria-label="正在生成回答"><i></i><i></i><i></i></span>'
-    : `<div class="message-copy"><p>${richText(content)}</p></div>${options.showImage ? '<figure class="message-figure"><img class="message-image" src="/assets/rash-atlas/images/mpox_12761.webp" alt="猴痘皮疹典型临床特征参考图"><figcaption>图谱参考 · 猴痘典型皮损形态</figcaption></figure>' : ""}`;
+    : `<div class="message-copy">${structuredAnswer(content)}</div>${options.showImage ? '<figure class="message-figure"><img class="message-image" src="/assets/rash-atlas/images/mpox_12761.webp" alt="猴痘皮疹典型临床特征参考图"><figcaption>图谱参考 · 猴痘典型皮损形态</figcaption></figure>' : ""}`;
   article.innerHTML = `<div class="message-body">${body}</div>`;
   els.chatFeed.append(article);
   els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
