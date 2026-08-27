@@ -5459,3 +5459,54 @@ body {
     height: 210px;
   }
 }
+
+/* Knowledge conversation proportions: compact learner bubbles and a quieter composer. */
+#view-knowledge .user-message {
+  width: fit-content;
+  max-width: min(70%, 620px);
+  margin-left: auto;
+}
+
+#view-knowledge .user-message .message-body {
+  width: fit-content;
+  min-width: 0;
+  max-width: 100%;
+}
+
+#view-knowledge .user-message .message-copy {
+  overflow-wrap: anywhere;
+}
+
+#view-knowledge .chat-input-dock {
+  display: flex;
+  justify-content: center;
+}
+
+#view-knowledge .composer {
+  width: 70%;
+  min-height: 49px;
+  margin: 0 auto;
+  padding: 7px 18px;
+}
+
+#view-knowledge .composer textarea {
+  min-height: 28px;
+  padding: 4px 0;
+}
+
+@media (max-width: 760px) {
+  #view-knowledge .user-message {
+    width: fit-content;
+    max-width: 84%;
+  }
+
+  #view-knowledge .composer {
+    width: 84%;
+    min-height: 46px;
+    padding: 6px 16px;
+  }
+
+  #view-knowledge .composer textarea {
+    min-height: 27px;
+  }
+}

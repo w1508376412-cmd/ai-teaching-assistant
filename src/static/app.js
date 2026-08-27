@@ -419,7 +419,7 @@ function askAboutComparison() {
 }
 
 function initialChatMarkup() {
-  return `<article class="message assistant-message"><div class="message-body"><div class="message-copy"><p>请描述一个具体的临床或现场问题。我会先核对知识库与图谱，再给出教学反馈。</p></div><div class="message-hint"><span>鉴别诊断</span><span>采样建议</span><span>现场处置</span></div></div></article>`;
+  return "";
 }
 
 function appendMessage(role, content, options = {}) {
