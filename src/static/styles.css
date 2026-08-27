@@ -5510,3 +5510,75 @@ body {
     min-height: 27px;
   }
 }
+
+/* Knowledge empty state: an orientation card, visually separate from real answers. */
+#view-knowledge .knowledge-guide {
+  width: min(70%, 720px);
+  margin: 18px auto 0;
+  padding: 26px 28px 23px;
+  color: var(--consult-ink);
+  background: #fff;
+  border: 1px solid #dfe0dc;
+  border-radius: 22px;
+  box-shadow: 0 14px 34px rgba(25, 25, 25, 0.05);
+}
+
+#view-knowledge .knowledge-guide-kicker {
+  color: var(--consult-orange);
+  font-family: var(--utility);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+#view-knowledge .knowledge-guide h2 {
+  margin: 8px 0 9px;
+  font-size: clamp(19px, 2vw, 24px);
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+
+#view-knowledge .knowledge-guide p {
+  max-width: 640px;
+  margin: 0;
+  color: #5f605c;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+#view-knowledge .knowledge-guide-topics {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+#view-knowledge .knowledge-guide-topics span {
+  padding: 7px 10px;
+  color: #3c3d3a;
+  background: #f1f2ef;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+#view-knowledge .knowledge-guide small {
+  display: block;
+  margin-top: 17px;
+  padding-top: 14px;
+  color: #8a8b86;
+  border-top: 1px solid #e7e8e4;
+  font-size: 9px;
+}
+
+@media (max-width: 760px) {
+  #view-knowledge .knowledge-guide {
+    width: 92%;
+    margin-top: 6px;
+    padding: 22px 20px 20px;
+  }
+
+  #view-knowledge .knowledge-guide h2 {
+    font-size: 19px;
+  }
+}

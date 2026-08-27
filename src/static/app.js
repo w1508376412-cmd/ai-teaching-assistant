@@ -419,7 +419,7 @@ function askAboutComparison() {
 }
 
 function initialChatMarkup() {
-  return "";
+  return `<section class="knowledge-guide" id="knowledgeGuide" aria-labelledby="knowledgeGuideTitle"><span class="knowledge-guide-kicker">EVIDENCE-GROUNDED Q&amp;A</span><h2 id="knowledgeGuideTitle">基于依据的知识问答</h2><p>可围绕疾病的临床表现、鉴别线索、采样检测与现场处置提问。回答会优先核对课程知识库；资料没有覆盖时，将明确提示依据不足。</p><div class="knowledge-guide-topics" aria-label="可提问范围"><span>临床表现与病程</span><span>鉴别与检测</span><span>防控与处置</span></div><small>在下方输入问题，按 Enter 发送；Shift + Enter 换行。</small></section>`;
 }
 
 function appendMessage(role, content, options = {}) {
@@ -438,6 +438,7 @@ function appendMessage(role, content, options = {}) {
 async function sendKnowledgeQuestion(prompt) {
   const value = prompt.trim();
   if (!value) return;
+  $("#knowledgeGuide", els.chatFeed)?.remove();
   state.qaMessages.push({ role: "user", content: value });
   appendMessage("user", value);
   els.chatInput.value = "";
@@ -779,6 +780,7 @@ function bindEvents() {
 async function init() {
   const adminRequested = new URLSearchParams(location.search).get("admin") === "true";
   if (adminRequested) els.adminNav.classList.remove("is-hidden");
+  els.chatFeed.innerHTML = initialChatMarkup();
   bindEvents();
   try {
     await Promise.all([refreshPublicData(), loadAtlas()]);
