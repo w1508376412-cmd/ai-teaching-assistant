@@ -233,7 +233,7 @@ function diseaseCardMarkup(disease) {
         <h3>${escapeHtml(disease.name)}<small>${escapeHtml(disease.english || "—")}</small></h3>
         <p class="card-clue">${escapeHtml(disease.facts?.["鉴别要点"] || disease.facts?.["皮疹"] || "查看病种详情")}</p>
         <div class="card-actions">
-          <button class="view-disease" type="button" data-open-disease="${escapeHtml(disease.id)}">查看鉴别要点 ↗</button>
+          <button class="view-disease" type="button" data-open-disease="${escapeHtml(disease.id)}">查看鉴别要点</button>
           <label class="compare-toggle"><input type="checkbox" data-compare="${escapeHtml(disease.id)}" ${checked ? "checked" : ""}><span>加入比较</span></label>
         </div>
       </div>
@@ -284,7 +284,7 @@ function openDisease(id) {
   }
   const facts = Object.entries(disease.facts || {}).map(([label, value]) => `<div class="detail-fact"><b>${escapeHtml(label)}</b><p>${escapeHtml(value)}</p></div>`).join("");
   const figures = (disease.images || []).map((item, index) => {
-    const links = (item.links || []).map((link) => `<a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(link.label)} ↗</a>`).join("");
+    const links = (item.links || []).map((link) => `<a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(link.label)}</a>`).join("");
     return `
       <figure class="detail-figure">
         <button class="detail-image-button" type="button" data-lightbox-disease="${escapeHtml(disease.id)}" data-lightbox-index="${index}" aria-label="放大查看${escapeHtml(item.alt || disease.name)}"><img src="${imageUrl(item.file)}" alt="${escapeHtml(item.alt || `${disease.name}皮疹`)}" loading="lazy"></button>
@@ -294,7 +294,7 @@ function openDisease(id) {
   const inCompare = state.compareIds.has(id);
   els.diseaseDialogContent.innerHTML = `
     <header class="disease-detail-head"><span class="detail-kicker">${escapeHtml(disease.category)} / DISEASE NOTE</span><h2 id="diseaseDialogTitle">${escapeHtml(disease.name)}<small>${escapeHtml(disease.english || "")}</small></h2></header>
-    <div class="detail-actions"><button class="solid-button" type="button" data-ask-disease="${escapeHtml(disease.id)}">带到 AI 问答 <span>↗</span></button><button class="line-button" type="button" data-toggle-detail-compare="${escapeHtml(disease.id)}">${inCompare ? "移出" : "加入"}并排比较 <span>${inCompare ? "−" : "+"}</span></button></div>
+    <div class="detail-actions"><button class="solid-button" type="button" data-ask-disease="${escapeHtml(disease.id)}">带到 AI 问答</button><button class="line-button" type="button" data-toggle-detail-compare="${escapeHtml(disease.id)}">${inCompare ? "移出" : "加入"}并排比较 <span>${inCompare ? "−" : "+"}</span></button></div>
     <section class="detail-facts" aria-label="${escapeHtml(disease.name)}鉴别要点">${facts}</section>
     <div class="detail-gallery-title"><h3>皮疹特征</h3></div>
     <div class="detail-gallery">${figures}</div>
@@ -321,7 +321,7 @@ function openComparison() {
     return `<th><div class="compare-disease-head">${cover ? `<img src="${imageUrl(cover.file)}" alt="${escapeHtml(disease.name)}皮疹">` : ""}<strong>${escapeHtml(disease.name)}</strong><small>${escapeHtml(disease.english || "")} · ${escapeHtml(disease.category)}</small></div></th>`;
   }).join("");
   const rows = dimensions.map((dimension) => `<tr><td><strong>${escapeHtml(dimension)}</strong></td>${selected.map((disease) => `<td>${escapeHtml(disease.facts?.[dimension] || "—")}</td>`).join("")}</tr>`).join("");
-  els.compareDialogContent.innerHTML = `<div class="compare-table-wrap"><table class="compare-table"><thead><tr><th>观察维度</th>${headers}</tr></thead><tbody>${rows}<tr><td><strong>图像数量</strong></td>${selected.map((disease) => `<td>${disease.image_count} 张</td>`).join("")}</tr></tbody></table></div><div class="detail-actions"><button class="solid-button" type="button" data-ask-comparison>带着这组候选问 AI <span>↗</span></button></div>`;
+  els.compareDialogContent.innerHTML = `<div class="compare-table-wrap"><table class="compare-table"><thead><tr><th>观察维度</th>${headers}</tr></thead><tbody>${rows}<tr><td><strong>图像数量</strong></td>${selected.map((disease) => `<td>${disease.image_count} 张</td>`).join("")}</tr></tbody></table></div><div class="detail-actions"><button class="solid-button" type="button" data-ask-comparison>带着这组候选问 AI</button></div>`;
   els.compareDialog.showModal();
 }
 

@@ -7,7 +7,7 @@
     <meta name="description" content="融合临床皮疹图谱、知识库问答与现场案例推演的公共卫生教学工作台" />
     <title>AI教学工具 · 临床流行病教学工作台</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260827-4" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260827-5" />
   </head>
   <body>
     <a class="skip-link" href="#mainContent">跳到主要内容</a>
@@ -68,8 +68,8 @@
             <div class="case-workspace" id="caseWorkspace">
               <div class="case-commandbar"><div><span class="section-code">CASE LIBRARY</span><strong>案例选择</strong></div><label for="caseSelect"><span>当前案例</span><select id="caseSelect"><option>正在加载案例…</option></select></label><button class="line-button" id="nextCase" type="button">进入下一案例 <span>→</span></button></div>
               <article class="dossier"><div class="dossier-head"><span class="section-code">CASE DOSSIER</span><span class="case-sequence" id="caseSequence">01 / 01</span></div><h2 id="caseTitle">正在加载案例</h2><p id="caseBackground">—</p><div class="patient-grid" id="patientGrid"></div></article>
-              <section class="decision-board" id="decisionBoard"><form id="decisionForm"><div class="decision-column"><div class="decision-heading"><span>01</span><div><strong>可能疾病</strong><small>POSSIBLE DISEASES</small></div></div><div class="option-list" id="diseaseOptions"></div></div><div class="decision-column"><div class="decision-heading"><span>02</span><div><strong>现场处置</strong><small>FIELD MEASURES</small></div></div><div class="option-list" id="measureOptions"></div></div><div class="decision-column"><div class="decision-heading"><span>03</span><div><strong>诊断方法</strong><small>DIAGNOSTICS</small></div></div><div class="option-list" id="treatmentOptions"></div></div><button class="solid-button evaluate-button" type="submit">提交判断 <span>↗</span></button></form><div class="decision-feedback is-hidden" id="decisionFeedback"></div></section>
-              <section class="stage-board is-hidden" id="stageBoard"><div class="stage-brief"><span class="section-code">CURRENT ASSIGNMENT</span><h2 id="stageTitle">当前任务</h2><div class="stage-task" id="stageTask"></div><div class="stage-data is-hidden" id="stageData"></div></div><div class="stage-dialogue"><div class="chat-feed compact" id="stageChat"></div><form class="composer" id="stageForm"><label class="sr-only" for="stageInput">输入处置思路</label><textarea id="stageInput" rows="1" maxlength="4000" placeholder="写下你的判断和处置思路…" required></textarea><button class="send-button" type="submit"><span>提交思路</span><span>↗</span></button></form><button class="line-button" id="nextStage" type="button">进入下一步 <span>→</span></button></div></section>
+              <section class="decision-board" id="decisionBoard"><form id="decisionForm"><div class="decision-column"><div class="decision-heading"><span>01</span><div><strong>可能疾病</strong><small>POSSIBLE DISEASES</small></div></div><div class="option-list" id="diseaseOptions"></div></div><div class="decision-column"><div class="decision-heading"><span>02</span><div><strong>现场处置</strong><small>FIELD MEASURES</small></div></div><div class="option-list" id="measureOptions"></div></div><div class="decision-column"><div class="decision-heading"><span>03</span><div><strong>诊断方法</strong><small>DIAGNOSTICS</small></div></div><div class="option-list" id="treatmentOptions"></div></div><button class="solid-button evaluate-button" type="submit">提交判断</button></form><div class="decision-feedback is-hidden" id="decisionFeedback"></div></section>
+              <section class="stage-board is-hidden" id="stageBoard"><div class="stage-brief"><span class="section-code">CURRENT ASSIGNMENT</span><h2 id="stageTitle">当前任务</h2><div class="stage-task" id="stageTask"></div><div class="stage-data is-hidden" id="stageData"></div></div><div class="stage-dialogue"><div class="chat-feed compact" id="stageChat"></div><form class="composer" id="stageForm"><label class="sr-only" for="stageInput">输入处置思路</label><textarea id="stageInput" rows="1" maxlength="4000" placeholder="写下你的判断和处置思路…" required></textarea><button class="send-button" type="submit"><span>提交思路</span></button></form><button class="line-button" id="nextStage" type="button">进入下一步 <span>→</span></button></div></section>
             </div>
           </section>
 
@@ -82,7 +82,7 @@
       </div>
     </div>
 
-    <div class="compare-dock is-hidden" id="compareDock" aria-live="polite"><div><span id="compareCount">0 / 3</span><p id="compareNames">尚未选择病种</p></div><button class="text-button" id="clearCompare" type="button">清空</button><button class="solid-button" id="openCompare" type="button">并排鉴别 <span>↗</span></button></div>
+    <div class="compare-dock is-hidden" id="compareDock" aria-live="polite"><div><span id="compareCount">0 / 3</span><p id="compareNames">尚未选择病种</p></div><button class="text-button" id="clearCompare" type="button">清空</button><button class="solid-button" id="openCompare" type="button">并排鉴别</button></div>
 
     <dialog class="drawer-dialog" id="diseaseDialog" aria-labelledby="diseaseDialogTitle"><div class="dialog-shell"><button class="dialog-close" type="button" data-close-dialog="diseaseDialog" aria-label="关闭病种详情">×</button><div id="diseaseDialogContent"></div></div></dialog>
     <dialog class="compare-dialog" id="compareDialog" aria-labelledby="compareDialogTitle"><div class="compare-shell"><div class="compare-head"><div><span class="section-code">SIDE-BY-SIDE DIFFERENTIAL</span><h2 id="compareDialogTitle">并排鉴别</h2></div><button class="dialog-close" type="button" data-close-dialog="compareDialog" aria-label="关闭比较">×</button></div><div id="compareDialogContent"></div></div></dialog>
@@ -90,6 +90,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="sidebar-scrim" id="sidebarScrim"></div>
-    <script src="/static/app.js?v=20260827-4" defer></script>
+    <script src="/static/app.js?v=20260827-5" defer></script>
   </body>
 </html>

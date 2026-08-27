@@ -5318,3 +5318,29 @@ body {
 .sidebar .morph-filters {
   width: 100%;
 }
+
+/* Comparison tray: a centered, quiet surface that stays readable over the atlas. */
+.compare-dock {
+  right: auto;
+  bottom: 24px;
+  left: 50%;
+  width: min(560px, calc(100vw - 48px));
+  transform: translateX(-50%);
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 18px 42px rgba(25, 25, 25, 0.14);
+}
+
+.compare-dock > div > span {
+  color: var(--coral);
+}
+
+.compare-dock p {
+  color: var(--muted);
+}
+
+.compare-dock .text-button {
+  color: var(--ink);
+}
