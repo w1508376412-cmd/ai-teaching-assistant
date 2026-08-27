@@ -129,7 +129,8 @@ function structuredAnswer(value = "") {
 
   const flushParagraph = () => {
     if (!paragraph.length) return;
-    blocks.push(`<p>${paragraph.map(inlineAnswerText).join("<br>")}</p>`);
+    const labeled = /^\*\*[^*]+[：:]\*\*/.test(paragraph[0]);
+    blocks.push(`<p${labeled ? ' class="answer-labeled-paragraph"' : ""}>${paragraph.map(inlineAnswerText).join("<br>")}</p>`);
     paragraph = [];
   };
 
@@ -148,11 +149,12 @@ function structuredAnswer(value = "") {
       return;
     }
 
-    const heading = trimmed.match(/^#{2,4}\s+(.+)$/) || trimmed.match(/^([一二三四五六七八九十]+[、.]\s*.+)$/);
+    const boldHeading = trimmed.match(/^\*\*(.+[：:])\*\*$/);
+    const heading = trimmed.match(/^#{2,4}\s+(.+)$/) || trimmed.match(/^([一二三四五六七八九十]+[、.]\s*.+)$/) || boldHeading;
     if (heading) {
       flushParagraph();
       flushList();
-      blocks.push(`<h3>${inlineAnswerText(heading[1])}</h3>`);
+      blocks.push(`<h3${boldHeading ? ' class="answer-section-label"' : ""}>${inlineAnswerText(heading[1])}</h3>`);
       return;
     }
 

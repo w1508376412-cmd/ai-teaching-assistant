@@ -29,7 +29,9 @@ class KnowledgeAPIIntegrationTests(unittest.TestCase):
         answer_prompt = mocked_complete.call_args_list[-1].args[0][0]["content"]
         self.assertIn("先判断问题复杂度", answer_prompt)
         self.assertIn("简单事实", answer_prompt)
-        self.assertIn("### 一、标题", answer_prompt)
+        self.assertIn("**潜伏期：**", answer_prompt)
+        self.assertIn("**前驱期（发病早期，约 0—5 天）：**", answer_prompt)
+        self.assertIn("只有操作步骤、时间顺序或决策流程确实有先后关系时", answer_prompt)
 
 
 if __name__ == "__main__":

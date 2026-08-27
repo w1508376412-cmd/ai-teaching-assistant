@@ -4115,10 +4115,33 @@ dialog::backdrop {
   margin-top: 0;
 }
 
+#view-knowledge .assistant-message .message-copy .answer-labeled-paragraph {
+  margin-top: 17px;
+}
+
+#view-knowledge .assistant-message .message-copy .answer-labeled-paragraph:first-child {
+  margin-top: 0;
+}
+
+#view-knowledge .assistant-message .message-copy .answer-section-label {
+  margin-top: 19px;
+  margin-bottom: 7px;
+  font-size: 13px;
+}
+
+#view-knowledge .assistant-message .message-copy .answer-section-label + ul {
+  margin-top: 5px;
+}
+
 @media (max-width: 760px) {
   #view-knowledge .assistant-message .message-copy h3 {
     margin-top: 18px;
     font-size: 13px;
+  }
+
+  #view-knowledge .assistant-message .message-copy .answer-labeled-paragraph,
+  #view-knowledge .assistant-message .message-copy .answer-section-label {
+    margin-top: 15px;
   }
 }
 
