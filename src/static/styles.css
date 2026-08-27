@@ -1753,7 +1753,6 @@ p {
   padding: 29px;
   background: var(--sheet);
   border: 1px solid var(--line);
-  border-left: 4px solid var(--teal);
 }
 
 .dossier-head {
@@ -3856,10 +3855,6 @@ a:focus-visible {
 
 .case-empty {
   border-radius: var(--radius-card);
-}
-
-.dossier {
-  border-left: 4px solid var(--coral);
 }
 
 .dossier-head,

@@ -280,11 +280,20 @@ function filteredDiseases() {
 
 function renderAtlasFilters() {
   const allButton = `<button type="button" data-category="all" class="${state.atlasCategory === "all" ? "is-active" : ""}"><span>全部类别</span></button>`;
-  els.categoryFilters.innerHTML = allButton + (state.atlas?.categories || []).map((category) =>
+  const availableCategories = (state.atlas?.categories || []).filter((category) =>
+    state.diseases.some((disease) => disease.category_id === category.id && matchesMorphology(disease, state.atlasMorphology)),
+  );
+  els.categoryFilters.innerHTML = allButton + availableCategories.map((category) =>
     `<button type="button" data-category="${escapeHtml(category.id)}" class="${state.atlasCategory === category.id ? "is-active" : ""}"><span>${escapeHtml(category.title.replace("（高发）", ""))}</span></button>`,
   ).join("");
 
-  els.morphologyFilters.innerHTML = MORPHOLOGIES.map((morphology) => {
+  const availableMorphologies = MORPHOLOGIES.filter((morphology) =>
+    morphology.id === "all" || state.diseases.some((disease) => {
+      const categoryMatch = state.atlasCategory === "all" || disease.category_id === state.atlasCategory;
+      return categoryMatch && matchesMorphology(disease, morphology.id);
+    }),
+  );
+  els.morphologyFilters.innerHTML = availableMorphologies.map((morphology) => {
     return `<button type="button" data-morph="${morphology.id}" class="${state.atlasMorphology === morphology.id ? "is-active" : ""}"><span>${escapeHtml(morphology.label)}</span></button>`;
   }).join("");
 }
