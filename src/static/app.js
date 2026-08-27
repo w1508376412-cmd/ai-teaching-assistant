@@ -13,6 +13,13 @@ const MORPHOLOGIES = [
   { id: "nodule", label: "结节 / 斑块", short: "结节", terms: ["结节", "斑块", "肿块", "浸润"] },
 ];
 
+const VIEW_PATHS = {
+  knowledge: "AI TEACHING ASSISTANT / KNOWLEDGE CONSULT",
+  atlas: "AI TEACHING ASSISTANT / RASH ATLAS",
+  cases: "AI TEACHING ASSISTANT / CASE DRILL",
+  admin: "AI TEACHING ASSISTANT / FACULTY CONTROL",
+};
+
 const state = {
   config: null,
   atlas: null,
@@ -34,6 +41,7 @@ const els = {
   sidebarAtlasTools: $("#sidebarAtlasTools"),
   sidebarScrim: $("#sidebarScrim"),
   menuButton: $("#menuButton"),
+  topbarKicker: $("#topbarKicker"),
   topbarTitle: $("#topbarTitle"),
   adminNav: $("#adminNav"),
   atlasSearch: $("#atlasSearch"),
@@ -170,6 +178,7 @@ function switchView(viewName, updateUrl = true) {
   const atlasToolsVisible = viewName === "atlas";
   els.sidebar.classList.toggle("has-atlas-tools", atlasToolsVisible);
   els.sidebarAtlasTools.setAttribute("aria-hidden", String(!atlasToolsVisible));
+  els.topbarKicker.textContent = VIEW_PATHS[viewName] || "AI TEACHING ASSISTANT";
   els.topbarTitle.textContent = target.dataset.title || "教学工作台";
   renderCompareDock();
   openSidebar(false);

@@ -5355,6 +5355,10 @@ body {
   right: 16px;
 }
 
+.compare-shell #compareDialogContent > .detail-actions {
+  justify-content: flex-end;
+}
+
 .compare-disease-head img {
   height: clamp(220px, 28vh, 290px);
 }
