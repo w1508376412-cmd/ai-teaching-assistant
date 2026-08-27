@@ -321,7 +321,7 @@ function openComparison() {
     return `<th><div class="compare-disease-head">${cover ? `<img src="${imageUrl(cover.file)}" alt="${escapeHtml(disease.name)}皮疹">` : ""}<strong>${escapeHtml(disease.name)}</strong><small>${escapeHtml(disease.english || "")} · ${escapeHtml(disease.category)}</small></div></th>`;
   }).join("");
   const rows = dimensions.map((dimension) => `<tr><td><strong>${escapeHtml(dimension)}</strong></td>${selected.map((disease) => `<td>${escapeHtml(disease.facts?.[dimension] || "—")}</td>`).join("")}</tr>`).join("");
-  els.compareDialogContent.innerHTML = `<div class="compare-table-wrap"><table class="compare-table"><thead><tr><th>观察维度</th>${headers}</tr></thead><tbody>${rows}<tr><td><strong>图像数量</strong></td>${selected.map((disease) => `<td>${disease.image_count} 张</td>`).join("")}</tr></tbody></table></div><div class="detail-actions"><button class="solid-button" type="button" data-ask-comparison>带着这组候选问 AI</button></div>`;
+  els.compareDialogContent.innerHTML = `<div class="compare-table-wrap"><table class="compare-table"><thead><tr><th>观察维度</th>${headers}</tr></thead><tbody>${rows}</tbody></table></div><div class="detail-actions"><button class="solid-button" type="button" data-ask-comparison>带着这组候选问 AI</button></div>`;
   els.compareDialog.showModal();
 }
 

@@ -5344,3 +5344,38 @@ body {
 .compare-dock .text-button {
   color: var(--ink);
 }
+
+/* Comparison view: prioritize the clinical images and the actual differences. */
+.compare-shell {
+  padding-top: 54px;
+}
+
+.compare-shell > .dialog-close {
+  top: 16px;
+  right: 16px;
+}
+
+.compare-disease-head img {
+  height: clamp(220px, 28vh, 290px);
+}
+
+/* Center the tray in the workspace to the right of the persistent sidebar. */
+.compare-dock {
+  left: calc(50% + 146px);
+}
+
+@media (max-width: 1180px) {
+  .compare-dock {
+    left: calc(50% + 136px);
+  }
+}
+
+@media (max-width: 940px) {
+  .compare-dock {
+    left: 50%;
+  }
+
+  .compare-disease-head img {
+    height: 210px;
+  }
+}
