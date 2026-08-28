@@ -1,7 +1,3 @@
 fastapi
 uvicorn[standard]
 openai
-python-docx
-PyPDF2
-spire.doc
-python-multipart

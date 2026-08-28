@@ -7,7 +7,7 @@
     <meta name="description" content="融合临床皮疹图谱、知识库问答与现场案例推演的公共卫生教学工作台" />
     <title>AI教学工具 · 临床流行病教学工作台</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260827-14" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260828-16" />
   </head>
   <body>
     <a class="skip-link" href="#mainContent">跳到主要内容</a>
@@ -76,7 +76,7 @@
           <section class="workspace-view" id="view-admin" data-title="教师管理">
             <div class="module-intro admin-intro"><div class="module-number" aria-hidden="true">04</div><div><span class="eyebrow">FACULTY CONTROL · 内容维护</span><h1>维护案例，<br />更新训练。</h1></div><div class="module-note"><strong>受保护入口</strong><p>案例变更会立即影响教学内容，请仅由授权教师操作。</p></div></div>
             <div class="admin-unlock" id="adminUnlock"><form id="adminLoginForm"><span class="section-code">FACULTY ACCESS</span><h2>验证教师身份</h2><p>请输入部署环境中设置的管理密码。</p><label for="adminPassword">管理密码</label><input id="adminPassword" type="password" autocomplete="current-password" required /><button class="solid-button" type="submit">进入管理台 <span>→</span></button></form></div>
-            <div class="admin-dashboard is-hidden" id="adminDashboard"><div class="admin-summary"><div><span>训练案例</span><strong id="adminCaseCount">—</strong></div></div><div class="admin-grid"><section class="admin-panel"><div class="panel-head"><div><span class="section-code">CASE LIBRARY</span><h2>案例训练库</h2></div></div><div class="content-list" id="caseList"></div><form class="upload-form" id="caseGenerateForm"><label for="caseSourceFile">从参考材料生成案例</label><input id="caseSourceFile" type="file" accept=".md,.doc,.docx,.pdf" required /><small>AI 将按口岸卫生检疫场景生成决策题</small><button class="line-button" type="submit">分析文档并生成案例</button></form></section></div></div>
+            <div class="admin-dashboard is-hidden" id="adminDashboard"><div class="admin-summary"><div><span>训练案例</span><strong id="adminCaseCount">—</strong></div></div><div class="admin-grid"><section class="admin-panel"><div class="panel-head"><div><span class="section-code">CASE LIBRARY</span><h2>案例训练库</h2></div></div><div class="content-list" id="caseList"></div></section></div></div>
           </section>
         </main>
       </div>
@@ -90,6 +90,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="sidebar-scrim" id="sidebarScrim"></div>
-    <script src="/static/app.js?v=20260827-14" defer></script>
+    <script src="/static/app.js?v=20260828-16" defer></script>
   </body>
 </html>
