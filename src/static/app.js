@@ -21,10 +21,10 @@ const VIEW_PATHS = {
 };
 
 const state = {
-  config: null,
   atlas: null,
   diseases: [],
   cases: [],
+  casesLoaded: false,
   currentCaseIndex: 0,
   qaMessages: [],
   stageIndex: 0,
@@ -93,8 +93,6 @@ const els = {
   adminPassword: $("#adminPassword"),
   caseList: $("#caseList"),
   adminCaseCount: $("#adminCaseCount"),
-  caseGenerateForm: $("#caseGenerateForm"),
-  caseSourceFile: $("#caseSourceFile"),
   toast: $("#toast"),
 };
 
@@ -249,6 +247,11 @@ function switchView(viewName, updateUrl = true) {
     const hash = viewName === "knowledge" ? "" : `#${viewName}`;
     history.replaceState(null, "", `${location.pathname}${location.search}${hash}`);
   }
+  if (viewName === "atlas") {
+    void ensureAtlas().catch((error) => toast(errorMessage(error), true));
+  } else if (viewName === "cases") {
+    void ensureCases().catch((error) => toast(errorMessage(error), true));
+  }
 }
 
 function flattenAtlas(atlas) {
@@ -305,7 +308,7 @@ function diseaseCardMarkup(disease) {
   return `
     <article class="disease-card" data-disease-card="${escapeHtml(disease.id)}">
       <button class="disease-cover" type="button" data-open-disease="${escapeHtml(disease.id)}" aria-label="查看${escapeHtml(disease.name)}详情">
-        ${cover ? `<img src="${imageUrl(cover.file)}" alt="${escapeHtml(cover.alt || `${disease.name}皮疹`)}" loading="lazy">` : ""}
+        ${cover ? `<img src="${imageUrl(cover.file)}" alt="${escapeHtml(cover.alt || `${disease.name}皮疹`)}" loading="lazy" decoding="async">` : ""}
         <span class="image-tally">${disease.image_count} IMAGE${disease.image_count === 1 ? "" : "S"}</span>
       </button>
       <div class="disease-card-body">
@@ -367,7 +370,7 @@ function openDisease(id) {
     const links = (item.links || []).map((link) => `<a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(link.label)}</a>`).join("");
     return `
       <figure class="detail-figure">
-        <button class="detail-image-button" type="button" data-lightbox-disease="${escapeHtml(disease.id)}" data-lightbox-index="${index}" aria-label="放大查看${escapeHtml(item.alt || disease.name)}"><img src="${imageUrl(item.file)}" alt="${escapeHtml(item.alt || `${disease.name}皮疹`)}" loading="lazy"></button>
+        <button class="detail-image-button" type="button" data-lightbox-disease="${escapeHtml(disease.id)}" data-lightbox-index="${index}" aria-label="放大查看${escapeHtml(item.alt || disease.name)}"><img src="${imageUrl(item.file)}" alt="${escapeHtml(item.alt || `${disease.name}皮疹`)}" loading="lazy" decoding="async"></button>
         <figcaption><div class="figure-source"><span>${escapeHtml(item.source_label)}</span><span>${escapeHtml(item.license)}</span></div><p>${escapeHtml(item.caption || item.provider || "图像出处见来源链接。")}</p>${links ? `<div class="figure-links">${links}</div>` : ""}</figcaption>
       </figure>`;
   }).join("");
@@ -398,7 +401,7 @@ function openComparison() {
   const dimensions = [...new Set(selected.flatMap((disease) => Object.keys(disease.facts || {})))];
   const headers = selected.map((disease) => {
     const cover = disease.images?.[0];
-    return `<th><div class="compare-disease-head">${cover ? `<img src="${imageUrl(cover.file)}" alt="${escapeHtml(disease.name)}皮疹">` : ""}<strong>${escapeHtml(disease.name)}</strong><small>${escapeHtml(disease.english || "")} · ${escapeHtml(disease.category)}</small></div></th>`;
+    return `<th><div class="compare-disease-head">${cover ? `<img src="${imageUrl(cover.file)}" alt="${escapeHtml(disease.name)}皮疹" decoding="async">` : ""}<strong>${escapeHtml(disease.name)}</strong><small>${escapeHtml(disease.english || "")} · ${escapeHtml(disease.category)}</small></div></th>`;
   }).join("");
   const rows = dimensions.map((dimension) => `<tr><td><strong>${escapeHtml(dimension)}</strong></td>${selected.map((disease) => `<td>${escapeHtml(disease.facts?.[dimension] || "—")}</td>`).join("")}</tr>`).join("");
   els.compareDialogContent.innerHTML = `<div class="compare-table-wrap"><table class="compare-table"><thead><tr><th>观察维度</th>${headers}</tr></thead><tbody>${rows}</tbody></table></div>`;
@@ -419,7 +422,7 @@ function messageAtlasGalleryMarkup(diseaseIds = []) {
   const items = figures.map(({ disease, item, index }) => `
     <figure class="message-atlas-item">
       <button type="button" data-lightbox-disease="${escapeHtml(disease.id)}" data-lightbox-index="${index}" aria-label="放大查看${escapeHtml(item.alt || `${disease.name}皮疹`)}">
-        <img src="${imageUrl(item.file)}" alt="${escapeHtml(item.alt || `${disease.name}皮疹`)}" loading="lazy">
+        <img src="${imageUrl(item.file)}" alt="${escapeHtml(item.alt || `${disease.name}皮疹`)}" loading="lazy" decoding="async">
       </button>
       <figcaption><strong>${escapeHtml(disease.name)}</strong><span>${escapeHtml(item.caption || item.source_label || "皮疹图谱")}</span></figcaption>
     </figure>`).join("");
@@ -440,6 +443,64 @@ function appendMessage(role, content, options = {}) {
   return article;
 }
 
+function updateAssistantMessage(article, content, options = {}) {
+  article.removeAttribute("data-loading");
+  const body = $(".message-body", article);
+  if (!body) return;
+  const atlasGallery = messageAtlasGalleryMarkup(options.atlasDiseaseIds);
+  body.innerHTML = `<div class="message-copy">${structuredAnswer(content)}</div>${atlasGallery}`;
+  els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
+}
+
+async function streamKnowledgeAnswer(messages, onEvent) {
+  const response = await fetch("/api/chat/knowledge/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+    body: JSON.stringify({ messages }),
+  });
+  if (!response.ok) {
+    const type = response.headers.get("content-type") || "";
+    const data = type.includes("application/json") ? await response.json() : await response.text();
+    throw new Error(data?.detail || data?.message || `请求失败（${response.status}）`);
+  }
+  if (!response.body) throw new Error("当前浏览器不支持流式回答。");
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let finalData = null;
+
+  const dispatchBlock = (block) => {
+    let event = "message";
+    const dataLines = [];
+    block.split(/\r?\n/).forEach((line) => {
+      if (line.startsWith("event:")) event = line.slice(6).trim();
+      if (line.startsWith("data:")) dataLines.push(line.slice(5).trimStart());
+    });
+    if (!dataLines.length) return;
+    const data = JSON.parse(dataLines.join("\n"));
+    if (event === "error") throw new Error(data.detail || "回答生成失败。");
+    onEvent?.(event, data);
+    if (event === "done") finalData = data;
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+    let match = buffer.match(/\r?\n\r?\n/);
+    while (match && match.index !== undefined) {
+      const block = buffer.slice(0, match.index);
+      buffer = buffer.slice(match.index + match[0].length);
+      if (block.trim()) dispatchBlock(block);
+      match = buffer.match(/\r?\n\r?\n/);
+    }
+    if (done) break;
+  }
+  if (buffer.trim()) dispatchBlock(buffer);
+  if (!finalData) throw new Error("回答流意外中断，请重试。");
+  return finalData;
+}
+
 async function sendKnowledgeQuestion(prompt) {
   const value = prompt.trim();
   if (!value) return;
@@ -451,18 +512,39 @@ async function sendKnowledgeQuestion(prompt) {
   const submit = $("button[type='submit']", els.chatForm);
   setBusy(submit, true, "正在查证…");
   const loading = appendMessage("assistant", "", { loading: true });
-  try {
-    const data = await api("/api/chat/knowledge", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: state.qaMessages }),
+  let liveAnswer = "";
+  let liveRenderFrame = null;
+  const scheduleLiveRender = () => {
+    if (liveRenderFrame !== null) return;
+    liveRenderFrame = window.requestAnimationFrame(() => {
+      liveRenderFrame = null;
+      updateAssistantMessage(loading, liveAnswer.replace(/\s*\[K\d+\]/g, ""));
     });
-    loading.remove();
+  };
+  try {
+    const data = await streamKnowledgeAnswer(state.qaMessages, (event, payload) => {
+      if (event !== "delta") return;
+      liveAnswer += payload.text || "";
+      scheduleLiveRender();
+    });
+    if (liveRenderFrame !== null) window.cancelAnimationFrame(liveRenderFrame);
+    liveRenderFrame = null;
     state.qaMessages.push({ role: "assistant", content: data.answer });
-    appendMessage("assistant", data.answer, { atlasDiseaseIds: data.atlas_disease_ids });
+    updateAssistantMessage(loading, data.answer);
+    if (data.atlas_disease_ids?.length) {
+      void ensureAtlas()
+        .then(() => updateAssistantMessage(loading, data.answer, { atlasDiseaseIds: data.atlas_disease_ids }))
+        .catch(() => {});
+    }
   } catch (error) {
-    loading.remove();
-    appendMessage("assistant", `无法完成回答：${errorMessage(error)}`);
+    if (liveRenderFrame !== null) window.cancelAnimationFrame(liveRenderFrame);
+    liveRenderFrame = null;
+    if (liveAnswer) {
+      updateAssistantMessage(loading, `${liveAnswer}\n\n回答生成中断，请重试。`);
+    } else {
+      loading.remove();
+      appendMessage("assistant", `无法完成回答：${errorMessage(error)}`);
+    }
     toast(errorMessage(error), true);
   } finally {
     setBusy(submit, false);
@@ -628,10 +710,13 @@ async function loadAdminContent() {
     : '<div class="empty-row">案例库目前为空</div>';
 }
 
-async function refreshPublicData() {
-  const [config, caseData] = await Promise.all([api("/api/config"), api("/api/cases")]);
-  state.config = config;
+let atlasLoadPromise = null;
+let casesLoadPromise = null;
+
+async function refreshPublicData(force = false) {
+  const caseData = await api("/api/cases", force ? { cache: "reload" } : {});
   state.cases = caseData.cases || [];
+  state.casesLoaded = true;
   if (state.currentCaseIndex >= state.cases.length) state.currentCaseIndex = 0;
   renderCases();
 }
@@ -643,27 +728,42 @@ async function loadAtlas() {
   renderAtlas();
 }
 
-async function uploadAdminFile(form, input, endpoint, busyLabel) {
-  const file = input.files?.[0];
-  if (!file) return;
-  const button = $("button[type='submit']", form);
-  const formData = new FormData();
-  formData.append("file", file);
-  setBusy(button, true, busyLabel);
-  try {
-    const data = await adminApi(endpoint, { method: "POST", body: formData });
-    toast(data.message);
-    form.reset();
-    await Promise.all([loadAdminContent(), refreshPublicData()]);
-  } catch (error) {
-    toast(errorMessage(error), true);
-  } finally {
-    setBusy(button, false);
+function ensureAtlas() {
+  if (state.atlas) return Promise.resolve(state.atlas);
+  if (!atlasLoadPromise) {
+    atlasLoadPromise = loadAtlas()
+      .then(() => state.atlas)
+      .catch((error) => {
+        atlasLoadPromise = null;
+        throw error;
+      });
   }
+  return atlasLoadPromise;
+}
+
+function ensureCases() {
+  if (state.casesLoaded) return Promise.resolve(state.cases);
+  if (!casesLoadPromise) {
+    casesLoadPromise = refreshPublicData()
+      .then(() => state.cases)
+      .catch((error) => {
+        casesLoadPromise = null;
+        throw error;
+      });
+  }
+  return casesLoadPromise;
 }
 
 function bindEvents() {
-  $$('[data-view]').forEach((button) => button.addEventListener("click", () => switchView(button.dataset.view)));
+  $$('[data-view]').forEach((button) => {
+    button.addEventListener("click", () => switchView(button.dataset.view));
+    const prefetch = () => {
+      if (button.dataset.view === "atlas") void ensureAtlas().catch(() => {});
+      if (button.dataset.view === "cases") void ensureCases().catch(() => {});
+    };
+    button.addEventListener("pointerenter", prefetch, { once: true });
+    button.addEventListener("focus", prefetch, { once: true });
+  });
   els.menuButton.addEventListener("click", () => openSidebar(!els.sidebar.classList.contains("is-open")));
   els.sidebarScrim.addEventListener("click", () => openSidebar(false));
 
@@ -760,7 +860,6 @@ function bindEvents() {
       setBusy(button, false);
     }
   });
-  els.caseGenerateForm.addEventListener("submit", (event) => { event.preventDefault(); uploadAdminFile(els.caseGenerateForm, els.caseSourceFile, "/api/admin/cases/generate", "正在生成案例…"); });
   els.caseList.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-delete-case]");
     if (!button || !confirm("确认移除这个案例？")) return;
@@ -768,7 +867,7 @@ function bindEvents() {
     try {
       const data = await adminApi(`/api/admin/cases/${encodeURIComponent(button.dataset.deleteCase)}`, { method: "DELETE" });
       toast(data.message);
-      await Promise.all([loadAdminContent(), refreshPublicData()]);
+      await Promise.all([loadAdminContent(), refreshPublicData(true)]);
     } catch (error) {
       toast(errorMessage(error), true);
       setBusy(button, false);
@@ -786,11 +885,6 @@ async function init() {
   if (adminRequested) els.adminNav.classList.remove("is-hidden");
   els.chatFeed.innerHTML = initialChatMarkup();
   bindEvents();
-  try {
-    await Promise.all([refreshPublicData(), loadAtlas()]);
-  } catch (error) {
-    toast(errorMessage(error), true);
-  }
 
   if (adminRequested) {
     switchView("admin", false);
@@ -806,6 +900,7 @@ async function init() {
     const requestedView = location.hash.slice(1);
     if ($(`#view-${requestedView}`)) switchView(requestedView, false);
   }
+
 }
 
 init();

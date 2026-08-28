@@ -2,6 +2,8 @@ import json
 import unittest
 from unittest.mock import patch
 
+from fastapi.testclient import TestClient
+
 import src.main as main
 
 
@@ -20,6 +22,8 @@ class KnowledgeAPIIntegrationTests(unittest.TestCase):
         ]
 
         with patch.object(main, "API_KEY", "test-key"), patch.object(
+            main, "RAG_LLM_RERANK_ENABLED", True
+        ), patch.object(
             main, "complete", side_effect=responses
         ) as mocked_complete:
             result = main.knowledge_chat(request)
@@ -33,6 +37,61 @@ class KnowledgeAPIIntegrationTests(unittest.TestCase):
         self.assertIn("**潜伏期：**", answer_prompt)
         self.assertIn("**前驱期（发病早期，约 0—5 天）：**", answer_prompt)
         self.assertIn("只有操作步骤、时间顺序或决策流程确实有先后关系时", answer_prompt)
+
+    def test_default_path_uses_one_model_call(self):
+        request = main.KnowledgeChatRequest(
+            messages=[main.ChatMessage(role="user", content="猴痘潜伏期多久？")]
+        )
+
+        with patch.object(main, "API_KEY", "test-key"), patch.object(
+            main, "RAG_LLM_RERANK_ENABLED", False
+        ), patch.object(
+            main, "complete", return_value="猴痘潜伏期通常为 5 至 21 天。"
+        ) as mocked_complete:
+            result = main.knowledge_chat(request)
+
+        self.assertEqual(mocked_complete.call_count, 1)
+        self.assertEqual(result["retrieval"]["reranker"], "deterministic-fallback")
+
+    def test_streaming_endpoint_emits_incremental_and_final_events(self):
+        client = TestClient(main.app)
+
+        with patch.object(main, "RAG_LLM_RERANK_ENABLED", False), patch.object(
+            main,
+            "stream_completion",
+            return_value=iter(["**潜伏期：** ", "5 至 21 天。"]),
+        ):
+            response = client.post(
+                "/api/chat/knowledge/stream",
+                json={"messages": [{"role": "user", "content": "猴痘潜伏期多久？"}]},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("content-encoding"), None)
+        self.assertIn("event: delta", response.text)
+        self.assertIn("event: done", response.text)
+        self.assertIn("5 至 21 天", response.text)
+
+    def test_long_conversation_only_sends_recent_bounded_history(self):
+        messages = []
+        for index in range(7):
+            messages.extend(
+                [
+                    main.ChatMessage(role="user", content=f"第 {index} 轮问题"),
+                    main.ChatMessage(role="assistant", content=f"第 {index} 轮回答"),
+                ]
+            )
+        messages.append(main.ChatMessage(role="user", content="最后一个问题"))
+        request = main.KnowledgeChatRequest(messages=messages)
+
+        with patch.object(main, "RAG_LLM_RERANK_ENABLED", False):
+            _, model_messages, _, _ = main.knowledge_completion(request)
+
+        history = model_messages[1:]
+        self.assertLessEqual(len(history), main.KNOWLEDGE_HISTORY_MAX_MESSAGES)
+        self.assertEqual(history[0]["role"], "user")
+        self.assertEqual(history[-1]["content"], "最后一个问题")
+        self.assertNotIn("第 0 轮问题", [item["content"] for item in history])
 
     def test_rash_answer_returns_matching_atlas_disease(self):
         request = main.KnowledgeChatRequest(
