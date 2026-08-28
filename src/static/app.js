@@ -374,7 +374,7 @@ function openDisease(id) {
   const inCompare = state.compareIds.has(id);
   els.diseaseDialogContent.innerHTML = `
     <header class="disease-detail-head"><span class="detail-kicker">${escapeHtml(disease.category)} / DISEASE NOTE</span><h2 id="diseaseDialogTitle">${escapeHtml(disease.name)}<small>${escapeHtml(disease.english || "")}</small></h2></header>
-    <div class="detail-actions"><button class="solid-button" type="button" data-ask-disease="${escapeHtml(disease.id)}">带到 AI 问答</button><button class="line-button" type="button" data-toggle-detail-compare="${escapeHtml(disease.id)}">${inCompare ? "移出" : "加入"}并排比较 <span>${inCompare ? "−" : "+"}</span></button></div>
+    <div class="detail-actions"><button class="line-button" type="button" data-toggle-detail-compare="${escapeHtml(disease.id)}">${inCompare ? "移出" : "加入"}并排比较 <span>${inCompare ? "−" : "+"}</span></button></div>
     <section class="detail-facts" aria-label="${escapeHtml(disease.name)}鉴别要点">${facts}</section>
     <div class="detail-gallery-title"><h3>皮疹特征</h3></div>
     <div class="detail-gallery">${figures}</div>
@@ -401,43 +401,39 @@ function openComparison() {
     return `<th><div class="compare-disease-head">${cover ? `<img src="${imageUrl(cover.file)}" alt="${escapeHtml(disease.name)}皮疹">` : ""}<strong>${escapeHtml(disease.name)}</strong><small>${escapeHtml(disease.english || "")} · ${escapeHtml(disease.category)}</small></div></th>`;
   }).join("");
   const rows = dimensions.map((dimension) => `<tr><td><strong>${escapeHtml(dimension)}</strong></td>${selected.map((disease) => `<td>${escapeHtml(disease.facts?.[dimension] || "—")}</td>`).join("")}</tr>`).join("");
-  els.compareDialogContent.innerHTML = `<div class="compare-table-wrap"><table class="compare-table"><thead><tr><th>观察维度</th>${headers}</tr></thead><tbody>${rows}</tbody></table></div><div class="detail-actions"><button class="solid-button" type="button" data-ask-comparison>带着这组候选问 AI</button></div>`;
+  els.compareDialogContent.innerHTML = `<div class="compare-table-wrap"><table class="compare-table"><thead><tr><th>观察维度</th>${headers}</tr></thead><tbody>${rows}</tbody></table></div>`;
   els.compareDialog.showModal();
-}
-
-function askAboutDisease(id) {
-  const disease = diseaseById(id);
-  if (!disease) return;
-  els.diseaseDialog.close();
-  switchView("knowledge");
-  els.chatInput.value = `请结合皮疹图谱和知识库，说明${disease.name}（${disease.english}）的典型皮损形态、发热与出疹关系、关键鉴别点，以及口岸现场还应核实哪些信息？`;
-  autosize(els.chatInput);
-  els.chatInput.focus();
-  toast(`已把“${disease.name}”带入问答，可补充现场信息后发送。`);
-}
-
-function askAboutComparison() {
-  const selected = [...state.compareIds].map(diseaseById).filter(Boolean);
-  if (!selected.length) return;
-  els.compareDialog.close();
-  switchView("knowledge");
-  els.chatInput.value = `请依据皮疹图谱和知识库，并排比较${selected.map((item) => item.name).join("、")}：重点说明发热与出疹关系、皮损形态与分布、最有区分度的体征，以及下一步需要核实的证据。`;
-  autosize(els.chatInput);
-  els.chatInput.focus();
-  toast("候选病种已带入问答。 ");
 }
 
 function initialChatMarkup() {
   return `<section class="knowledge-guide message assistant-message" id="knowledgeGuide" role="note" aria-label="知识问答说明"><div class="message-body"><div class="message-copy"><p>本AI教学工具根据权威诊疗指南和防控方案构建知识库，答案基于该权威知识库进行回答。在下方搜索框输入问题，按Enter发送，Shift+Enter换行。</p></div></div></section>`;
 }
 
+function messageAtlasGalleryMarkup(diseaseIds = []) {
+  const diseases = diseaseIds.map(diseaseById).filter(Boolean);
+  const figures = diseases.flatMap((disease) =>
+    (disease.images || []).map((item, index) => ({ disease, item, index })),
+  ).slice(0, 16);
+  if (!figures.length) return "";
+  const diseaseNames = diseases.map((disease) => disease.name).join("、");
+  const items = figures.map(({ disease, item, index }) => `
+    <figure class="message-atlas-item">
+      <button type="button" data-lightbox-disease="${escapeHtml(disease.id)}" data-lightbox-index="${index}" aria-label="放大查看${escapeHtml(item.alt || `${disease.name}皮疹`)}">
+        <img src="${imageUrl(item.file)}" alt="${escapeHtml(item.alt || `${disease.name}皮疹`)}" loading="lazy">
+      </button>
+      <figcaption><strong>${escapeHtml(disease.name)}</strong><span>${escapeHtml(item.caption || item.source_label || "皮疹图谱")}</span></figcaption>
+    </figure>`).join("");
+  return `<section class="message-atlas-gallery" aria-label="${escapeHtml(diseaseNames)}皮疹图谱"><div class="message-atlas-head"><strong>相关皮疹图谱</strong><span>${figures.length} 张 · 横向滑动查看</span></div><div class="message-atlas-track ${figures.length === 1 ? "is-single" : ""}" tabindex="0">${items}</div></section>`;
+}
+
 function appendMessage(role, content, options = {}) {
   const article = document.createElement("article");
   article.className = `message ${role === "user" ? "user-message" : "assistant-message"}`;
   if (options.loading) article.dataset.loading = "true";
+  const atlasGallery = role === "assistant" ? messageAtlasGalleryMarkup(options.atlasDiseaseIds) : "";
   const body = options.loading
     ? '<span class="loading-dots" aria-label="正在生成回答"><i></i><i></i><i></i></span>'
-    : `<div class="message-copy">${structuredAnswer(content)}</div>${options.showImage ? '<figure class="message-figure"><img class="message-image" src="/assets/rash-atlas/images/mpox_12761.webp" alt="猴痘皮疹典型临床特征参考图"><figcaption>图谱参考 · 猴痘典型皮损形态</figcaption></figure>' : ""}`;
+    : `<div class="message-copy">${structuredAnswer(content)}</div>${atlasGallery}`;
   article.innerHTML = `<div class="message-body">${body}</div>`;
   els.chatFeed.append(article);
   els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
@@ -463,7 +459,7 @@ async function sendKnowledgeQuestion(prompt) {
     });
     loading.remove();
     state.qaMessages.push({ role: "assistant", content: data.answer });
-    appendMessage("assistant", data.answer, { showImage: data.show_mpox_image });
+    appendMessage("assistant", data.answer, { atlasDiseaseIds: data.atlas_disease_ids });
   } catch (error) {
     loading.remove();
     appendMessage("assistant", `无法完成回答：${errorMessage(error)}`);
@@ -706,11 +702,10 @@ function bindEvents() {
     if (lightbox) openLightbox(lightbox.dataset.lightboxDisease, Number(lightbox.dataset.lightboxIndex));
     const toggle = event.target.closest("[data-toggle-detail-compare]");
     if (toggle) setCompare(toggle.dataset.toggleDetailCompare, !state.compareIds.has(toggle.dataset.toggleDetailCompare));
-    const ask = event.target.closest("[data-ask-disease]");
-    if (ask) askAboutDisease(ask.dataset.askDisease);
   });
-  els.compareDialogContent.addEventListener("click", (event) => {
-    if (event.target.closest("[data-ask-comparison]")) askAboutComparison();
+  els.chatFeed.addEventListener("click", (event) => {
+    const lightbox = event.target.closest("[data-lightbox-disease]");
+    if (lightbox) openLightbox(lightbox.dataset.lightboxDisease, Number(lightbox.dataset.lightboxIndex));
   });
   $$('[data-close-dialog]').forEach((button) => button.addEventListener("click", () => $(`#${button.dataset.closeDialog}`)?.close()));
   [els.diseaseDialog, els.compareDialog, els.imageDialog].forEach((dialog) => dialog.addEventListener("click", (event) => {

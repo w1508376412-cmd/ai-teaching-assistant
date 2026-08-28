@@ -38,6 +38,28 @@ MODEL_NAME = os.getenv("MODEL_NAME", "deepseek-v4-flash")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
 RAG_CANDIDATE_K = int(os.getenv("RAG_CANDIDATE_K", "16"))
 RAG_CONTEXT_K = int(os.getenv("RAG_CONTEXT_K", "8"))
+RASH_DESCRIPTION_TERMS = (
+    "皮疹",
+    "皮损",
+    "出疹",
+    "斑疹",
+    "斑丘疹",
+    "丘疹",
+    "红斑",
+    "水疱",
+    "大疱",
+    "脓疱",
+    "疱液",
+    "结痂",
+    "脱屑",
+    "鳞屑",
+    "紫癜",
+    "瘀点",
+    "瘀斑",
+    "风团",
+    "糜烂",
+    "黏膜疹",
+)
 
 mimetypes.add_type("image/webp", ".webp")
 mimetypes.add_type("image/svg+xml", ".svg")
@@ -173,6 +195,40 @@ def atlas_reference(diseases: list[dict] | None = None) -> str:
             f"{disease.get('category', '')}）：{fact_text}"
         )
     return "\n".join(lines)
+
+
+def atlas_disease_ids_for_answer(question: str, answer: str) -> list[str]:
+    """Return atlas diseases explicitly discussed in a rash-related answer."""
+    combined = f"{question}\n{answer}"
+    searchable = combined.casefold()
+    mentioned: list[tuple[int, dict, list[str]]] = []
+
+    for disease in atlas_diseases():
+        labels = [str(disease.get("name", "")).strip()]
+        english = str(disease.get("english", "")).strip()
+        if english:
+            labels.append(english)
+            base_english = re.split(r"\s*[（(/]", english, maxsplit=1)[0].strip()
+            if len(base_english) >= 4:
+                labels.append(base_english)
+        positions = [searchable.find(label.casefold()) for label in labels if label]
+        positions = [position for position in positions if position >= 0]
+        if positions:
+            mentioned.append((min(positions), disease, labels))
+
+    if not mentioned:
+        return []
+
+    rash_context = searchable
+    for _, _, labels in mentioned:
+        for label in labels:
+            if label:
+                rash_context = rash_context.replace(label.casefold(), "")
+    if not any(term.casefold() in rash_context for term in RASH_DESCRIPTION_TERMS):
+        return []
+
+    mentioned.sort(key=lambda item: item[0])
+    return [str(disease.get("id")) for _, disease, _ in mentioned[:4] if disease.get("id")]
 
 
 def select_atlas_diseases(query: str, limit: int = 10) -> list[dict]:
@@ -426,8 +482,6 @@ def knowledge_chat(request: KnowledgeChatRequest) -> dict:
    - 只有操作步骤、时间顺序或决策流程确实有先后关系时，才使用“### 1. 标题”“### 2. 标题”等编号层级；普通症状、特征和鉴别维度不要机械编号。
    - 层级通常控制在 2—5 个部分；不要为了形式强行拆分内容，不要重复同一结论，不要使用“我来帮你梳理”等铺垫话术，也不要使用超过三级的层级。
 
-图片规则：只有当学员专门询问猴痘皮疹形态、特点或演变时，回答中才可包含标记 [显示猴痘皮疹图]。普通定义或症状列表不得包含该标记。
-
 RAG 检索证据：
 {context or '未检索到可用证据。'}"""
     answer = complete(
@@ -436,11 +490,10 @@ RAG 检索证据：
             *[message.model_dump() for message in request.messages],
         ]
     )
-    cleaned_answer = answer.replace("[显示猴痘皮疹图]", "")
-    cleaned_answer = re.sub(r"\s*\[K\d+\]", "", cleaned_answer).strip()
+    cleaned_answer = re.sub(r"\s*\[K\d+\]", "", answer).strip()
     return {
         "answer": cleaned_answer,
-        "show_mpox_image": "[显示猴痘皮疹图]" in answer,
+        "atlas_disease_ids": atlas_disease_ids_for_answer(latest_question, cleaned_answer),
         "retrieval": retrieval,
     }
 
