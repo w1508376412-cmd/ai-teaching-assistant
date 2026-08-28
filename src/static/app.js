@@ -435,12 +435,18 @@ function appendMessage(role, content, options = {}) {
   if (options.loading) article.dataset.loading = "true";
   const atlasGallery = role === "assistant" ? messageAtlasGalleryMarkup(options.atlasDiseaseIds) : "";
   const body = options.loading
-    ? '<span class="loading-dots" aria-label="正在生成回答"><i></i><i></i><i></i></span>'
+    ? '<div class="message-loading"><span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>正在检索知识库并生成回答…</span></div>'
     : `<div class="message-copy">${structuredAnswer(content)}</div>${atlasGallery}`;
   article.innerHTML = `<div class="message-body">${body}</div>`;
   els.chatFeed.append(article);
   els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
   return article;
+}
+
+function updateAssistantLoading(article, label) {
+  if (!article.dataset.loading) return;
+  const status = $(".message-loading > span:last-child", article);
+  if (status) status.textContent = label;
 }
 
 function updateAssistantMessage(article, content, options = {}) {
@@ -498,12 +504,24 @@ async function streamKnowledgeAnswer(messages, onEvent) {
   }
   if (buffer.trim()) dispatchBlock(buffer);
   if (!finalData) throw new Error("回答流意外中断，请重试。");
+  if (typeof finalData.answer !== "string" || !finalData.answer.trim()) {
+    throw new Error("AI 未返回有效回答，请重试。");
+  }
   return finalData;
 }
+
+let knowledgeRequestActive = false;
 
 async function sendKnowledgeQuestion(prompt) {
   const value = prompt.trim();
   if (!value) return;
+  if (knowledgeRequestActive) {
+    toast("上一条回答仍在生成，请稍候。", true);
+    return;
+  }
+  knowledgeRequestActive = true;
+  els.chatForm.setAttribute("aria-busy", "true");
+  els.chatInput.disabled = true;
   $("#knowledgeGuide", els.chatFeed)?.remove();
   state.qaMessages.push({ role: "user", content: value });
   appendMessage("user", value);
@@ -523,9 +541,14 @@ async function sendKnowledgeQuestion(prompt) {
   };
   try {
     const data = await streamKnowledgeAnswer(state.qaMessages, (event, payload) => {
+      if (event === "meta") {
+        updateAssistantLoading(loading, "已找到相关资料，正在组织回答…");
+        return;
+      }
       if (event !== "delta") return;
       liveAnswer += payload.text || "";
-      scheduleLiveRender();
+      const visibleAnswer = liveAnswer.replace(/\s*\[K\d+\]/g, "").trim();
+      if (visibleAnswer) scheduleLiveRender();
     });
     if (liveRenderFrame !== null) window.cancelAnimationFrame(liveRenderFrame);
     liveRenderFrame = null;
@@ -539,15 +562,23 @@ async function sendKnowledgeQuestion(prompt) {
   } catch (error) {
     if (liveRenderFrame !== null) window.cancelAnimationFrame(liveRenderFrame);
     liveRenderFrame = null;
-    if (liveAnswer) {
-      updateAssistantMessage(loading, `${liveAnswer}\n\n回答生成中断，请重试。`);
+    const visibleAnswer = liveAnswer.replace(/\s*\[K\d+\]/g, "").trim();
+    if (visibleAnswer) {
+      updateAssistantMessage(loading, `${visibleAnswer}\n\n回答生成中断，请重试。`);
     } else {
       loading.remove();
       appendMessage("assistant", `无法完成回答：${errorMessage(error)}`);
     }
+    if (state.qaMessages.at(-1)?.role === "user" && state.qaMessages.at(-1)?.content === value) {
+      state.qaMessages.pop();
+    }
     toast(errorMessage(error), true);
   } finally {
     setBusy(submit, false);
+    knowledgeRequestActive = false;
+    els.chatForm.setAttribute("aria-busy", "false");
+    els.chatInput.disabled = false;
+    els.chatInput.focus();
   }
 }
 
@@ -822,6 +853,10 @@ function bindEvents() {
   els.chatForm.addEventListener("submit", (event) => { event.preventDefault(); sendKnowledgeQuestion(els.chatInput.value); });
   $$('[data-prompt]').forEach((button) => button.addEventListener("click", () => sendKnowledgeQuestion(button.dataset.prompt)));
   els.clearChat?.addEventListener("click", () => {
+    if (knowledgeRequestActive) {
+      toast("请等待当前回答完成后再清空记录。", true);
+      return;
+    }
     state.qaMessages = [];
     els.chatFeed.innerHTML = initialChatMarkup();
     toast("问答记录已清空");
