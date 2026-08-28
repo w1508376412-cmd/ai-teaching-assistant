@@ -209,6 +209,22 @@ function toast(message, isError = false) {
 
 function setBusy(button, busy, label = "处理中…") {
   if (!button) return;
+  if (button.hasAttribute("data-icon-only")) {
+    if (busy) {
+      if (!button.dataset.originalLabel) button.dataset.originalLabel = button.getAttribute("aria-label") || "发送";
+      button.setAttribute("aria-label", label);
+      button.setAttribute("title", label);
+      button.classList.add("is-busy");
+      button.disabled = true;
+    } else {
+      const originalLabel = button.dataset.originalLabel || "发送";
+      button.setAttribute("aria-label", originalLabel);
+      button.setAttribute("title", originalLabel);
+      button.classList.remove("is-busy");
+      button.disabled = false;
+    }
+    return;
+  }
   if (busy) {
     if (!button.dataset.original) button.dataset.original = button.innerHTML;
     button.textContent = label;
