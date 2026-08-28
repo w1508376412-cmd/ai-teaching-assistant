@@ -72,38 +72,6 @@ class KnowledgeAPIIntegrationTests(unittest.TestCase):
         self.assertIn("event: done", response.text)
         self.assertIn("5 至 21 天", response.text)
 
-    def test_empty_stream_falls_back_to_complete_answer(self):
-        client = TestClient(main.app)
-
-        with patch.object(main, "RAG_LLM_RERANK_ENABLED", False), patch.object(
-            main, "stream_completion", return_value=iter([])
-        ), patch.object(
-            main, "complete", return_value="登革热常见急性发热、头痛和肌肉关节痛。"
-        ) as mocked_complete:
-            response = client.post(
-                "/api/chat/knowledge/stream",
-                json={"messages": [{"role": "user", "content": "登革热的临床表现"}]},
-            )
-
-        self.assertEqual(mocked_complete.call_count, 1)
-        self.assertIn("event: delta", response.text)
-        self.assertIn("event: done", response.text)
-        self.assertIn("登革热常见急性发热", response.text)
-
-    def test_empty_stream_never_returns_blank_done_event(self):
-        client = TestClient(main.app)
-
-        with patch.object(main, "RAG_LLM_RERANK_ENABLED", False), patch.object(
-            main, "stream_completion", return_value=iter([])
-        ), patch.object(main, "complete", return_value=""):
-            response = client.post(
-                "/api/chat/knowledge/stream",
-                json={"messages": [{"role": "user", "content": "登革热的临床表现"}]},
-            )
-
-        self.assertIn("event: error", response.text)
-        self.assertNotIn("event: done", response.text)
-
     def test_long_conversation_only_sends_recent_bounded_history(self):
         messages = []
         for index in range(7):

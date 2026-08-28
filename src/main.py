@@ -582,19 +582,9 @@ def knowledge_chat_stream(request: KnowledgeChatRequest) -> StreamingResponse:
             for delta in stream_completion(messages):
                 answer_parts.append(delta)
                 yield sse_event("delta", {"text": delta})
-            if not "".join(answer_parts).strip():
-                fallback_answer = complete(messages).strip()
-                if fallback_answer:
-                    answer_parts.append(fallback_answer)
-                    yield sse_event("delta", {"text": fallback_answer})
             cleaned_answer = re.sub(
                 r"\s*\[K\d+\]", "", "".join(answer_parts)
             ).strip()
-            if not cleaned_answer:
-                raise HTTPException(
-                    status_code=502,
-                    detail="AI 未返回有效回答，请重新提交问题。",
-                )
             yield sse_event(
                 "done",
                 {

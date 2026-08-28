@@ -4994,23 +4994,6 @@ body {
   align-items: center;
 }
 
-#view-knowledge .message-loading {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  min-height: 28px;
-  color: var(--consult-muted);
-  font-size: 10px;
-}
-
-#view-knowledge .composer[aria-busy="true"] {
-  opacity: 0.72;
-}
-
-#view-knowledge .composer textarea:disabled {
-  cursor: progress;
-}
-
 #view-knowledge .chat-input-dock {
   padding: 12px;
   background: rgba(255, 255, 255, 0.94);
