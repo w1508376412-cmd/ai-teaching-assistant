@@ -1020,7 +1020,8 @@ p {
 .atlas-search > span,
 .filter-group legend,
 .lab-form > label,
-.admin-unlock label {
+.admin-unlock label,
+.upload-form label {
   color: var(--muted);
   font-family: var(--utility);
   font-size: 9px;
@@ -2145,6 +2146,37 @@ p {
   color: var(--muted);
   text-align: center;
   font-size: 10px;
+}
+
+.upload-form {
+  padding-top: 20px;
+  margin-top: 20px;
+  border-top: 2px solid var(--deep);
+}
+
+.upload-form label,
+.upload-form small,
+.upload-form input {
+  display: block;
+  width: 100%;
+}
+
+.upload-form input {
+  padding: 10px;
+  margin-top: 8px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  font-size: 9px;
+}
+
+.upload-form small {
+  margin: 7px 0 13px;
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.upload-form .line-button {
+  width: 100%;
 }
 
 .compare-dock {
@@ -3604,7 +3636,8 @@ a:focus-visible {
 }
 
 .atlas-search input,
-.admin-unlock input {
+.admin-unlock input,
+.upload-form input {
   background: #f4f4f2;
   border: 0;
   border-radius: 9px;
@@ -3883,6 +3916,10 @@ a:focus-visible {
 
 .admin-summary strong {
   color: var(--ink);
+}
+
+.upload-form {
+  border-color: var(--ink);
 }
 
 .compare-dock {

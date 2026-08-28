@@ -1,23 +1,23 @@
+import io
 import json
 import mimetypes
 import os
 import re
+import tempfile
 from functools import lru_cache
 from pathlib import Path
-from typing import Iterator, Literal, TYPE_CHECKING
+from typing import Literal
 
-from fastapi import Depends, FastAPI, Header, HTTPException
-from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.requests import Request
-from fastapi.responses import FileResponse, StreamingResponse
+import docx
+import PyPDF2
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from openai import OpenAI
 from pydantic import BaseModel, Field
+from spire.doc import Document
 
 from src.rag import RetrievalCandidate, build_context, get_rag
-
-
-if TYPE_CHECKING:
-    from openai import OpenAI
 
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -38,26 +38,6 @@ MODEL_NAME = os.getenv("MODEL_NAME", "deepseek-v4-flash")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
 RAG_CANDIDATE_K = int(os.getenv("RAG_CANDIDATE_K", "16"))
 RAG_CONTEXT_K = int(os.getenv("RAG_CONTEXT_K", "8"))
-RAG_LLM_RERANK_ENABLED = os.getenv("RAG_LLM_RERANK_ENABLED", "false").lower() in {
-    "1",
-    "true",
-    "yes",
-    "on",
-}
-AI_MAX_TOKENS = int(os.getenv("AI_MAX_TOKENS", "1200"))
-AI_TIMEOUT_SECONDS = float(os.getenv("AI_TIMEOUT_SECONDS", "45"))
-KNOWLEDGE_HISTORY_MAX_MESSAGES = max(
-    1, int(os.getenv("KNOWLEDGE_HISTORY_MAX_MESSAGES", "8"))
-)
-KNOWLEDGE_HISTORY_MAX_CHARACTERS = max(
-    1000, int(os.getenv("KNOWLEDGE_HISTORY_MAX_CHARACTERS", "12000"))
-)
-RETRIEVAL_HISTORY_QUESTIONS = max(
-    1, int(os.getenv("RETRIEVAL_HISTORY_QUESTIONS", "2"))
-)
-RETRIEVAL_QUERY_MAX_CHARACTERS = max(
-    500, int(os.getenv("RETRIEVAL_QUERY_MAX_CHARACTERS", "4000"))
-)
 RASH_DESCRIPTION_TERMS = (
     "皮疹",
     "皮损",
@@ -89,31 +69,8 @@ app = FastAPI(
     description="临床皮疹图谱、知识库问答、现场案例推演与教师内容管理",
     version="4.0.0",
 )
-app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
-
-
-@app.middleware("http")
-async def add_cache_headers(request: Request, call_next):
-    response = await call_next(request)
-    if request.method != "GET" or response.status_code != 200:
-        return response
-
-    path = request.url.path
-    if path.startswith(("/static/", "/assets/")):
-        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-    elif path == "/api/rash-atlas":
-        response.headers["Cache-Control"] = (
-            "public, max-age=3600, stale-while-revalidate=86400"
-        )
-    elif path in {"/api/config", "/api/cases", "/api/knowledge"}:
-        response.headers["Cache-Control"] = (
-            "public, max-age=60, stale-while-revalidate=300"
-        )
-    elif path == "/":
-        response.headers["Cache-Control"] = "no-cache"
-    return response
 
 
 class ChatMessage(BaseModel):
@@ -141,21 +98,13 @@ class RashDifferentialRequest(BaseModel):
     candidate_ids: list[str] = Field(default_factory=list, max_length=5)
 
 
-@lru_cache(maxsize=1)
-def get_client() -> "OpenAI":
+def get_client() -> OpenAI:
     if not API_KEY:
         raise HTTPException(
             status_code=503,
             detail="AI 服务尚未配置，请在 Zeabur 中设置 DEEPSEEK_API_KEY。",
         )
-    from openai import OpenAI
-
-    return OpenAI(
-        api_key=API_KEY,
-        base_url=BASE_URL,
-        timeout=AI_TIMEOUT_SECONDS,
-        max_retries=1,
-    )
+    return OpenAI(api_key=API_KEY, base_url=BASE_URL)
 
 
 def require_admin(x_admin_password: str | None = Header(default=None)) -> None:
@@ -309,43 +258,53 @@ def public_case(case: dict) -> dict:
     return {key: value for key, value in case.items() if key not in hidden}
 
 
+def safe_stem(filename: str) -> str:
+    stem = Path(filename).stem.strip()
+    cleaned = re.sub(r"[^\w\-（）()]+", "_", stem, flags=re.UNICODE).strip("_")
+    if not cleaned:
+        raise HTTPException(status_code=400, detail="文件名无效。")
+    return cleaned[:100]
+
+
+def extract_document(filename: str, content: bytes) -> str:
+    extension = Path(filename).suffix.lower()
+    try:
+        if extension == ".md":
+            return content.decode("utf-8")
+        if extension == ".docx":
+            document = docx.Document(io.BytesIO(content))
+            return "\n".join(paragraph.text for paragraph in document.paragraphs)
+        if extension == ".pdf":
+            reader = PyPDF2.PdfReader(io.BytesIO(content))
+            return "\n".join(page.extract_text() or "" for page in reader.pages)
+        if extension == ".doc":
+            temp_path = ""
+            try:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".doc") as temp_file:
+                    temp_file.write(content)
+                    temp_path = temp_file.name
+                document = Document()
+                document.LoadFromFile(temp_path)
+                return document.GetText()
+            finally:
+                if temp_path and os.path.exists(temp_path):
+                    os.remove(temp_path)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=f"文档解析失败：{exc}") from exc
+    raise HTTPException(status_code=415, detail="仅支持 .md、.docx、.doc 和 .pdf 文件。")
+
+
 def complete(messages: list[dict]) -> str:
     try:
         response = get_client().chat.completions.create(
             model=MODEL_NAME,
             messages=messages,
-            max_tokens=AI_MAX_TOKENS,
         )
         return response.choices[0].message.content or ""
     except HTTPException:
         raise
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"AI 服务调用失败：{exc}") from exc
-
-
-def stream_completion(messages: list[dict]) -> Iterator[str]:
-    stream = None
-    try:
-        stream = get_client().chat.completions.create(
-            model=MODEL_NAME,
-            messages=messages,
-            max_tokens=AI_MAX_TOKENS,
-            stream=True,
-        )
-        for chunk in stream:
-            if not chunk.choices:
-                continue
-            delta = chunk.choices[0].delta.content or ""
-            if delta:
-                yield delta
-    except HTTPException:
-        raise
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"AI 服务调用失败：{exc}") from exc
-    finally:
-        close = getattr(stream, "close", None)
-        if callable(close):
-            close()
 
 
 def rag_index():
@@ -380,7 +339,7 @@ def rerank_candidates(
 ) -> tuple[list[RetrievalCandidate], str]:
     if not candidates:
         return [], "none"
-    if not API_KEY or not RAG_LLM_RERANK_ENABLED:
+    if not API_KEY:
         return candidates[:limit], "deterministic-fallback"
 
     candidate_payload = [
@@ -426,64 +385,6 @@ def retrieve_knowledge(query: str) -> tuple[str, list[dict], dict]:
         "reranker": reranker,
         "retrieval": "bm25+tfidf-vector+weighted-rrf",
     }
-
-
-def limited_chat_history(messages: list[ChatMessage]) -> list[dict]:
-    selected: list[ChatMessage] = []
-    characters = 0
-    for message in reversed(messages):
-        if selected and (
-            len(selected) >= KNOWLEDGE_HISTORY_MAX_MESSAGES
-            or characters + len(message.content) > KNOWLEDGE_HISTORY_MAX_CHARACTERS
-        ):
-            break
-        selected.append(message)
-        characters += len(message.content)
-
-    selected.reverse()
-    while selected and selected[0].role == "assistant":
-        selected.pop(0)
-    return [message.model_dump() for message in selected]
-
-
-def knowledge_completion(
-    request: KnowledgeChatRequest,
-) -> tuple[str, list[dict], dict, str]:
-    latest_question = request.messages[-1].content
-    recent_user_questions = [
-        message.content
-        for message in request.messages
-        if message.role == "user"
-    ][-RETRIEVAL_HISTORY_QUESTIONS:]
-    retrieval_query = ("\n".join(recent_user_questions) or latest_question)[
-        -RETRIEVAL_QUERY_MAX_CHARACTERS:
-    ]
-    context, _, retrieval = retrieve_knowledge(retrieval_query)
-    system_prompt = f"""你是一个专业的口岸卫生检疫与现场流行病学教学助手。
-请严格依据下方 RAG 检索证据回答学员问题；证据没有覆盖的内容必须明确说明依据不足，不能依靠记忆补写。
-
-回答规则：
-1. 回答应直接、专业、便于教学，不要显示来源编号、引用卡片或 [K#] 标注。
-2. 若证据之间存在差异，明确指出差异；证据没有覆盖的内容必须说明依据不足。
-3. 不要在结尾添加扩展建议。
-4. 先判断问题复杂度，再选择排版方式：
-   - 简单事实或几句话即可讲清的问题，直接用 1—3 个简短自然段回答，不添加标题、序号或项目符号。
-   - 涉及多个阶段、维度、鉴别点或处置步骤的问题，先用一句简洁的话概括核心结论，并用 **加粗** 标出 2—4 个真正关键的词语。
-   - 单个事实采用“**潜伏期：** 正文”的标签式段落；一个阶段包含多个表现时，先单独写“**前驱期（发病早期，约 0—5 天）：**”，再用“- ”列出简短要点。每个要点只表达一个主要信息。
-   - 只有操作步骤、时间顺序或决策流程确实有先后关系时，才使用“### 1. 标题”“### 2. 标题”等编号层级；普通症状、特征和鉴别维度不要机械编号。
-   - 层级通常控制在 2—5 个部分；不要为了形式强行拆分内容，不要重复同一结论，不要使用“我来帮你梳理”等铺垫话术，也不要使用超过三级的层级。
-
-RAG 检索证据：
-{context or '未检索到可用证据。'}"""
-    messages = [
-        {"role": "system", "content": system_prompt},
-        *limited_chat_history(request.messages),
-    ]
-    return latest_question, messages, retrieval, context
-
-
-def sse_event(event: str, data: dict) -> str:
-    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
 @app.get("/", include_in_schema=False)
@@ -561,53 +462,40 @@ def knowledge_index() -> dict:
 
 @app.post("/api/chat/knowledge")
 def knowledge_chat(request: KnowledgeChatRequest) -> dict:
-    latest_question, messages, retrieval, _ = knowledge_completion(request)
-    answer = complete(messages)
+    latest_question = request.messages[-1].content
+    recent_user_questions = [
+        message.content for message in request.messages[-6:] if message.role == "user"
+    ]
+    retrieval_query = "\n".join(recent_user_questions) or latest_question
+    context, citations, retrieval = retrieve_knowledge(retrieval_query)
+    system_prompt = f"""你是一个专业的口岸卫生检疫与现场流行病学教学助手。
+请严格依据下方 RAG 检索证据回答学员问题；证据没有覆盖的内容必须明确说明依据不足，不能依靠记忆补写。
+
+回答规则：
+1. 回答应直接、专业、便于教学，不要显示来源编号、引用卡片或 [K#] 标注。
+2. 若证据之间存在差异，明确指出差异；证据没有覆盖的内容必须说明依据不足。
+3. 不要在结尾添加扩展建议。
+4. 先判断问题复杂度，再选择排版方式：
+   - 简单事实或几句话即可讲清的问题，直接用 1—3 个简短自然段回答，不添加标题、序号或项目符号。
+   - 涉及多个阶段、维度、鉴别点或处置步骤的问题，先用一句简洁的话概括核心结论，并用 **加粗** 标出 2—4 个真正关键的词语。
+   - 单个事实采用“**潜伏期：** 正文”的标签式段落；一个阶段包含多个表现时，先单独写“**前驱期（发病早期，约 0—5 天）：**”，再用“- ”列出简短要点。每个要点只表达一个主要信息。
+   - 只有操作步骤、时间顺序或决策流程确实有先后关系时，才使用“### 1. 标题”“### 2. 标题”等编号层级；普通症状、特征和鉴别维度不要机械编号。
+   - 层级通常控制在 2—5 个部分；不要为了形式强行拆分内容，不要重复同一结论，不要使用“我来帮你梳理”等铺垫话术，也不要使用超过三级的层级。
+
+RAG 检索证据：
+{context or '未检索到可用证据。'}"""
+    answer = complete(
+        [
+            {"role": "system", "content": system_prompt},
+            *[message.model_dump() for message in request.messages],
+        ]
+    )
     cleaned_answer = re.sub(r"\s*\[K\d+\]", "", answer).strip()
     return {
         "answer": cleaned_answer,
         "atlas_disease_ids": atlas_disease_ids_for_answer(latest_question, cleaned_answer),
         "retrieval": retrieval,
     }
-
-
-@app.post("/api/chat/knowledge/stream")
-def knowledge_chat_stream(request: KnowledgeChatRequest) -> StreamingResponse:
-    latest_question, messages, retrieval, _ = knowledge_completion(request)
-
-    def events() -> Iterator[str]:
-        answer_parts: list[str] = []
-        yield sse_event("meta", {"retrieval": retrieval})
-        try:
-            for delta in stream_completion(messages):
-                answer_parts.append(delta)
-                yield sse_event("delta", {"text": delta})
-            cleaned_answer = re.sub(
-                r"\s*\[K\d+\]", "", "".join(answer_parts)
-            ).strip()
-            yield sse_event(
-                "done",
-                {
-                    "answer": cleaned_answer,
-                    "atlas_disease_ids": atlas_disease_ids_for_answer(
-                        latest_question, cleaned_answer
-                    ),
-                    "retrieval": retrieval,
-                },
-            )
-        except HTTPException as exc:
-            yield sse_event("error", {"detail": str(exc.detail)})
-        except Exception as exc:
-            yield sse_event("error", {"detail": f"AI 服务调用失败：{exc}"})
-
-    return StreamingResponse(
-        events(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache, no-transform",
-            "X-Accel-Buffering": "no",
-        },
-    )
 
 
 @app.get("/api/cases")
@@ -708,3 +596,47 @@ def delete_case(filename: str, _: None = Depends(require_admin)) -> dict:
         raise HTTPException(status_code=404, detail="案例不存在。")
     path.unlink()
     return {"message": f"案例《{path.stem}》已移除。"}
+
+
+@app.post("/api/admin/cases/generate")
+async def generate_case(
+    file: UploadFile = File(...), _: None = Depends(require_admin)
+) -> dict:
+    filename = file.filename or ""
+    content = extract_document(filename, await file.read())
+    document_name = safe_stem(filename)
+    prompt = f"""你是专业的海关卫生检疫业务教学设计师。根据下方文档设计一个交互式决策判断案例。
+
+参考文档：
+{content[:8000]}
+
+要求：
+1. 场景限定为口岸卫生检疫，海关人员不得开具处方或实施临床治疗。
+2. 背景与病例信息不得直接出现目标传染病名称，学员应根据表现和流行病学史推断。
+3. 处置措施聚焦流调、采样、防护、通报与闭环转运；诊断方法聚焦实验室检测。
+4. 只返回合法 JSON，不要使用 Markdown 代码块。
+
+JSON 结构：
+{{
+  "id": "gen_{document_name[:24]}",
+  "format": "interactive_v2",
+  "title": "案例标题",
+  "background": "客观场景背景",
+  "patient_info": {{"年龄":"", "性别":"", "旅行史":"", "症状":[], "发病时间":"", "接触史":""}},
+  "options": {{"possible_diseases":[], "measures":[], "treatments":[]}},
+  "correct_answers": {{"possible_diseases":[], "measures":[], "treatments":[]}},
+  "reference_sop": "引用依据"
+}}"""
+    raw = complete([{"role": "system", "content": prompt}]).strip()
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+    try:
+        case = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=502, detail="AI 返回的案例不是合法 JSON。") from exc
+
+    case_id = safe_stem(str(case.get("id") or f"gen_{document_name}"))
+    case["id"] = case_id
+    destination = CASES_DIR / f"{case_id}.json"
+    destination.write_text(json.dumps(case, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {"message": f"案例《{case.get('title', case_id)}》已生成。", "case": public_case(case)}

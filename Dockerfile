@@ -9,10 +9,7 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY src ./src
-COPY rag_data ./rag_data
-COPY cases ./cases
-COPY assets/rash-atlas ./assets/rash-atlas
+COPY . .
 
 EXPOSE 8501
 

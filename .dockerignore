@@ -4,8 +4,3 @@ __pycache__
 *.pyc
 *.log
 .DS_Store
-exports
-knowledge_base
-tests
-scripts
-assets/mpox_rash.png
