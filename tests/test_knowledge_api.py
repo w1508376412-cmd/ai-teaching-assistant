@@ -72,6 +72,35 @@ class KnowledgeAPIIntegrationTests(unittest.TestCase):
         self.assertIn("event: done", response.text)
         self.assertIn("5 至 21 天", response.text)
 
+    def test_streaming_endpoint_continues_after_length_limit(self):
+        client = TestClient(main.app)
+        calls = []
+
+        def fake_stream(messages, *, max_tokens, state):
+            calls.append((messages, max_tokens))
+            state.provider_observed = True
+            if len(calls) == 1:
+                state.finish_reason = "length"
+                yield "**急性发热期：**\n- 急性起病，"
+            else:
+                state.finish_reason = "stop"
+                yield "伴有高热和头痛。"
+
+        with patch.object(main, "RAG_LLM_RERANK_ENABLED", False), patch.object(
+            main, "stream_completion", side_effect=fake_stream
+        ):
+            response = client.post(
+                "/api/chat/knowledge/stream",
+                json={"messages": [{"role": "user", "content": "登革热的临床表现"}]},
+            )
+
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(calls[0][1], main.KNOWLEDGE_MAX_TOKENS)
+        self.assertEqual(calls[1][1], main.KNOWLEDGE_CONTINUATION_MAX_TOKENS)
+        self.assertIn("上一个回答因输出长度限制被截断", calls[1][0][-1]["content"])
+        self.assertIn("伴有高热和头痛", response.text)
+        self.assertIn("event: done", response.text)
+
     def test_empty_stream_falls_back_to_complete_answer(self):
         client = TestClient(main.app)
 

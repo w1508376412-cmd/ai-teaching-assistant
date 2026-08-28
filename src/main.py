@@ -2,6 +2,7 @@ import json
 import mimetypes
 import os
 import re
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Iterator, Literal, TYPE_CHECKING
@@ -45,6 +46,10 @@ RAG_LLM_RERANK_ENABLED = os.getenv("RAG_LLM_RERANK_ENABLED", "false").lower() in
     "on",
 }
 AI_MAX_TOKENS = int(os.getenv("AI_MAX_TOKENS", "1200"))
+KNOWLEDGE_MAX_TOKENS = int(os.getenv("KNOWLEDGE_MAX_TOKENS", "2400"))
+KNOWLEDGE_CONTINUATION_MAX_TOKENS = int(
+    os.getenv("KNOWLEDGE_CONTINUATION_MAX_TOKENS", "1200")
+)
 AI_TIMEOUT_SECONDS = float(os.getenv("AI_TIMEOUT_SECONDS", "45"))
 KNOWLEDGE_HISTORY_MAX_MESSAGES = max(
     1, int(os.getenv("KNOWLEDGE_HISTORY_MAX_MESSAGES", "8"))
@@ -309,12 +314,12 @@ def public_case(case: dict) -> dict:
     return {key: value for key, value in case.items() if key not in hidden}
 
 
-def complete(messages: list[dict]) -> str:
+def complete(messages: list[dict], max_tokens: int = AI_MAX_TOKENS) -> str:
     try:
         response = get_client().chat.completions.create(
             model=MODEL_NAME,
             messages=messages,
-            max_tokens=AI_MAX_TOKENS,
+            max_tokens=max_tokens,
         )
         return response.choices[0].message.content or ""
     except HTTPException:
@@ -323,19 +328,36 @@ def complete(messages: list[dict]) -> str:
         raise HTTPException(status_code=502, detail=f"AI 服务调用失败：{exc}") from exc
 
 
-def stream_completion(messages: list[dict]) -> Iterator[str]:
+@dataclass
+class StreamCompletionState:
+    provider_observed: bool = False
+    finish_reason: str | None = None
+
+
+def stream_completion(
+    messages: list[dict],
+    *,
+    max_tokens: int = AI_MAX_TOKENS,
+    state: StreamCompletionState | None = None,
+) -> Iterator[str]:
     stream = None
     try:
         stream = get_client().chat.completions.create(
             model=MODEL_NAME,
             messages=messages,
-            max_tokens=AI_MAX_TOKENS,
+            max_tokens=max_tokens,
             stream=True,
         )
         for chunk in stream:
             if not chunk.choices:
                 continue
-            delta = chunk.choices[0].delta.content or ""
+            choice = chunk.choices[0]
+            if state is not None:
+                state.provider_observed = True
+                finish_reason = getattr(choice, "finish_reason", None)
+                if finish_reason:
+                    state.finish_reason = str(finish_reason)
+            delta = choice.delta.content or ""
             if delta:
                 yield delta
     except HTTPException:
@@ -472,6 +494,7 @@ def knowledge_completion(
    - 单个事实采用“**潜伏期：** 正文”的标签式段落；一个阶段包含多个表现时，先单独写“**前驱期（发病早期，约 0—5 天）：**”，再用“- ”列出简短要点。每个要点只表达一个主要信息。
    - 只有操作步骤、时间顺序或决策流程确实有先后关系时，才使用“### 1. 标题”“### 2. 标题”等编号层级；普通症状、特征和鉴别维度不要机械编号。
    - 层级通常控制在 2—5 个部分；不要为了形式强行拆分内容，不要重复同一结论，不要使用“我来帮你梳理”等铺垫话术，也不要使用超过三级的层级。
+5. 在信息完整的前提下尽量控制在 1200 个汉字以内，避免冗长重复。
 
 RAG 检索证据：
 {context or '未检索到可用证据。'}"""
@@ -562,7 +585,7 @@ def knowledge_index() -> dict:
 @app.post("/api/chat/knowledge")
 def knowledge_chat(request: KnowledgeChatRequest) -> dict:
     latest_question, messages, retrieval, _ = knowledge_completion(request)
-    answer = complete(messages)
+    answer = complete(messages, max_tokens=KNOWLEDGE_MAX_TOKENS)
     cleaned_answer = re.sub(r"\s*\[K\d+\]", "", answer).strip()
     return {
         "answer": cleaned_answer,
@@ -579,11 +602,44 @@ def knowledge_chat_stream(request: KnowledgeChatRequest) -> StreamingResponse:
         answer_parts: list[str] = []
         yield sse_event("meta", {"retrieval": retrieval})
         try:
-            for delta in stream_completion(messages):
+            stream_state = StreamCompletionState()
+            for delta in stream_completion(
+                messages,
+                max_tokens=KNOWLEDGE_MAX_TOKENS,
+                state=stream_state,
+            ):
                 answer_parts.append(delta)
                 yield sse_event("delta", {"text": delta})
+            if stream_state.finish_reason == "length" and answer_parts:
+                partial_answer = "".join(answer_parts)
+                continuation_state = StreamCompletionState()
+                continuation_messages = [
+                    *messages,
+                    {"role": "assistant", "content": partial_answer},
+                    {
+                        "role": "user",
+                        "content": (
+                            "上一个回答因输出长度限制被截断。请只从中断处继续完成回答，"
+                            "不要重复已经写出的内容，不要添加新的开场白。"
+                        ),
+                    },
+                ]
+                for delta in stream_completion(
+                    continuation_messages,
+                    max_tokens=KNOWLEDGE_CONTINUATION_MAX_TOKENS,
+                    state=continuation_state,
+                ):
+                    answer_parts.append(delta)
+                    yield sse_event("delta", {"text": delta})
+                if continuation_state.finish_reason == "length":
+                    raise HTTPException(
+                        status_code=502,
+                        detail="回答内容过长，自动续写后仍未完成，请缩小问题范围后重试。",
+                    )
             if not "".join(answer_parts).strip():
-                fallback_answer = complete(messages).strip()
+                fallback_answer = complete(
+                    messages, max_tokens=KNOWLEDGE_MAX_TOKENS
+                ).strip()
                 if fallback_answer:
                     answer_parts.append(fallback_answer)
                     yield sse_event("delta", {"text": fallback_answer})
