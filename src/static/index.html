@@ -7,7 +7,7 @@
     <meta name="description" content="面向临床医学学生的传染病知识问答、皮疹图谱与情景演练教学工作台" />
     <title>AI教学工具 · 传染病学教学工作台</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260829-20" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260829-21" />
   </head>
   <body>
     <a class="skip-link" href="#mainContent">跳到主要内容</a>
@@ -67,7 +67,7 @@
             <div class="case-empty is-hidden" id="caseEmpty">情景库目前为空，请联系教师添加教学情景。</div>
             <div class="case-workspace" id="caseWorkspace">
               <div class="case-commandbar"><div><span class="section-code">SCENARIO LIBRARY</span><strong>情景选择</strong></div><label for="caseSelect"><span>当前情景</span><select id="caseSelect"><option>正在加载情景…</option></select></label><button class="line-button" id="nextCase" type="button">进入下一情景 <span>→</span></button></div>
-              <article class="dossier"><div class="dossier-head"><span class="section-code">CLINICAL SCENARIO</span><span class="case-sequence" id="caseSequence">01 / 01</span></div><h2 id="caseTitle">正在加载情景</h2><p id="caseBackground">—</p><div class="case-learning" id="caseLearning"></div><div class="patient-grid" id="patientGrid"></div></article>
+              <article class="dossier"><div class="dossier-head"><span class="section-code">CLINICAL SCENARIO</span><span class="case-sequence" id="caseSequence">01 / 01</span></div><h2 id="caseTitle">正在加载情景</h2><p id="caseBackground">—</p><div class="patient-grid" id="patientGrid"></div></article>
               <section class="decision-board" id="decisionBoard"><form id="decisionForm"><div class="decision-column"><div class="decision-heading"><span>01</span><div><strong>诊断判断</strong><small>DIAGNOSTIC IMPRESSION</small></div></div><div class="option-list" id="diseaseOptions"></div></div><div class="decision-column"><div class="decision-heading"><span>02</span><div><strong>临床处置</strong><small>CLINICAL MANAGEMENT</small></div></div><div class="option-list" id="measureOptions"></div></div><div class="decision-column"><div class="decision-heading"><span>03</span><div><strong>检查与治疗</strong><small>TESTS &amp; TREATMENT</small></div></div><div class="option-list" id="treatmentOptions"></div></div><button class="solid-button evaluate-button" type="submit">提交判断</button></form><div class="decision-feedback is-hidden" id="decisionFeedback"></div></section>
               <section class="stage-board is-hidden" id="stageBoard"><div class="stage-brief"><span class="section-code">CURRENT ASSIGNMENT</span><h2 id="stageTitle">当前任务</h2><div class="stage-task" id="stageTask"></div><div class="stage-data is-hidden" id="stageData"></div></div><div class="stage-dialogue"><div class="chat-feed compact" id="stageChat"></div><form class="composer" id="stageForm"><label class="sr-only" for="stageInput">输入处置思路</label><textarea id="stageInput" rows="1" maxlength="4000" placeholder="写下你的判断和处置思路…" required></textarea><button class="send-button" type="submit"><span>提交思路</span></button></form><button class="line-button" id="nextStage" type="button">进入下一步 <span>→</span></button></div></section>
             </div>
@@ -90,6 +90,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="sidebar-scrim" id="sidebarScrim"></div>
-    <script src="/static/app.js?v=20260829-20" defer></script>
+    <script src="/static/app.js?v=20260829-21" defer></script>
   </body>
 </html>

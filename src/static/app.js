@@ -72,7 +72,6 @@ const els = {
   caseSequence: $("#caseSequence"),
   caseTitle: $("#caseTitle"),
   caseBackground: $("#caseBackground"),
-  caseLearning: $("#caseLearning"),
   patientGrid: $("#patientGrid"),
   decisionBoard: $("#decisionBoard"),
   decisionForm: $("#decisionForm"),
@@ -636,11 +635,6 @@ function renderCurrentCase() {
   els.caseSequence.textContent = `${String(state.currentCaseIndex + 1).padStart(2, "0")} / ${String(state.cases.length).padStart(2, "0")}`;
   els.caseTitle.textContent = current.title;
   els.caseBackground.textContent = current.background || "暂无背景信息";
-  const objectives = current.learning_objectives || [];
-  els.caseLearning.innerHTML = objectives.length
-    ? `<span>${escapeHtml(current.difficulty || "临床训练")}</span>${objectives.map((item) => `<em>${escapeHtml(item)}</em>`).join("")}`
-    : "";
-  els.caseLearning.classList.toggle("is-hidden", !objectives.length);
   els.patientGrid.innerHTML = patientMarkup(current.patient_info || {});
   els.decisionFeedback.classList.add("is-hidden");
   els.decisionFeedback.innerHTML = "";

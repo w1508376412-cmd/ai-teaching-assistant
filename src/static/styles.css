@@ -1778,35 +1778,6 @@ p {
   line-height: 1.85;
 }
 
-.case-learning {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  margin-top: 18px;
-}
-
-.case-learning span,
-.case-learning em {
-  padding: 6px 9px;
-  border-radius: 999px;
-  font-size: 9px;
-  font-style: normal;
-  line-height: 1.2;
-}
-
-.case-learning span {
-  color: #fff;
-  background: var(--coral);
-  font-family: var(--utility);
-  letter-spacing: 0.06em;
-}
-
-.case-learning em {
-  color: var(--ink);
-  background: #f1f1ef;
-}
-
 .patient-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
