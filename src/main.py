@@ -90,8 +90,8 @@ mimetypes.add_type("image/webp", ".webp")
 mimetypes.add_type("image/svg+xml", ".svg")
 
 app = FastAPI(
-    title="现场辨证 · 临床流行病教学工作台",
-    description="临床皮疹图谱、知识库问答、现场案例推演与教师内容管理",
+    title="AI教学工具 · 传染病学教学工作台",
+    description="传染病知识问答、临床皮疹图谱、情景演练与教师内容管理",
     version="4.0.0",
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
@@ -210,14 +210,14 @@ def load_cases() -> list[dict]:
             data = json.loads(file.read_text(encoding="utf-8"))
             data["_filename"] = file.name
             data.setdefault("id", file.stem)
-            data.setdefault("title", f"未命名案例（{file.stem}）")
+            data.setdefault("title", f"未命名情景（{file.stem}）")
             cases.append(data)
         except (OSError, json.JSONDecodeError) as exc:
             cases.append(
                 {
                     "_filename": file.name,
                     "id": file.stem,
-                    "title": f"损坏的案例（{file.name}）",
+                    "title": f"损坏的情景（{file.name}）",
                     "error": str(exc),
                 }
             )
@@ -306,7 +306,7 @@ def find_case(case_id: str) -> dict:
             if case.get("error"):
                 raise HTTPException(status_code=422, detail=case["error"])
             return case
-    raise HTTPException(status_code=404, detail="未找到该案例。")
+    raise HTTPException(status_code=404, detail="未找到该教学情景。")
 
 
 def public_case(case: dict) -> dict:
@@ -481,7 +481,7 @@ def knowledge_completion(
         -RETRIEVAL_QUERY_MAX_CHARACTERS:
     ]
     context, _, retrieval = retrieve_knowledge(retrieval_query)
-    system_prompt = f"""你是一个专业的口岸卫生检疫与现场流行病学教学助手。
+    system_prompt = f"""你是一个面向临床医学学生的传染病学教学助手。
 请严格依据下方 RAG 检索证据回答学员问题；证据没有覆盖的内容必须明确说明依据不足，不能依靠记忆补写。
 
 回答规则：
@@ -685,28 +685,28 @@ def cases_index() -> dict:
 def evaluate_case(case_id: str, request: DecisionRequest) -> dict:
     case = find_case(case_id)
     if case.get("format") != "interactive_v2":
-        raise HTTPException(status_code=400, detail="该案例不是决策判断格式。")
+        raise HTTPException(status_code=400, detail="该教学情景不是决策判断格式。")
 
     correct = case.get("correct_answers", {})
     user_answer = f"""学员选择：
-- 可能疾病：{', '.join(request.possible_diseases) or '未选择'}
-- 处置措施：{', '.join(request.measures) or '未选择'}
-- 诊断方法：{', '.join(request.treatments) or '未选择'}"""
-    system_prompt = f"""你是专业的现场流行病学案例导师。
-当前案例：{case.get('title')}
+- 诊断判断：{', '.join(request.possible_diseases) or '未选择'}
+- 临床处置：{', '.join(request.measures) or '未选择'}
+- 检查与治疗：{', '.join(request.treatments) or '未选择'}"""
+    system_prompt = f"""你是面向临床医学学生的传染病学情景演练导师。
+当前情景：{case.get('title')}
 标准答案：
-- 疾病：{', '.join(correct.get('possible_diseases', []))}
-- 措施：{', '.join(correct.get('measures', []))}
-- 诊断：{', '.join(correct.get('treatments', []))}
-参考 SOP：{case.get('reference_sop', '未提供')}
+- 诊断判断：{', '.join(correct.get('possible_diseases', []))}
+- 临床处置：{', '.join(correct.get('measures', []))}
+- 检查与治疗：{', '.join(correct.get('treatments', []))}
+参考依据：{case.get('reference_sop', '未提供')}
 
-评价学员选择是否正确、完整，先给结论，再指出做对、遗漏或错误之处，最后给出基于 SOP 的专业解析。内容控制在 500 字以内。"""
+评价学员的临床推理是否正确、完整。先给结论，再指出做对、遗漏或错误之处；重点提示危重征象、检查时序、隔离要求和不安全选择，最后给出基于参考依据的解析。内容控制在 500 字以内。"""
     feedback = complete(
         [
             {"role": "system", "content": system_prompt},
             {
                 "role": "user",
-                "content": f"病例背景：{case.get('background', '')}\n{user_answer}",
+                "content": f"临床情景：{case.get('background', '')}\n{user_answer}",
             },
         ]
     )
@@ -718,7 +718,7 @@ def coach_stage(case_id: str, request: StageCoachRequest) -> dict:
     case = find_case(case_id)
     stages = case.get("stages", [])
     if request.stage_index >= len(stages):
-        raise HTTPException(status_code=400, detail="案例阶段不存在。")
+        raise HTTPException(status_code=400, detail="情景阶段不存在。")
     stage = stages[request.stage_index]
     retrieval_query = " ".join(
         [
@@ -730,8 +730,8 @@ def coach_stage(case_id: str, request: StageCoachRequest) -> dict:
         ]
     )
     context, _, _ = retrieve_knowledge(retrieval_query)
-    system_prompt = f"""你是专业的口岸卫生检疫案例教学引导员。
-案例：《{case.get('title', '未知')}》
+    system_prompt = f"""你是面向临床医学学生的传染病学情景演练导师。
+情景：《{case.get('title', '未知')}》
 当前阶段：第 {stage.get('step', request.stage_index + 1)} 步 — {stage.get('title', '')}
 任务：{stage.get('task', '')}
 引导问题：{', '.join(stage.get('guiding_questions', []))}
@@ -739,7 +739,7 @@ def coach_stage(case_id: str, request: StageCoachRequest) -> dict:
 参考规范：
 {context}
 
-评价准则：正确时给予具体肯定并引向下一步；有疏漏时指出疏漏并通过追问引导；不要直接泄露完整答案；保持专业、严谨。"""
+评价准则：围绕症候识别、鉴别诊断、危重征象、检查选择、隔离和治疗顺序评价；正确时给予具体肯定并引向下一步；有疏漏时指出风险并通过追问引导；不要直接泄露完整答案；保持专业、严谨。"""
     answer = complete(
         [
             {"role": "system", "content": system_prompt},
@@ -768,9 +768,9 @@ def admin_content(_: None = Depends(require_admin)) -> dict:
 def delete_case(filename: str, _: None = Depends(require_admin)) -> dict:
     candidate = Path(filename).name
     if not candidate.endswith(".json"):
-        raise HTTPException(status_code=400, detail="案例文件名无效。")
+        raise HTTPException(status_code=400, detail="情景文件名无效。")
     path = CASES_DIR / candidate
     if not path.exists():
-        raise HTTPException(status_code=404, detail="案例不存在。")
+        raise HTTPException(status_code=404, detail="教学情景不存在。")
     path.unlink()
-    return {"message": f"案例《{path.stem}》已移除。"}
+    return {"message": f"教学情景《{path.stem}》已移除。"}

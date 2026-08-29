@@ -4,10 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#082f31" />
-    <meta name="description" content="融合临床皮疹图谱、知识库问答与现场案例推演的公共卫生教学工作台" />
-    <title>AI教学工具 · 临床流行病教学工作台</title>
+    <meta name="description" content="面向临床医学学生的传染病知识问答、皮疹图谱与情景演练教学工作台" />
+    <title>AI教学工具 · 传染病学教学工作台</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260829-19" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260829-20" />
   </head>
   <body>
     <a class="skip-link" href="#mainContent">跳到主要内容</a>
@@ -22,7 +22,7 @@
         <nav class="primary-nav" aria-label="主导航">
           <button class="nav-item is-active" type="button" data-view="knowledge"><span class="nav-index">01</span><span><strong>知识问答</strong></span></button>
           <button class="nav-item" type="button" data-view="atlas"><span class="nav-index">02</span><span><strong>皮疹图谱</strong></span></button>
-          <button class="nav-item" type="button" data-view="cases"><span class="nav-index">03</span><span><strong>案例推演</strong></span></button>
+          <button class="nav-item" type="button" data-view="cases"><span class="nav-index">03</span><span><strong>情景演练</strong></span></button>
           <button class="nav-item is-hidden" id="adminNav" type="button" data-view="admin"><span class="nav-index">04</span><span><strong>教师管理</strong></span></button>
         </nav>
 
@@ -63,20 +63,20 @@
             </div>
           </section>
 
-          <section class="workspace-view" id="view-cases" data-title="案例推演">
-            <div class="case-empty is-hidden" id="caseEmpty">案例库目前为空，请联系教师添加案例。</div>
+          <section class="workspace-view" id="view-cases" data-title="情景演练">
+            <div class="case-empty is-hidden" id="caseEmpty">情景库目前为空，请联系教师添加教学情景。</div>
             <div class="case-workspace" id="caseWorkspace">
-              <div class="case-commandbar"><div><span class="section-code">CASE LIBRARY</span><strong>案例选择</strong></div><label for="caseSelect"><span>当前案例</span><select id="caseSelect"><option>正在加载案例…</option></select></label><button class="line-button" id="nextCase" type="button">进入下一案例 <span>→</span></button></div>
-              <article class="dossier"><div class="dossier-head"><span class="section-code">CASE DOSSIER</span><span class="case-sequence" id="caseSequence">01 / 01</span></div><h2 id="caseTitle">正在加载案例</h2><p id="caseBackground">—</p><div class="patient-grid" id="patientGrid"></div></article>
-              <section class="decision-board" id="decisionBoard"><form id="decisionForm"><div class="decision-column"><div class="decision-heading"><span>01</span><div><strong>可能疾病</strong><small>POSSIBLE DISEASES</small></div></div><div class="option-list" id="diseaseOptions"></div></div><div class="decision-column"><div class="decision-heading"><span>02</span><div><strong>现场处置</strong><small>FIELD MEASURES</small></div></div><div class="option-list" id="measureOptions"></div></div><div class="decision-column"><div class="decision-heading"><span>03</span><div><strong>诊断方法</strong><small>DIAGNOSTICS</small></div></div><div class="option-list" id="treatmentOptions"></div></div><button class="solid-button evaluate-button" type="submit">提交判断</button></form><div class="decision-feedback is-hidden" id="decisionFeedback"></div></section>
+              <div class="case-commandbar"><div><span class="section-code">SCENARIO LIBRARY</span><strong>情景选择</strong></div><label for="caseSelect"><span>当前情景</span><select id="caseSelect"><option>正在加载情景…</option></select></label><button class="line-button" id="nextCase" type="button">进入下一情景 <span>→</span></button></div>
+              <article class="dossier"><div class="dossier-head"><span class="section-code">CLINICAL SCENARIO</span><span class="case-sequence" id="caseSequence">01 / 01</span></div><h2 id="caseTitle">正在加载情景</h2><p id="caseBackground">—</p><div class="case-learning" id="caseLearning"></div><div class="patient-grid" id="patientGrid"></div></article>
+              <section class="decision-board" id="decisionBoard"><form id="decisionForm"><div class="decision-column"><div class="decision-heading"><span>01</span><div><strong>诊断判断</strong><small>DIAGNOSTIC IMPRESSION</small></div></div><div class="option-list" id="diseaseOptions"></div></div><div class="decision-column"><div class="decision-heading"><span>02</span><div><strong>临床处置</strong><small>CLINICAL MANAGEMENT</small></div></div><div class="option-list" id="measureOptions"></div></div><div class="decision-column"><div class="decision-heading"><span>03</span><div><strong>检查与治疗</strong><small>TESTS &amp; TREATMENT</small></div></div><div class="option-list" id="treatmentOptions"></div></div><button class="solid-button evaluate-button" type="submit">提交判断</button></form><div class="decision-feedback is-hidden" id="decisionFeedback"></div></section>
               <section class="stage-board is-hidden" id="stageBoard"><div class="stage-brief"><span class="section-code">CURRENT ASSIGNMENT</span><h2 id="stageTitle">当前任务</h2><div class="stage-task" id="stageTask"></div><div class="stage-data is-hidden" id="stageData"></div></div><div class="stage-dialogue"><div class="chat-feed compact" id="stageChat"></div><form class="composer" id="stageForm"><label class="sr-only" for="stageInput">输入处置思路</label><textarea id="stageInput" rows="1" maxlength="4000" placeholder="写下你的判断和处置思路…" required></textarea><button class="send-button" type="submit"><span>提交思路</span></button></form><button class="line-button" id="nextStage" type="button">进入下一步 <span>→</span></button></div></section>
             </div>
           </section>
 
           <section class="workspace-view" id="view-admin" data-title="教师管理">
-            <div class="module-intro admin-intro"><div class="module-number" aria-hidden="true">04</div><div><span class="eyebrow">FACULTY CONTROL · 内容维护</span><h1>维护案例，<br />更新训练。</h1></div><div class="module-note"><strong>受保护入口</strong><p>案例变更会立即影响教学内容，请仅由授权教师操作。</p></div></div>
+            <div class="module-intro admin-intro"><div class="module-number" aria-hidden="true">04</div><div><span class="eyebrow">FACULTY CONTROL · 内容维护</span><h1>维护情景，<br />更新训练。</h1></div><div class="module-note"><strong>受保护入口</strong><p>情景变更会立即影响教学内容，请仅由授权教师操作。</p></div></div>
             <div class="admin-unlock" id="adminUnlock"><form id="adminLoginForm"><span class="section-code">FACULTY ACCESS</span><h2>验证教师身份</h2><p>请输入部署环境中设置的管理密码。</p><label for="adminPassword">管理密码</label><input id="adminPassword" type="password" autocomplete="current-password" required /><button class="solid-button" type="submit">进入管理台 <span>→</span></button></form></div>
-            <div class="admin-dashboard is-hidden" id="adminDashboard"><div class="admin-summary"><div><span>训练案例</span><strong id="adminCaseCount">—</strong></div></div><div class="admin-grid"><section class="admin-panel"><div class="panel-head"><div><span class="section-code">CASE LIBRARY</span><h2>案例训练库</h2></div></div><div class="content-list" id="caseList"></div></section></div></div>
+            <div class="admin-dashboard is-hidden" id="adminDashboard"><div class="admin-summary"><div><span>教学情景</span><strong id="adminCaseCount">—</strong></div></div><div class="admin-grid"><section class="admin-panel"><div class="panel-head"><div><span class="section-code">SCENARIO LIBRARY</span><h2>情景演练库</h2></div></div><div class="content-list" id="caseList"></div></section></div></div>
           </section>
         </main>
       </div>
@@ -90,6 +90,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="sidebar-scrim" id="sidebarScrim"></div>
-    <script src="/static/app.js?v=20260829-19" defer></script>
+    <script src="/static/app.js?v=20260829-20" defer></script>
   </body>
 </html>

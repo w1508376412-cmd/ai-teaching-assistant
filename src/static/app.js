@@ -16,7 +16,7 @@ const MORPHOLOGIES = [
 const VIEW_PATHS = {
   knowledge: "AI TEACHING ASSISTANT / KNOWLEDGE CONSULT",
   atlas: "AI TEACHING ASSISTANT / RASH ATLAS",
-  cases: "AI TEACHING ASSISTANT / CASE DRILL",
+  cases: "AI TEACHING ASSISTANT / CLINICAL SCENARIO",
   admin: "AI TEACHING ASSISTANT / FACULTY CONTROL",
 };
 
@@ -72,6 +72,7 @@ const els = {
   caseSequence: $("#caseSequence"),
   caseTitle: $("#caseTitle"),
   caseBackground: $("#caseBackground"),
+  caseLearning: $("#caseLearning"),
   patientGrid: $("#patientGrid"),
   decisionBoard: $("#decisionBoard"),
   decisionForm: $("#decisionForm"),
@@ -603,7 +604,7 @@ function optionMarkup(items = [], group) {
 }
 
 function patientMarkup(info = {}) {
-  const wideKeys = new Set(["旅行史", "症状", "接触史"]);
+  const wideKeys = new Set(["主诉", "现病史", "流行病学史", "暴露史", "既往史", "体格检查", "辅助检查", "旅行史", "症状", "接触史"]);
   return Object.entries(info).map(([key, value]) => {
     const display = Array.isArray(value) ? value.join("、") : value;
     return `<div class="patient-item ${wideKeys.has(key) ? "is-wide" : ""}"><span>${escapeHtml(key)}</span><strong>${escapeHtml(display)}</strong></div>`;
@@ -614,7 +615,7 @@ function renderCases() {
   if (!state.cases.length) {
     els.caseWorkspace.classList.add("is-hidden");
     els.caseEmpty.classList.remove("is-hidden");
-    els.caseSelect.innerHTML = "<option>暂无案例</option>";
+    els.caseSelect.innerHTML = "<option>暂无情景</option>";
     els.nextCase.disabled = true;
     return;
   }
@@ -635,6 +636,11 @@ function renderCurrentCase() {
   els.caseSequence.textContent = `${String(state.currentCaseIndex + 1).padStart(2, "0")} / ${String(state.cases.length).padStart(2, "0")}`;
   els.caseTitle.textContent = current.title;
   els.caseBackground.textContent = current.background || "暂无背景信息";
+  const objectives = current.learning_objectives || [];
+  els.caseLearning.innerHTML = objectives.length
+    ? `<span>${escapeHtml(current.difficulty || "临床训练")}</span>${objectives.map((item) => `<em>${escapeHtml(item)}</em>`).join("")}`
+    : "";
+  els.caseLearning.classList.toggle("is-hidden", !objectives.length);
   els.patientGrid.innerHTML = patientMarkup(current.patient_info || {});
   els.decisionFeedback.classList.add("is-hidden");
   els.decisionFeedback.innerHTML = "";
@@ -685,8 +691,8 @@ function renderStage() {
   const stages = current?.stages || [];
   const stage = stages[state.stageIndex];
   if (!stage) {
-    els.stageTitle.textContent = "推演完成";
-    els.stageTask.innerHTML = `<strong>参考总结</strong><br>${richText(current?.answers_summary || "本案例已完成。")}`;
+    els.stageTitle.textContent = "演练完成";
+    els.stageTask.innerHTML = `<strong>参考总结</strong><br>${richText(current?.answers_summary || "本情景已完成。")}`;
     els.stageData.classList.add("is-hidden");
     els.stageForm.classList.add("is-hidden");
     els.nextStage.textContent = "重新开始";
@@ -695,8 +701,8 @@ function renderStage() {
   }
   els.stageForm.classList.remove("is-hidden");
   els.nextStage.dataset.action = "next";
-  els.nextStage.innerHTML = state.stageIndex === stages.length - 1 ? "完成推演 <span>→</span>" : "进入下一步 <span>→</span>";
-  els.stageTitle.textContent = `第 ${stage.step || state.stageIndex + 1} 步 · ${stage.title || "现场任务"}`;
+  els.nextStage.innerHTML = state.stageIndex === stages.length - 1 ? "完成演练 <span>→</span>" : "进入下一步 <span>→</span>";
+  els.stageTitle.textContent = `第 ${stage.step || state.stageIndex + 1} 步 · ${stage.title || "临床任务"}`;
   els.stageTask.innerHTML = `<strong>当前任务</strong><br>${richText(stage.task || "")}`;
   if (stage.data) {
     els.stageData.classList.remove("is-hidden");
@@ -712,7 +718,7 @@ function appendStageMessage(role, content, loading = false) {
   const article = document.createElement("article");
   article.className = `message ${role === "user" ? "user-message" : "assistant-message"}`;
   if (loading) article.dataset.loading = "true";
-  article.innerHTML = `<div class="message-marker"><span></span></div><div class="message-body"><div class="message-meta"><strong>${role === "user" ? "学员" : "案例导师"}</strong><span>${role === "user" ? "处置思路" : "引导反馈"}</span></div>${loading ? '<span class="loading-dots"><i></i><i></i><i></i></span>' : `<p>${richText(content)}</p>`}</div>`;
+  article.innerHTML = `<div class="message-marker"><span></span></div><div class="message-body"><div class="message-meta"><strong>${role === "user" ? "学员" : "情景导师"}</strong><span>${role === "user" ? "临床思路" : "引导反馈"}</span></div>${loading ? '<span class="loading-dots"><i></i><i></i><i></i></span>' : `<p>${richText(content)}</p>`}</div>`;
   els.stageChat.append(article);
   return article;
 }
@@ -754,7 +760,7 @@ async function loadAdminContent() {
   els.adminCaseCount.textContent = `${data.cases.length} 个`;
   els.caseList.innerHTML = data.cases.length
     ? data.cases.map((item) => `<div class="content-row"><div><strong title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</strong><small>${escapeHtml(item.id || "未知 ID")}${item.error ? " · 文件损坏" : ""}</small></div><button class="delete-button" type="button" data-delete-case="${escapeHtml(item.filename)}">移除</button></div>`).join("")
-    : '<div class="empty-row">案例库目前为空</div>';
+    : '<div class="empty-row">情景库目前为空</div>';
 }
 
 let atlasLoadPromise = null;
@@ -913,7 +919,7 @@ function bindEvents() {
   });
   els.caseList.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-delete-case]");
-    if (!button || !confirm("确认移除这个案例？")) return;
+    if (!button || !confirm("确认移除这个教学情景？")) return;
     setBusy(button, true, "移除中");
     try {
       const data = await adminApi(`/api/admin/cases/${encodeURIComponent(button.dataset.deleteCase)}`, { method: "DELETE" });
