@@ -5577,6 +5577,8 @@ body {
   min-height: 44px;
   align-self: center;
   padding: 0;
+  align-content: center;
+  justify-content: center;
   place-items: center;
   color: #fff;
   background: #111;
