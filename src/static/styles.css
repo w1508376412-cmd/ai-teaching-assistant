@@ -4562,6 +4562,25 @@ body {
   font-weight: 650;
 }
 
+@media (min-width: 761px) {
+  .case-commandbar > div {
+    position: relative;
+    display: flex;
+    min-height: 42px;
+    align-items: center;
+  }
+
+  .case-commandbar > div .section-code {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+  }
+
+  .case-commandbar > div strong {
+    margin-top: 0;
+  }
+}
+
 .case-commandbar label span {
   margin-bottom: 6px;
   color: var(--muted);
