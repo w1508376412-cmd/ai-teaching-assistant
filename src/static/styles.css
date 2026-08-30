@@ -5640,10 +5640,29 @@ body {
 }
 
 @media (max-width: 760px) {
+  #view-knowledge .chat-input-dock {
+    width: 100%;
+    min-width: 0;
+    padding-right: max(14px, env(safe-area-inset-right));
+    padding-bottom: max(17px, env(safe-area-inset-bottom));
+    padding-left: max(14px, env(safe-area-inset-left));
+  }
+
   #view-knowledge .composer {
     grid-template-columns: minmax(0, 1fr) 42px;
     gap: 7px;
+    max-width: 100%;
+    min-width: 0;
     padding: 4px 6px 4px 16px;
+  }
+
+  #view-knowledge .composer-field,
+  #view-knowledge .composer textarea {
+    min-width: 0;
+  }
+
+  #view-knowledge .composer textarea {
+    font-size: 16px;
   }
 
   #view-knowledge .send-button,
