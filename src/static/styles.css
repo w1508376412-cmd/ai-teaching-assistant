@@ -5673,3 +5673,13 @@ body {
     min-height: 42px;
   }
 }
+
+/* Clinical assessment feedback: use the same quiet white surface as the case dossier. */
+#view-cases .decision-feedback {
+  padding: 29px;
+  margin-top: 22px;
+  background: #fff;
+  border: 0;
+  border-radius: var(--radius-card);
+  box-shadow: 0 10px 32px rgba(25, 25, 25, 0.05);
+}
