@@ -1773,7 +1773,7 @@ p {
 
 .dossier > p {
   max-width: 900px;
-  color: var(--muted);
+  color: var(--ink);
   font-size: 12px;
   line-height: 1.85;
 }

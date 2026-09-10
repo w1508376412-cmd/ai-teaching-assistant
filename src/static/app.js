@@ -70,7 +70,6 @@ const els = {
   caseEmpty: $("#caseEmpty"),
   caseWorkspace: $("#caseWorkspace"),
   caseSequence: $("#caseSequence"),
-  caseTitle: $("#caseTitle"),
   caseBackground: $("#caseBackground"),
   patientGrid: $("#patientGrid"),
   decisionBoard: $("#decisionBoard"),
@@ -621,7 +620,7 @@ function renderCases() {
   els.caseWorkspace.classList.remove("is-hidden");
   els.caseEmpty.classList.add("is-hidden");
   els.nextCase.disabled = false;
-  els.caseSelect.innerHTML = state.cases.map((item, index) => `<option value="${index}">${escapeHtml(item.title)}</option>`).join("");
+  els.caseSelect.innerHTML = state.cases.map((item, index) => `<option value="${index}">Clinical Case ${index + 1}</option>`).join("");
   els.caseSelect.value = String(state.currentCaseIndex);
   renderCurrentCase();
 }
@@ -633,7 +632,6 @@ function renderCurrentCase() {
   state.stageMessages = [];
   els.caseSelect.value = String(state.currentCaseIndex);
   els.caseSequence.textContent = `${String(state.currentCaseIndex + 1).padStart(2, "0")} / ${String(state.cases.length).padStart(2, "0")}`;
-  els.caseTitle.textContent = current.title;
   els.caseBackground.textContent = current.background || "暂无背景信息";
   els.patientGrid.innerHTML = patientMarkup(current.patient_info || {});
   els.decisionFeedback.classList.add("is-hidden");
