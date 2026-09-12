@@ -66,7 +66,6 @@ const els = {
   chatInput: $("#chatInput"),
   clearChat: $("#clearChat"),
   caseSelect: $("#caseSelect"),
-  nextCase: $("#nextCase"),
   caseEmpty: $("#caseEmpty"),
   caseWorkspace: $("#caseWorkspace"),
   caseSequence: $("#caseSequence"),
@@ -614,12 +613,10 @@ function renderCases() {
     els.caseWorkspace.classList.add("is-hidden");
     els.caseEmpty.classList.remove("is-hidden");
     els.caseSelect.innerHTML = "<option>暂无情景</option>";
-    els.nextCase.disabled = true;
     return;
   }
   els.caseWorkspace.classList.remove("is-hidden");
   els.caseEmpty.classList.add("is-hidden");
-  els.nextCase.disabled = false;
   els.caseSelect.innerHTML = state.cases.map((item, index) => `<option value="${index}">Clinical Case ${index + 1}</option>`).join("");
   els.caseSelect.value = String(state.currentCaseIndex);
   renderCurrentCase();
@@ -877,12 +874,6 @@ function bindEvents() {
   });
 
   els.caseSelect.addEventListener("change", () => { state.currentCaseIndex = Number(els.caseSelect.value); renderCurrentCase(); });
-  els.nextCase.addEventListener("click", () => {
-    if (!state.cases.length) return;
-    state.currentCaseIndex = (state.currentCaseIndex + 1) % state.cases.length;
-    renderCurrentCase();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
   els.decisionForm.addEventListener("submit", submitDecision);
   els.stageInput.addEventListener("input", () => autosize(els.stageInput));
   els.stageForm.addEventListener("submit", submitStageMessage);

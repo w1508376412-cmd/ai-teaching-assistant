@@ -4544,10 +4544,14 @@ body {
   gap: 18px;
   align-items: end;
   padding: 17px 19px;
-  margin-bottom: 16px;
+  margin-top: 16px;
   background: #fff;
   border-radius: 13px;
   box-shadow: 0 10px 32px rgba(25, 25, 25, 0.045);
+}
+
+.decision-commandbar {
+  grid-column: 1 / -1;
 }
 
 .case-commandbar > div span,
@@ -4601,7 +4605,11 @@ body {
   font-weight: 600;
 }
 
-.case-commandbar .line-button {
+.decision-commandbar .evaluate-button {
+  grid-column: auto;
+  justify-self: stretch;
+  min-height: 42px;
+  margin: 0;
   white-space: nowrap;
 }
 
@@ -4645,7 +4653,7 @@ body {
     gap: 13px;
   }
 
-  .case-commandbar .line-button {
+  .decision-commandbar .evaluate-button {
     width: 100%;
   }
 
