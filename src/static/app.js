@@ -80,6 +80,7 @@ const els = {
   decisionForm: $("#decisionForm"),
   diseaseOptions: $("#diseaseOptions"),
   measureOptions: $("#measureOptions"),
+  testOptions: $("#testOptions"),
   treatmentOptions: $("#treatmentOptions"),
   decisionFeedback: $("#decisionFeedback"),
   stageBoard: $("#stageBoard"),
@@ -680,6 +681,7 @@ function renderCurrentCase() {
     els.stageBoard.classList.add("is-hidden");
     els.diseaseOptions.innerHTML = optionMarkup(current.options?.possible_diseases, "possible_diseases");
     els.measureOptions.innerHTML = optionMarkup(current.options?.measures, "measures");
+    els.testOptions.innerHTML = optionMarkup(current.options?.tests, "tests");
     els.treatmentOptions.innerHTML = optionMarkup(current.options?.treatments, "treatments");
     els.decisionForm.reset();
   } else {
@@ -705,7 +707,7 @@ async function submitDecision(event) {
     const data = await api(`/api/cases/${encodeURIComponent(current.id)}/evaluate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ possible_diseases: selectedValues("possible_diseases"), measures: selectedValues("measures"), treatments: selectedValues("treatments") }),
+      body: JSON.stringify({ possible_diseases: selectedValues("possible_diseases"), measures: selectedValues("measures"), tests: selectedValues("tests"), treatments: selectedValues("treatments") }),
     });
     els.decisionFeedback.innerHTML = `<h3>评估反馈</h3><p>${richText(data.feedback)}</p><div class="reference"><strong>参考依据</strong><br>${richText(data.reference_sop)}</div>`;
     els.decisionFeedback.scrollIntoView({ behavior: "smooth", block: "nearest" });

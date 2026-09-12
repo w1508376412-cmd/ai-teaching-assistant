@@ -133,6 +133,7 @@ class KnowledgeChatRequest(BaseModel):
 class DecisionRequest(BaseModel):
     possible_diseases: list[str] = Field(default_factory=list)
     measures: list[str] = Field(default_factory=list)
+    tests: list[str] = Field(default_factory=list)
     treatments: list[str] = Field(default_factory=list)
 
 
@@ -691,13 +692,15 @@ def evaluate_case(case_id: str, request: DecisionRequest) -> dict:
     user_answer = f"""学员选择：
 - 诊断判断：{', '.join(request.possible_diseases) or '未选择'}
 - 临床处置：{', '.join(request.measures) or '未选择'}
-- 检查与治疗：{', '.join(request.treatments) or '未选择'}"""
+- 检查：{', '.join(request.tests) or '未选择'}
+- 治疗：{', '.join(request.treatments) or '未选择'}"""
     system_prompt = f"""你是面向临床医学学生的传染病学情景演练导师。
 当前情景：{case.get('title')}
 标准答案：
 - 诊断判断：{', '.join(correct.get('possible_diseases', []))}
 - 临床处置：{', '.join(correct.get('measures', []))}
-- 检查与治疗：{', '.join(correct.get('treatments', []))}
+- 检查：{', '.join(correct.get('tests', []))}
+- 治疗：{', '.join(correct.get('treatments', []))}
 参考依据：{case.get('reference_sop', '未提供')}
 
 评价学员的临床推理是否正确、完整。先给结论，再指出做对、遗漏或错误之处；重点提示危重征象、检查时序、隔离要求和不安全选择，最后给出基于参考依据的解析。内容控制在 500 字以内。"""
