@@ -66,6 +66,11 @@ const els = {
   chatInput: $("#chatInput"),
   clearChat: $("#clearChat"),
   caseSelect: $("#caseSelect"),
+  casePicker: $("#casePicker"),
+  casePickerTrigger: $("#casePickerTrigger"),
+  casePickerValue: $("#casePickerValue"),
+  casePickerCount: $("#casePickerCount"),
+  casePickerMenu: $("#casePickerMenu"),
   caseEmpty: $("#caseEmpty"),
   caseWorkspace: $("#caseWorkspace"),
   caseSequence: $("#caseSequence"),
@@ -608,17 +613,53 @@ function patientMarkup(info = {}) {
   }).join("");
 }
 
+function closeCasePicker(restoreFocus = false) {
+  els.casePickerTrigger.setAttribute("aria-expanded", "false");
+  els.casePickerMenu.classList.add("is-hidden");
+  if (restoreFocus) els.casePickerTrigger.focus();
+}
+
+function openCasePicker(focusSelected = false) {
+  if (els.casePickerTrigger.disabled) return;
+  els.casePickerTrigger.setAttribute("aria-expanded", "true");
+  els.casePickerMenu.classList.remove("is-hidden");
+  if (focusSelected) {
+    requestAnimationFrame(() => $("[aria-selected='true']", els.casePickerMenu)?.focus());
+  }
+}
+
+function updateCasePicker() {
+  const total = state.cases.length;
+  const current = Math.min(state.currentCaseIndex, Math.max(total - 1, 0));
+  els.casePickerTrigger.disabled = total === 0;
+  els.casePickerValue.textContent = total ? `Clinical Case ${current + 1}` : "暂无情景";
+  els.casePickerCount.textContent = total ? `${String(current + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")}` : "—";
+  $$('[data-case-index]', els.casePickerMenu).forEach((button) => {
+    const selected = Number(button.dataset.caseIndex) === current;
+    button.setAttribute("aria-selected", String(selected));
+    button.tabIndex = selected ? 0 : -1;
+  });
+}
+
+function casePickerMarkup() {
+  return state.cases.map((_, index) => `<button class="case-picker-option" type="button" role="option" data-case-index="${index}" aria-selected="${index === state.currentCaseIndex}" tabindex="${index === state.currentCaseIndex ? "0" : "-1"}"><span>${String(index + 1).padStart(2, "0")}</span><strong>Clinical Case ${index + 1}</strong></button>`).join("");
+}
+
 function renderCases() {
   if (!state.cases.length) {
     els.caseWorkspace.classList.add("is-hidden");
     els.caseEmpty.classList.remove("is-hidden");
     els.caseSelect.innerHTML = "<option>暂无情景</option>";
+    els.casePickerMenu.innerHTML = "";
+    updateCasePicker();
     return;
   }
   els.caseWorkspace.classList.remove("is-hidden");
   els.caseEmpty.classList.add("is-hidden");
   els.caseSelect.innerHTML = state.cases.map((item, index) => `<option value="${index}">Clinical Case ${index + 1}</option>`).join("");
+  els.casePickerMenu.innerHTML = casePickerMarkup();
   els.caseSelect.value = String(state.currentCaseIndex);
+  updateCasePicker();
   renderCurrentCase();
 }
 
@@ -628,6 +669,7 @@ function renderCurrentCase() {
   state.stageIndex = 0;
   state.stageMessages = [];
   els.caseSelect.value = String(state.currentCaseIndex);
+  updateCasePicker();
   els.caseSequence.textContent = `${String(state.currentCaseIndex + 1).padStart(2, "0")} / ${String(state.cases.length).padStart(2, "0")}`;
   els.caseBackground.textContent = current.background || "暂无背景信息";
   els.patientGrid.innerHTML = patientMarkup(current.patient_info || {});
@@ -874,6 +916,38 @@ function bindEvents() {
   });
 
   els.caseSelect.addEventListener("change", () => { state.currentCaseIndex = Number(els.caseSelect.value); renderCurrentCase(); });
+  els.casePickerTrigger.addEventListener("click", () => {
+    if (els.casePickerTrigger.getAttribute("aria-expanded") === "true") closeCasePicker();
+    else openCasePicker();
+  });
+  els.casePickerTrigger.addEventListener("keydown", (event) => {
+    if (!["ArrowDown", "ArrowUp"].includes(event.key)) return;
+    event.preventDefault();
+    openCasePicker(true);
+  });
+  els.casePickerMenu.addEventListener("click", (event) => {
+    const option = event.target.closest("[data-case-index]");
+    if (!option) return;
+    els.caseSelect.value = option.dataset.caseIndex;
+    els.caseSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    closeCasePicker(true);
+  });
+  els.casePickerMenu.addEventListener("keydown", (event) => {
+    const options = $$('[data-case-index]', els.casePickerMenu);
+    const activeIndex = options.indexOf(document.activeElement);
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeCasePicker(true);
+      return;
+    }
+    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const nextIndex = event.key === "Home" ? 0 : event.key === "End" ? options.length - 1 : event.key === "ArrowDown" ? Math.min(activeIndex + 1, options.length - 1) : Math.max(activeIndex - 1, 0);
+    options[nextIndex]?.focus();
+  });
+  document.addEventListener("click", (event) => {
+    if (!els.casePicker.contains(event.target)) closeCasePicker();
+  });
   els.decisionForm.addEventListener("submit", submitDecision);
   els.stageInput.addEventListener("input", () => autosize(els.stageInput));
   els.stageForm.addEventListener("submit", submitStageMessage);

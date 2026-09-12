@@ -4539,6 +4539,8 @@ body {
 }
 
 .case-commandbar {
+  position: relative;
+  z-index: 5;
   display: grid;
   grid-template-columns: minmax(130px, 0.45fr) minmax(260px, 1.4fr) auto;
   gap: 18px;
@@ -4554,38 +4556,43 @@ body {
   grid-column: 1 / -1;
 }
 
-.case-commandbar > div span,
-.case-commandbar > div strong,
-.case-commandbar label span {
+.case-commandbar-title span,
+.case-commandbar-title strong {
   display: block;
 }
 
-.case-commandbar > div strong {
+.case-commandbar-title strong {
   margin-top: 5px;
   font-size: 17px;
   font-weight: 650;
 }
 
 @media (min-width: 761px) {
-  .case-commandbar > div {
+  .case-commandbar-title {
     position: relative;
     display: flex;
     min-height: 42px;
     align-items: center;
   }
 
-  .case-commandbar > div .section-code {
+  .case-commandbar-title .section-code {
     position: absolute;
     bottom: calc(100% + 6px);
     left: 0;
   }
 
-  .case-commandbar > div strong {
+  .case-commandbar-title strong {
     margin-top: 0;
   }
 }
 
-.case-commandbar label span {
+.case-picker {
+  position: relative;
+  min-width: 0;
+}
+
+.case-picker-label {
+  display: block;
   margin-bottom: 6px;
   color: var(--muted);
   font-family: var(--utility);
@@ -4594,15 +4601,148 @@ body {
   text-transform: uppercase;
 }
 
-.case-commandbar select {
+.case-picker-trigger {
   width: 100%;
-  height: 42px;
-  padding: 0 12px;
-  background: #f4f4f2;
-  border: 0;
-  border-radius: 9px;
+  min-height: 46px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 11px;
+  padding: 0 13px 0 15px;
+  color: var(--ink);
+  background: #f7f7f4;
+  border: 1px solid #deddd7;
+  border-radius: 11px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
   font-size: 11px;
   font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.case-picker-trigger:hover {
+  background: #fff;
+  border-color: #bbb9b1;
+}
+
+.case-picker-trigger:focus-visible {
+  outline: 3px solid rgba(240, 78, 22, 0.22);
+  outline-offset: 2px;
+}
+
+.case-picker-trigger:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.case-picker-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.case-picker-count {
+  color: var(--coral);
+  font-family: var(--utility);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.case-picker-trigger svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+  transition: transform 160ms ease;
+}
+
+.case-picker-trigger[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+.case-picker-menu {
+  position: absolute;
+  z-index: 20;
+  right: 0;
+  bottom: calc(100% + 10px);
+  left: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  max-height: 300px;
+  padding: 8px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #deddd7;
+  border-radius: 14px;
+  box-shadow: 0 22px 55px rgba(21, 21, 20, 0.18);
+  scrollbar-color: #c5c3bb transparent;
+  scrollbar-width: thin;
+}
+
+.case-picker-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.case-picker-menu::-webkit-scrollbar-thumb {
+  background: #c5c3bb;
+  border-radius: 999px;
+}
+
+.case-picker-option {
+  display: grid;
+  grid-template-columns: 31px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 6px 10px 6px 7px;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  font-size: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.case-picker-option > span {
+  display: grid;
+  width: 31px;
+  height: 28px;
+  place-items: center;
+  color: var(--muted);
+  background: #f1f1ee;
+  border-radius: 7px;
+  font-family: var(--utility);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+}
+
+.case-picker-option > strong {
+  overflow: hidden;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.case-picker-option:hover,
+.case-picker-option:focus-visible {
+  background: #f3f2ef;
+  outline: none;
+}
+
+.case-picker-option[aria-selected="true"] {
+  color: #fff;
+  background: var(--ink);
+}
+
+.case-picker-option[aria-selected="true"] > span {
+  color: #fff;
+  background: var(--coral);
 }
 
 .decision-commandbar .evaluate-button {
@@ -4651,6 +4791,10 @@ body {
   .case-commandbar {
     grid-template-columns: 1fr;
     gap: 13px;
+  }
+
+  .case-picker-menu {
+    max-height: 260px;
   }
 
   .decision-commandbar .evaluate-button {
