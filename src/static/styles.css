@@ -4748,8 +4748,9 @@ body {
 }
 
 .case-picker-option[aria-selected="true"] {
-  color: #fff;
-  background: var(--ink);
+  color: var(--ink);
+  background: #f3f2ef;
+  box-shadow: inset 0 0 0 1px #deddd7;
 }
 
 .case-picker-option[aria-selected="true"] > span {
