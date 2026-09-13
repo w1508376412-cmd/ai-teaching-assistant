@@ -5876,3 +5876,14 @@ body {
 #view-cases .decision-answer-key dl { display: grid; gap: 14px; margin: 16px 0; }
 #view-cases .decision-answer-key dt { font-weight: 600; }
 #view-cases .decision-answer-key dd { margin: 6px 0 0; line-height: 1.8; }
+
+/* Restore the desktop case layout: two balanced rows of decision cards. */
+#view-cases .decision-board form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 760px) {
+  #view-cases .decision-board form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
