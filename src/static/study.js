@@ -128,7 +128,7 @@ window.Study = (() => {
     showing = true;
     try {
       updateSession(await request("/api/session"));
-      if (!session.authenticated) return;
+      if (!session?.authenticated) return;
       if (session.active) {
         if (!force && paper?.id === session.active.id && find("#assessmentForm")) return;
         paper = await request(`/api/assessments/${session.active.id}`);

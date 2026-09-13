@@ -12,6 +12,7 @@ const admin = { "X-Admin-Password": "local-study-test-only" };
   const teacher = await browser.newPage();
   teacher.on("dialog", d => d.accept());
   try {
+    await page.request.put(base + "/api/admin/study/release", { headers: admin, data: { open: false } });
     await page.goto(base + "/#cases");
     await page.waitForSelector('body[data-auth="login"]');
     assert.equal(await page.locator(".app-shell:visible").count(), 0);
@@ -43,6 +44,7 @@ const admin = { "X-Admin-Password": "local-study-test-only" };
     await page.evaluate(() => scrollTo(0, 0));
     await page.screenshot({ path: "/private/tmp/study-pre-desktop.png" });
     await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForFunction(() => document.querySelector("#sidebar").getBoundingClientRect().right <= 0);
     await page.screenshot({ path: "/private/tmp/study-pre-mobile.png" });
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.locator('[data-study-action="submit"]').click();
