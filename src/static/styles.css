@@ -5857,28 +5857,8 @@ body {
   box-shadow: 0 10px 32px rgba(25, 25, 25, 0.05);
 }
 
-/* Diagnosis-first practice; later choices are fetched only after commitment. */
-#view-cases .decision-workflow {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 18px 22px;
-  margin-bottom: 4px;
-  border-radius: var(--radius-card);
-  background: #fff;
-}
-#view-cases .decision-workflow strong { font-size: 14px; }
-#view-cases .decision-workflow p { margin: 7px 0 0; color: #6d6d69; font-size: 12px; line-height: 1.7; }
-#view-cases #restartDecision { flex-shrink: 0; padding: 10px 14px; min-height: 42px; font-size: 12px; }
+/* Four clinical decision areas stay visible together throughout the exercise. */
 #view-cases .decision-column { display: flex; flex-direction: column; }
-#view-cases .is-diagnosing .decision-column.is-locked { display: none; }
-#view-cases .is-diagnosing .decision-column:not(.is-locked) { grid-column: 1 / -1; }
-#view-cases .is-diagnosing .decision-column:not(.is-locked) .option-list {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: repeat(2, minmax(58px, auto));
-}
 #view-cases .decision-column .option-list {
   flex: 1;
   grid-template-rows: repeat(4, minmax(58px, auto));
@@ -5891,23 +5871,8 @@ body {
 #view-cases .option-card input[type="radio"] + span::before { border-radius: 50%; }
 #view-cases .option-card input:focus-visible + span { outline: 2px solid #ff5100; outline-offset: 2px; }
 #view-cases .option-card input:disabled + span { cursor: default; }
-#view-cases .decision-column.is-locked .option-list { display: flex; align-items: center; justify-content: center; min-height: 256px; }
-#view-cases .decision-locked-note { width: 100%; padding: 24px 10px; color: #83837e; text-align: center; background: #f5f5f2; border-radius: 12px; }
-#view-cases .decision-locked-note > span { display: block; margin-bottom: 12px; }
-#view-cases .decision-locked-note strong { font-size: 12px; font-weight: 500; }
-#view-cases .decision-locked-note p { margin: 8px 0 0; font-size: 11px; line-height: 1.6; }
 #view-cases .decision-answer-key { margin-top: 20px; }
 #view-cases .decision-answer-key summary { cursor: pointer; font-weight: 600; }
 #view-cases .decision-answer-key dl { display: grid; gap: 14px; margin: 16px 0; }
 #view-cases .decision-answer-key dt { font-weight: 600; }
 #view-cases .decision-answer-key dd { margin: 6px 0 0; line-height: 1.8; }
-@media (max-width: 760px) {
-  #view-cases .is-diagnosing .decision-column:not(.is-locked) .option-list {
-    grid-template-columns: 1fr;
-    grid-template-rows: repeat(4, minmax(58px, auto));
-  }
-  #view-cases .decision-workflow { align-items: flex-start; flex-direction: column; padding: 16px; }
-  #view-cases .decision-column.is-locked .option-list { min-height: 0; }
-  #view-cases .decision-column.is-locked .decision-locked-note { padding: 14px 10px; }
-  #view-cases .decision-column.is-locked .decision-locked-note > span { display: none; }
-}

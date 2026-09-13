@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from src.rag import RetrievalCandidate, build_context, get_rag
-from src.case_training import public_case, public_case_id, lock_diagnosis, validate_decision
+from src.case_training import public_case, public_case_id, validate_decision
 
 
 if TYPE_CHECKING:
@@ -133,12 +133,7 @@ class KnowledgeChatRequest(BaseModel):
     messages: list[ChatMessage] = Field(min_length=1, max_length=30)
 
 
-class DiagnosisRequest(BaseModel):
-    diagnosis: str = Field(min_length=1, max_length=200)
-
-
 class DecisionRequest(BaseModel):
-    attempt_token: str = Field(min_length=1, max_length=4000)
     possible_diseases: list[str] = Field(default_factory=list)
     tests: list[str] = Field(default_factory=list)
     treatments: list[str] = Field(default_factory=list)
@@ -691,7 +686,7 @@ def evaluate_case(case_id: str, request: DecisionRequest) -> dict:
     if case.get("format") != "interactive_v2":
         raise HTTPException(status_code=400, detail="该教学情景不是决策判断格式。")
     try:
-        validate_decision(case, request.attempt_token, request.model_dump())
+        validate_decision(case, request.model_dump())
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
@@ -710,8 +705,8 @@ def evaluate_case(case_id: str, request: DecisionRequest) -> dict:
 - 临床处置：{', '.join(correct.get('measures', []))}
 参考依据：{case.get('reference_sop', '未提供')}
 
-学员先独立锁定初步诊断，再完成检查、治疗和临床处置。后续选项不能被当作病原学检测结果。
-评价最初锁定的诊断，不得因后续处置正确而把最初错误诊断算对；区分临床疑似诊断与实验室确诊，犬咬伤情景评价的是暴露分级而非已患狂犬病。
+学员同时完成诊断判断、检查、治疗和临床处置四栏。选项代表学员拟选择的决策，不能被当作已经获得的检查结果。
+区分临床疑似诊断与实验室确诊；犬咬伤情景评价的是暴露分级而非已患狂犬病。
 评价学员的临床推理是否正确、完整。先给结论，再指出做对、遗漏或错误之处；重点提示危重征象、检查时序、隔离要求和不安全选择，最后给出基于参考依据的解析。内容控制在 500 字以内。"""
     feedback = complete(
         [
@@ -723,17 +718,6 @@ def evaluate_case(case_id: str, request: DecisionRequest) -> dict:
         ]
     )
     return {"feedback": feedback, "reference_sop": case.get("reference_sop", ""), "correct_answers": correct}
-
-
-@app.post("/api/cases/{case_id}/diagnosis")
-def submit_case_diagnosis(case_id: str, request: DiagnosisRequest) -> dict:
-    case = find_case(case_id)
-    if case.get("format") != "interactive_v2":
-        raise HTTPException(status_code=400, detail="该情景不支持分步作答。")
-    try:
-        return lock_diagnosis(case, request.diagnosis)
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @app.post("/api/cases/{case_id}/coach")
