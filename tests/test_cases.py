@@ -35,7 +35,7 @@ class ClinicalScenarioLibraryTests(unittest.TestCase):
                 self.assertIn(case["difficulty"], {"基础", "进阶"})
 
     def test_correct_answers_are_available_options(self) -> None:
-        groups = ("possible_diseases", "measures", "tests", "treatments")
+        groups = ("possible_diseases", "tests", "treatments", "measures")
         for case in self.cases:
             for group in groups:
                 with self.subTest(case=case["id"], group=group):
@@ -49,6 +49,12 @@ class ClinicalScenarioLibraryTests(unittest.TestCase):
         for case in self.cases:
             with self.subTest(case=case["id"]):
                 self.assertFalse(set(case["options"]["tests"]) & set(case["options"]["treatments"]))
+
+    def test_each_decision_group_has_four_options(self) -> None:
+        for case in self.cases:
+            for group in ("possible_diseases", "tests", "treatments", "measures"):
+                with self.subTest(case=case["id"], group=group):
+                    self.assertEqual(len(case["options"][group]), 4)
 
     def test_old_customs_training_context_is_removed(self) -> None:
         forbidden = ("入境旅客", "海关", "口岸", "卫生检疫", "关员", "就诊方便卡")

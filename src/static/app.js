@@ -25,6 +25,7 @@ const state = {
   diseases: [],
   cases: [],
   casesLoaded: false,
+  caseAttempts: new Map(),
   currentCaseIndex: 0,
   qaMessages: [],
   stageIndex: 0,
@@ -78,6 +79,9 @@ const els = {
   patientGrid: $("#patientGrid"),
   decisionBoard: $("#decisionBoard"),
   decisionForm: $("#decisionForm"),
+  decisionProgress: $("#decisionProgress"),
+  decisionStatus: $("#decisionStatus"),
+  restartDecision: $("#restartDecision"),
   diseaseOptions: $("#diseaseOptions"),
   measureOptions: $("#measureOptions"),
   testOptions: $("#testOptions"),
@@ -602,8 +606,9 @@ async function sendKnowledgeQuestion(prompt) {
   }
 }
 
-function optionMarkup(items = [], group) {
-  return items.map((item, index) => `<label class="option-card"><input type="checkbox" name="${group}" value="${escapeHtml(item)}" id="${group}-${index}"><span>${escapeHtml(item)}</span></label>`).join("");
+function optionMarkup(items = [], group, selected = [], disabled = false) {
+  const type = group === "possible_diseases" ? "radio" : "checkbox";
+  return items.map((item, index) => `<label class="option-card"><input type="${type}" name="${group}" value="${escapeHtml(item)}" id="${group}-${index}" ${selected.includes(item) ? "checked" : ""} ${disabled ? "disabled" : ""}><span>${escapeHtml(item)}</span></label>`).join("");
 }
 
 function patientMarkup(info = {}) {
@@ -679,11 +684,7 @@ function renderCurrentCase() {
   if (current.format === "interactive_v2") {
     els.decisionBoard.classList.remove("is-hidden");
     els.stageBoard.classList.add("is-hidden");
-    els.diseaseOptions.innerHTML = optionMarkup(current.options?.possible_diseases, "possible_diseases");
-    els.measureOptions.innerHTML = optionMarkup(current.options?.measures, "measures");
-    els.testOptions.innerHTML = optionMarkup(current.options?.tests, "tests");
-    els.treatmentOptions.innerHTML = optionMarkup(current.options?.treatments, "treatments");
-    els.decisionForm.reset();
+    renderDecision(current);
   } else {
     els.decisionBoard.classList.add("is-hidden");
     els.stageBoard.classList.remove("is-hidden");
@@ -695,27 +696,118 @@ function selectedValues(name) {
   return $$(`input[name="${name}"]:checked`, els.decisionForm).map((input) => input.value);
 }
 
+const DECISION_GROUPS = [
+  ["possible_diseases", "诊断判断", "diseaseOptions"],
+  ["tests", "检查", "testOptions"],
+  ["treatments", "治疗", "treatmentOptions"],
+  ["measures", "临床处置", "measureOptions"],
+];
+
+function caseAttempt(current) {
+  if (!state.caseAttempts.has(current.id)) {
+    state.caseAttempts.set(current.id, {
+      answers: Object.fromEntries(DECISION_GROUPS.map(([group]) => [group, []])),
+      token: null, options: null, pending: null, result: null, error: "",
+    });
+  }
+  return state.caseAttempts.get(current.id);
+}
+
+function saveDecisionAnswers() {
+  const current = state.cases[state.currentCaseIndex];
+  if (!current) return;
+  const attempt = caseAttempt(current);
+  if (attempt.pending || attempt.result) return;
+  DECISION_GROUPS.forEach(([group]) => {
+    if (group !== "possible_diseases" || !attempt.token) attempt.answers[group] = selectedValues(group);
+  });
+}
+
+function renderDecision(current) {
+  const attempt = caseAttempt(current);
+  const locked = Boolean(attempt.token);
+  const completed = Boolean(attempt.result);
+  els.decisionForm.classList.toggle("is-diagnosing", !locked);
+  els.decisionForm.setAttribute("aria-busy", String(Boolean(attempt.pending)));
+  els.decisionProgress.textContent = completed ? "演练完成" : locked ? "第二步 · 完成临床决策" : "第一步 · 独立判断";
+  els.decisionStatus.textContent = completed
+    ? "本轮答案已保留，可在下方对照参考答案与解析。"
+    : locked
+      ? "初步诊断已锁定（尚未判定对错）。请完成检查、治疗和临床处置，各栏可多选，最后统一提交。"
+      : "请先阅读病例并选择一项最可能的初步诊断或暴露分级。确认后本轮不可修改，随后开放其余三栏。";
+  els.restartDecision.classList.toggle("is-hidden", !completed && !attempt.error);
+  els.restartDecision.disabled = Boolean(attempt.pending);
+  DECISION_GROUPS.forEach(([group, label, element]) => {
+    const diagnosis = group === "possible_diseases";
+    const options = diagnosis ? current.options?.possible_diseases : attempt.options?.[group];
+    const container = els[element];
+    container.closest(".decision-column").classList.toggle("is-locked", !diagnosis && !locked);
+    container.innerHTML = !diagnosis && !locked
+      ? `<div class="decision-locked-note"><span aria-hidden="true">—</span><strong>确认诊断后开放</strong><p>${label}选项将在下一步显示。</p></div>`
+      : optionMarkup(options, group, attempt.answers[group], Boolean(attempt.pending) || completed || (diagnosis && locked));
+  });
+  const button = $("button[type='submit']", els.decisionForm);
+  button.disabled = Boolean(attempt.pending) || completed;
+  button.textContent = attempt.pending === "diagnosis" ? "正在保存诊断…"
+    : attempt.pending === "evaluation" ? "正在分析决策…"
+    : completed ? "已完成判断" : locked ? "提交判断" : "确认诊断，继续作答";
+  els.decisionFeedback.classList.toggle("is-hidden", !attempt.result && !attempt.error && attempt.pending !== "evaluation");
+  if (attempt.result) {
+    const data = attempt.result;
+    const answerKey = DECISION_GROUPS.map(([group, label]) => `<div><dt>${label}</dt><dd>${escapeHtml((data.correct_answers?.[group] || []).join("；"))}</dd></div>`).join("");
+    els.decisionFeedback.innerHTML = `<h3>评估反馈</h3><p>${richText(data.feedback)}</p><details class="decision-answer-key"><summary>查看参考答案</summary><dl>${answerKey}</dl></details><div class="reference"><strong>参考依据</strong><br>${richText(data.reference_sop)}</div>`;
+  } else if (attempt.error) {
+    els.decisionFeedback.innerHTML = `<h3>提交未完成</h3><p>${escapeHtml(attempt.error)}</p><p>本轮已选答案仍保留；可以重试。若提示作答记录失效，请点击“重新作答”。</p>`;
+  } else if (attempt.pending === "evaluation") {
+    els.decisionFeedback.innerHTML = '<p>正在评估本轮作答，请稍候…</p><span class="loading-dots"><i></i><i></i><i></i></span>';
+  } else {
+    els.decisionFeedback.innerHTML = "";
+  }
+}
+
 async function submitDecision(event) {
   event.preventDefault();
   const current = state.cases[state.currentCaseIndex];
   if (!current) return;
-  const button = $("button[type='submit']", els.decisionForm);
-  setBusy(button, true, "正在分析决策…");
-  els.decisionFeedback.classList.remove("is-hidden");
-  els.decisionFeedback.innerHTML = '<span class="loading-dots"><i></i><i></i><i></i></span>';
+  const attempt = caseAttempt(current);
+  if (attempt.pending || attempt.result) return;
+  saveDecisionAnswers();
+  if (attempt.answers.possible_diseases.length !== 1) {
+    toast("请先选择一项初步诊断或暴露分级。", true);
+    els.diseaseOptions.querySelector("input")?.focus();
+    return;
+  }
+  const isDiagnosis = !attempt.token;
+  attempt.pending = isDiagnosis ? "diagnosis" : "evaluation";
+  attempt.error = "";
+  renderDecision(current);
   try {
-    const data = await api(`/api/cases/${encodeURIComponent(current.id)}/evaluate`, {
+    const data = await api(`/api/cases/${encodeURIComponent(current.id)}/${isDiagnosis ? "diagnosis" : "evaluate"}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ possible_diseases: selectedValues("possible_diseases"), measures: selectedValues("measures"), tests: selectedValues("tests"), treatments: selectedValues("treatments") }),
+      body: JSON.stringify(isDiagnosis
+        ? { diagnosis: attempt.answers.possible_diseases[0] }
+        : { attempt_token: attempt.token, ...attempt.answers }),
     });
-    els.decisionFeedback.innerHTML = `<h3>评估反馈</h3><p>${richText(data.feedback)}</p><div class="reference"><strong>参考依据</strong><br>${richText(data.reference_sop)}</div>`;
-    els.decisionFeedback.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (isDiagnosis) {
+      attempt.token = data.attempt_token;
+      attempt.options = data.options;
+      attempt.answers.possible_diseases = [data.locked_diagnosis];
+    } else {
+      attempt.result = data;
+    }
   } catch (error) {
-    els.decisionFeedback.innerHTML = `<h3>反馈未生成</h3><p>${escapeHtml(errorMessage(error))}</p>`;
-    toast(errorMessage(error), true);
+    attempt.error = errorMessage(error);
   } finally {
-    setBusy(button, false);
+    attempt.pending = null;
+    // Requests belong to their original case. Switching cases must not replace
+    // the new case's choices or display another case's feedback.
+    if (state.cases[state.currentCaseIndex]?.id === current.id && state.caseAttempts.get(current.id) === attempt) {
+      renderDecision(current);
+      const target = attempt.error || attempt.result ? els.decisionFeedback : els.testOptions;
+      target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      if (isDiagnosis && !attempt.error) els.testOptions.querySelector("input")?.focus({ preventScroll: true });
+    }
   }
 }
 
@@ -800,7 +892,7 @@ let atlasLoadPromise = null;
 let casesLoadPromise = null;
 
 async function refreshPublicData(force = false) {
-  const caseData = await api("/api/cases", force ? { cache: "reload" } : {});
+  const caseData = await api("/api/cases?workflow=diagnosis-first-v1", { cache: "no-store" });
   state.cases = caseData.cases || [];
   state.casesLoaded = true;
   if (state.currentCaseIndex >= state.cases.length) state.currentCaseIndex = 0;
@@ -951,6 +1043,15 @@ function bindEvents() {
     if (!els.casePicker.contains(event.target)) closeCasePicker();
   });
   els.decisionForm.addEventListener("submit", submitDecision);
+  els.decisionForm.addEventListener("change", saveDecisionAnswers);
+  els.restartDecision.addEventListener("click", () => {
+    const current = state.cases[state.currentCaseIndex];
+    if (!current || caseAttempt(current).pending) return;
+    state.caseAttempts.delete(current.id);
+    renderDecision(current);
+    els.diseaseOptions.scrollIntoView({ behavior: "smooth", block: "center" });
+    els.diseaseOptions.querySelector("input")?.focus({ preventScroll: true });
+  });
   els.stageInput.addEventListener("input", () => autosize(els.stageInput));
   els.stageForm.addEventListener("submit", submitStageMessage);
   els.nextStage.addEventListener("click", () => {
