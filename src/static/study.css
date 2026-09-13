@@ -1,0 +1,101 @@
+/* Assessment follows the clinical worksheet's white / charcoal / orange system. */
+body[data-auth="loading"] .app-shell, body[data-auth="login"] .app-shell,
+body:not([data-auth="ready"]) .compare-dock { display: none; }
+body[data-auth="ready"] .student-login { display: none; }
+.student-login { min-height: 100svh; display: grid; grid-template-columns: 1.1fr 1fr; align-items: center; gap: clamp(30px, 6vw, 100px); max-width: 1220px; margin: auto; padding: 56px 40px; }
+.login-story .brand { margin-bottom: 64px; }
+.login-story h1 { font-size: clamp(30px, 3.6vw, 46px); line-height: 1.45; letter-spacing: -.04em; margin: 20px 0 14px; }
+.login-story > p { color: #787b77; font-size: 17px; }
+.login-story .section-code { font-size: 10px; }
+.study-journey { list-style: none; padding: 0; margin: 36px 0 0; display: grid; gap: 24px; }
+.study-journey li { display: flex; gap: 22px; align-items: flex-start; }
+.study-journey li > span { color: #ff5100; font: 20px monospace; padding-top: 2px; }
+.study-journey p { color: #787b77; margin: 4px 0 0; font-size: 14px; }
+.login-card, .study-card { background: #fff; border-radius: 24px; padding: 34px; box-shadow: 0 12px 38px #19191908; min-width: 0; }
+.login-card h2 { font-size: 28px; margin: 20px 0 8px; }
+.login-card > p { line-height: 1.8; }
+.login-card label { display: block; margin: 24px 0 9px; font-size: 14px; font-weight: 600; }
+.login-card input { width: 100%; min-width: 0; background: #f3f3f1; border: 1px solid transparent; border-radius: 12px; padding: 16px; color: #171817; font: inherit; font-size: 16px; }
+.login-card input:focus { outline: 2px solid #ff5100; outline-offset: 2px; }
+.login-card .solid-button { width: 100%; margin-top: 12px; justify-content: center; }
+.faculty-link { display: block; text-align: center; margin-top: 20px; color: #777b77; font-size: 13px; }
+.study-notice { color: #717570; font-size: 13px; line-height: 1.8; margin: 20px 0; }
+.study-error { color: #a93812 !important; line-height: 1.7; }
+.student-profile { margin: 24px 20px; padding: 20px 10px; border-top: 1px solid #e4e5e2; display: grid; gap: 8px; overflow-wrap: anywhere; }
+.student-profile strong { font-size: 14px; }
+.student-profile small { font-size: 12px; color: #777b77; }
+.student-profile button { justify-self: start; background: none; border: 0; padding: 6px 0; color: #777b77; cursor: pointer; font: inherit; font-size: 12px; }
+.nav-item.study-locked { opacity: .55; }
+.assessment-root { max-width: 1220px; margin: 0 auto; padding: 22px 38px 40px; }
+.study-heading { margin: 6px 0 30px; }
+.study-heading h1 { margin: 15px 0 12px; font-size: clamp(26px, 3vw, 36px); letter-spacing: -.03em; }
+.study-heading p, .study-card > p { line-height: 1.85; }
+.study-heading > p { color: #717570; }
+.study-card { margin: 20px 0; }
+.study-card h2 { font-size: 23px; margin: 15px 0; }
+.study-pill { font-size: 12px; color: #c54100; background: #fff1e9; padding: 7px 12px; border-radius: 7px; display: inline-block; }
+.exam-specs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin: 24px 0; background: #dedfdb; border: 1px solid #dedfdb; border-radius: 16px; overflow: hidden; }
+.exam-specs > div { display: grid; gap: 8px; padding: 22px; background: #f8f8f6; }
+.exam-specs strong { font: 30px ui-monospace, monospace; color: #191919; }
+.exam-specs span { color: #717570; font-size: 12px; line-height: 1.6; }
+.score-specs strong { color: #e74b00; }
+.study-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 22px 0; }
+.study-actions .line-button, .study-actions .solid-button { font-size: 14px; padding: 13px 18px; }
+.study-confirmation { border-top: 1px solid #dedfdb; padding-top: 24px; margin-top: 24px; }
+.study-confirmation p { line-height: 1.8; }
+.exam-progress { position: sticky; top: 12px; z-index: 8; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 16px 22px; border: 1px solid #e2e3df; background: #fffffff5; backdrop-filter: blur(10px); border-radius: 14px; box-shadow: 0 5px 20px #19191908; font-size: 13px; }
+.exam-progress label { font-weight: 600; }
+.exam-progress progress { accent-color: #ff5100; height: 6px; flex: 1; min-width: 60px; max-width: 210px; }
+.exam-progress span { color: #717570; }
+.exam-progress button { margin-left: auto; font-size: 12px; }
+.exam-section-title { padding: 10px 0 24px; }
+.exam-section-title h2 { font-size: 22px; margin: 12px 0 8px; }
+.exam-section-title > span:last-child { color: #717570; font-size: 13px; }
+.exam-question { border: 0; border-top: 1px solid #e2e3df; padding: 28px 0 30px; margin: 0; min-width: 0; scroll-margin-top: 115px; }
+.exam-question legend { display: block; float: left; width: 100%; margin-bottom: 18px; padding: 0; font-size: 16px; font-weight: 600; line-height: 1.9; }
+.exam-question legend + * { clear: both; }
+.exam-question legend small { color: #777b77; font-size: 11px; font-weight: 400; white-space: nowrap; margin-left: 8px; }
+.question-number { color: #ef5000; font: 17px ui-monospace, monospace; margin-right: 12px; }
+.exam-options { display: grid; gap: 10px; }
+.exam-option { display: block; position: relative; cursor: pointer; }
+.exam-option input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.exam-option > span { display: flex; gap: 14px; align-items: baseline; background: #f3f3f1; border: 1px solid transparent; border-radius: 10px; padding: 14px 18px; line-height: 1.7; font-size: 15px; color: #555b55; overflow-wrap: anywhere; }
+.exam-option b { font: 13px ui-monospace, monospace; border: 1px solid #bec3bd; background: white; border-radius: 4px; width: 24px; min-width: 24px; height: 24px; line-height: 22px; text-align: center; align-self: center; }
+.exam-option input:checked + span { color: #171817; border-color: #d3d6ce; background: #edeeea; }
+.exam-option input:checked + span b { background: #ff5100; border-color: #ff5100; color: white; }
+.exam-option input:focus-visible + span, .exam-question:focus-visible { outline: 2px solid #ff5100; outline-offset: 3px; }
+.exam-option:has(input:disabled) { cursor: default; }
+.exam-question.is-missing { border-top-color: #ce4c19; }
+.exam-case-stem { margin-bottom: 24px; }
+.exam-case-stem h3 { margin: 12px 0; font-size: 21px; }
+.exam-case-stem p { line-height: 2; font-size: 16px; }
+.exam-submit, .study-release { display: flex; justify-content: space-between; align-items: center; gap: 22px; }
+.exam-submit p, .study-release p { color: #717570; font-size: 13px; line-height: 1.8; }
+.exam-submit button, .study-release button { flex-shrink: 0; }
+.study-review { margin: 24px 0; }
+.study-review > summary { cursor: pointer; padding: 22px; background: white; border-radius: 16px; font-weight: 600; }
+.exam-explanation { padding: 20px; margin-top: 14px; background: #f6f7f4; border-radius: 12px; font-size: 14px; line-height: 1.85; }
+.exam-explanation small { color: #717570; }
+.study-table-wrap { max-width: 100%; overflow: auto; }
+.study-table-wrap table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.study-table-wrap th, .study-table-wrap td { padding: 14px; text-align: left; border-bottom: 1px solid #e2e3df; white-space: nowrap; }
+.study-table-wrap th { color: #717570; font-size: 12px; }
+@media(max-width: 760px) {
+  .assessment-root { padding: 22px 18px 32px; }
+  .student-login { display: block; padding: 26px 18px; }
+  .login-story .brand { margin: 10px 0 30px; }
+  .login-story h1 { font-size: 29px; }
+  .study-journey { display: none; }
+  .login-card { margin-top: 30px; }
+  .login-card, .study-card { padding: 24px 20px; border-radius: 20px; }
+  .exam-specs > div { padding: 18px 12px; }
+  .exam-specs strong { font-size: 25px; }
+  .exam-progress { top: 8px; gap: 9px; padding: 12px; }
+  .exam-progress span { flex-basis: 65%; font-size: 11px; }
+  .exam-submit, .study-release { display: block; }
+  .exam-submit button, .study-release button { width: 100%; justify-content: center; margin-top: 10px; }
+  .exam-option > span { padding: 12px; font-size: 15px; }
+  .exam-question legend { font-size: 16px; }
+  .study-heading { margin-top: 0; }
+}
+@media print { .sidebar, .topbar, .study-actions, .exam-progress, .toast { display: none !important; } .main-stage { margin: 0 !important; } .study-card { box-shadow: none; } .exam-question { break-inside: avoid; } }

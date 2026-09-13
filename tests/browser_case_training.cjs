@@ -18,6 +18,9 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   try {
+    await page.request.post(base + "/api/session/login", { data: { student_no: "CASE-E2E", name: "情景功能测试" } });
+    const pre = await (await page.request.post(base + "/api/assessments/start", { data: { phase: "pre" } })).json();
+    if (!pre.submitted) await page.request.post(base + `/api/assessments/${pre.id}/submit`, { data: { answers: Object.fromEntries(pre.questions.map(q => [q.id, q.options[0].id])), revision: pre.revision } });
     await page.goto(base + "/#cases");
     await page.waitForSelector("#diseaseOptions input");
     const selectCase = async index => {

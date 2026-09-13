@@ -9,6 +9,10 @@ import src.main as main
 
 
 class AllDecisionsVisibleTests(unittest.TestCase):
+    def setUp(self):
+        main.app.dependency_overrides[main.require_learning] = lambda: {"id": "unit-test"}
+        self.addCleanup(lambda: main.app.dependency_overrides.pop(main.require_learning, None))
+
     @classmethod
     def setUpClass(cls):
         cls.client = TestClient(main.app)
@@ -17,7 +21,7 @@ class AllDecisionsVisibleTests(unittest.TestCase):
     def test_public_payload_contains_all_four_decision_groups(self):
         response = self.client.get("/api/cases")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.headers["cache-control"], "no-store")
+        self.assertIn("no-store", response.headers["cache-control"])
         public = response.json()["cases"]
         self.assertEqual(len(public), 10)
         for source, case in zip(self.cases, public):

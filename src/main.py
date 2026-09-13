@@ -10,12 +10,13 @@ from typing import Iterator, Literal, TYPE_CHECKING
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.requests import Request
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from src.rag import RetrievalCandidate, build_context, get_rag
 from src.case_training import public_case, public_case_id, validate_decision
+from src.study import router as study_router, require_learning
 
 
 if TYPE_CHECKING:
@@ -96,13 +97,24 @@ app = FastAPI(
     version="4.0.0",
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
+app.include_router(study_router)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
 
 
 @app.middleware("http")
 async def add_cache_headers(request: Request, call_next):
+    path = request.url.path
+    if path.startswith("/assets/"):
+        try:
+            require_learning(request)
+        except HTTPException as error:
+            return JSONResponse({"detail": error.detail}, status_code=error.status_code, headers={"Cache-Control": "private, no-store"})
     response = await call_next(request)
+    if path.startswith(("/api/", "/assets/")):
+        response.headers["Cache-Control"] = "private, no-store"
+        response.headers["Vary"] = "Cookie"
+        return response
     if request.method != "GET" or response.status_code != 200:
         return response
 
@@ -535,12 +547,12 @@ def config() -> dict:
     }
 
 
-@app.get("/api/rash-atlas")
+@app.get("/api/rash-atlas", dependencies=[Depends(require_learning)])
 def rash_atlas() -> dict:
     return load_rash_atlas()
 
 
-@app.post("/api/rash-atlas/differential")
+@app.post("/api/rash-atlas/differential", dependencies=[Depends(require_learning)])
 def rash_differential(request: RashDifferentialRequest) -> dict:
     all_diseases = atlas_diseases()
     requested_ids = set(request.candidate_ids)
@@ -576,12 +588,12 @@ def rash_differential(request: RashDifferentialRequest) -> dict:
     }
 
 
-@app.get("/api/knowledge")
+@app.get("/api/knowledge", dependencies=[Depends(require_learning)])
 def knowledge_index() -> dict:
     return {"rag": rag_index().stats()}
 
 
-@app.post("/api/chat/knowledge")
+@app.post("/api/chat/knowledge", dependencies=[Depends(require_learning)])
 def knowledge_chat(request: KnowledgeChatRequest) -> dict:
     latest_question, messages, retrieval, _ = knowledge_completion(request)
     answer = complete(messages, max_tokens=KNOWLEDGE_MAX_TOKENS)
@@ -593,7 +605,7 @@ def knowledge_chat(request: KnowledgeChatRequest) -> dict:
     }
 
 
-@app.post("/api/chat/knowledge/stream")
+@app.post("/api/chat/knowledge/stream", dependencies=[Depends(require_learning)])
 def knowledge_chat_stream(request: KnowledgeChatRequest) -> StreamingResponse:
     latest_question, messages, retrieval, _ = knowledge_completion(request)
 
@@ -675,12 +687,12 @@ def knowledge_chat_stream(request: KnowledgeChatRequest) -> StreamingResponse:
     )
 
 
-@app.get("/api/cases")
+@app.get("/api/cases", dependencies=[Depends(require_learning)])
 def cases_index() -> dict:
     return {"cases": [public_case(case) for case in load_cases() if not case.get("error")]}
 
 
-@app.post("/api/cases/{case_id}/evaluate")
+@app.post("/api/cases/{case_id}/evaluate", dependencies=[Depends(require_learning)])
 def evaluate_case(case_id: str, request: DecisionRequest) -> dict:
     case = find_case(case_id)
     if case.get("format") != "interactive_v2":
@@ -720,7 +732,7 @@ def evaluate_case(case_id: str, request: DecisionRequest) -> dict:
     return {"feedback": feedback, "reference_sop": case.get("reference_sop", ""), "correct_answers": correct}
 
 
-@app.post("/api/cases/{case_id}/coach")
+@app.post("/api/cases/{case_id}/coach", dependencies=[Depends(require_learning)])
 def coach_stage(case_id: str, request: StageCoachRequest) -> dict:
     case = find_case(case_id)
     stages = case.get("stages", [])

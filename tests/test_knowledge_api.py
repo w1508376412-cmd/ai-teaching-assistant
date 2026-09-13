@@ -8,6 +8,10 @@ import src.main as main
 
 
 class KnowledgeAPIIntegrationTests(unittest.TestCase):
+    def setUp(self):
+        main.app.dependency_overrides[main.require_learning] = lambda: {"id": "unit-test"}
+        self.addCleanup(lambda: main.app.dependency_overrides.pop(main.require_learning, None))
+
     def test_answer_hides_citation_markers_but_keeps_reranking(self):
         request = main.KnowledgeChatRequest(
             messages=[main.ChatMessage(role="user", content="猴痘潜伏期多久？")]

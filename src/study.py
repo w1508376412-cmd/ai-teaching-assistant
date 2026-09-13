@@ -1,0 +1,465 @@
+"""Student registration, durable paired assessments, and faculty results."""
+import csv
+import hashlib
+import hmac
+import io
+import json
+import os
+import random
+import re
+import secrets
+import sqlite3
+import time
+import unicodedata
+from contextlib import contextmanager
+from functools import lru_cache
+from pathlib import Path
+from typing import Literal
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
+from pydantic import BaseModel, Field
+
+from src.assessment_bank import VERSION, PAIRS, CASE_PAIRS, bank_with_sources
+
+COOKIE = "teaching_student"
+SESSION_SECONDS = 30 * 86400
+ROOT = Path(__file__).resolve().parents[1]
+router = APIRouter()
+
+
+def encode(value):
+    return json.dumps(value, ensure_ascii=False)
+
+
+class Store:
+    def __init__(self, path):
+        self.path = Path(path)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self.db() as conn:
+            conn.executescript("""
+            CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS students (
+              id TEXT PRIMARY KEY, student_no TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
+              first_form TEXT NOT NULL, created REAL NOT NULL);
+            CREATE TABLE IF NOT EXISTS sessions (
+              hash TEXT PRIMARY KEY, student TEXT NOT NULL REFERENCES students(id), expires REAL NOT NULL);
+            CREATE TABLE IF NOT EXISTS attempts (
+              id TEXT PRIMARY KEY, student TEXT NOT NULL REFERENCES students(id), phase TEXT NOT NULL,
+              form TEXT NOT NULL, version TEXT NOT NULL, paper TEXT NOT NULL,
+              answers TEXT NOT NULL DEFAULT '{}', revision INTEGER NOT NULL DEFAULT 0,
+              started REAL NOT NULL, submitted REAL, result TEXT,
+              UNIQUE(student, phase));
+            CREATE TABLE IF NOT EXISTS activity (
+              student TEXT NOT NULL REFERENCES students(id), module TEXT NOT NULL,
+              count INTEGER NOT NULL DEFAULT 1, first REAL NOT NULL, last REAL NOT NULL,
+              PRIMARY KEY(student, module));
+            CREATE TABLE IF NOT EXISTS login_limits (key TEXT NOT NULL, created REAL NOT NULL);
+            CREATE INDEX IF NOT EXISTS login_time ON login_limits(created);
+            """)
+            conn.execute("INSERT OR IGNORE INTO settings VALUES ('seed', ?)", (str(secrets.randbits(63)),))
+            conn.execute("INSERT OR IGNORE INTO settings VALUES ('post_open', 'false')")
+            conn.execute("INSERT OR IGNORE INTO settings VALUES ('version', ?)", (VERSION,))
+        os.chmod(self.path, 0o600)
+        # Freeze the cohort's actual paired papers, not just the RNG seed. A later
+        # bank edit must never silently change an enrolled student's post-test.
+        if "paper_A" not in self.settings():
+            forms = {form: self.build_paper(form) for form in ("A", "B")}
+            with self.db(write=True) as c:
+                for form, paper in forms.items():
+                    c.execute("INSERT OR IGNORE INTO settings VALUES (?, ?)", (f"paper_{form}", encode(paper)))
+
+    @contextmanager
+    def db(self, write=False):
+        conn = sqlite3.connect(self.path, timeout=20)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys=ON")
+        conn.execute("PRAGMA journal_mode=WAL")
+        try:
+            if write:
+                conn.execute("BEGIN IMMEDIATE")
+            yield conn
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+
+    def login(self, student_no, name, address):
+        key = hashlib.sha256(f"{address}:{student_no}".encode()).hexdigest()
+        now = time.time()
+        # Commit the rate-limit event even if identity validation subsequently fails.
+        with self.db(write=True) as c:
+            c.execute("DELETE FROM login_limits WHERE created < ?", (now - 600,))
+            if c.execute("SELECT COUNT(*) FROM login_limits WHERE key=?", (key,)).fetchone()[0] >= 40:
+                raise HTTPException(429, "登录尝试较多，请10分钟后再试。")
+            c.execute("INSERT INTO login_limits VALUES (?, ?)", (key, now))
+        with self.db(write=True) as c:
+            user = c.execute("SELECT * FROM students WHERE student_no=?", (student_no,)).fetchone()
+            if user and user["name"] != name:
+                raise HTTPException(409, "学号与已登记的姓名不一致，请核对或联系教师。")
+            if not user:
+                c.execute("INSERT INTO students VALUES (?, ?, ?, ?, ?)",
+                          (secrets.token_hex(16), student_no, name, secrets.choice(["A", "B"]), now))
+                user = c.execute("SELECT * FROM students WHERE student_no=?", (student_no,)).fetchone()
+            token = secrets.token_urlsafe(32)
+            c.execute("DELETE FROM sessions WHERE expires < ?", (now,))
+            c.execute("INSERT INTO sessions VALUES (?, ?, ?)",
+                      (hashlib.sha256(token.encode()).hexdigest(), user["id"], now + SESSION_SECONDS))
+            return dict(user), token
+
+    def user(self, token):
+        if not token:
+            return None
+        with self.db() as c:
+            row = c.execute("SELECT s.* FROM students s JOIN sessions t ON s.id=t.student WHERE t.hash=? AND t.expires>?",
+                            (hashlib.sha256(token.encode()).hexdigest(), time.time())).fetchone()
+            return dict(row) if row else None
+
+    def settings(self):
+        with self.db() as c:
+            return {r["key"]: r["value"] for r in c.execute("SELECT * FROM settings")}
+
+    def blueprint(self):
+        rng = random.Random(int(self.settings()["seed"]))
+        selected = []
+        for difficulty, count in [("基础", 8), ("应用", 8), ("综合", 4)]:
+            selected.extend(rng.sample([p for p in PAIRS if p["difficulty"] == difficulty], count))
+        return selected
+
+    def build_paper(self, form):
+        sources = bank_with_sources()
+        questions = []
+        cases = []
+
+        def add(q, ident, points, meta, case_id=None):
+            choices = list(q["choices"])
+            random.SystemRandom().shuffle(choices)
+            options = [{"id": secrets.token_hex(5), "text": text} for text in choices]
+            questions.append({"id": ident, "stem": q["stem"], "options": options,
+                              "correct": next(o["id"] for o in options if o["text"] == q["answer"]),
+                              "points": points, "case_id": case_id, **meta})
+
+        for n, p in enumerate(self.blueprint(), 1):
+            refs = [sources[k] for k in p["source_ids"]]
+            add(p[form], f"q{n:02}", 3,
+                dict(pair=p["id"], point=p["point"], domain=p["domain"], difficulty=p["difficulty"],
+                     disease=refs[0]["disease"], explanation=p["explanation"],
+                     sources=[{"id": r["id"], "document": r["document"], "url": r["source"]} for r in refs]))
+        # Same two case constructs in both forms, with distinct patients and wording.
+        for n, p in enumerate(reversed(CASE_PAIRS), 1):
+            case_id = f"c{n}"
+            cases.append({"id": case_id, "title": f"案例题 {n}", "background": p[form]["background"]})
+            refs = [sources[k] for k in p["source_ids"]]
+            for j, q in enumerate(p[form]["questions"]):
+                add(q, f"{case_id}_{j+1}", 5,
+                    dict(pair=f"{p['id']}-{j+1}", point=p["points"][j], domain=["临床识别", "检查与诊断", "治疗原则", "风险与处置"][j],
+                         difficulty=p["difficulty"], disease=p["disease"], explanation=p["explanations"][j],
+                         sources=[{"id": r["id"], "document": r["document"], "url": r["source"]} for r in refs]), case_id)
+        return {"version": VERSION, "form": form, "questions": questions, "cases": cases, "total": 100}
+
+    def make_paper(self, form):
+        paper = json.loads(self.settings()[f"paper_{form}"])
+        for question in paper["questions"]:
+            for option in question["options"]:
+                old_id = option["id"]
+                option["id"] = secrets.token_hex(8)
+                if question["correct"] == old_id:
+                    question["correct"] = option["id"]
+            random.SystemRandom().shuffle(question["options"])
+        return paper
+
+    def attempts(self, user_id):
+        with self.db() as c:
+            return [dict(r) for r in c.execute("SELECT * FROM attempts WHERE student=? ORDER BY started", (user_id,))]
+
+    def status(self, user):
+        attempts = self.attempts(user["id"])
+        pre = next((r for r in attempts if r["phase"] == "pre"), None)
+        post = next((r for r in attempts if r["phase"] == "post"), None)
+        completed = bool(pre and pre["submitted"])
+        finished = bool(post and post["submitted"])
+        return {"authenticated": True, "student": {"student_no": user["student_no"], "name": user["name"]},
+                "pre_completed": completed, "post_completed": finished,
+                "post_open": self.settings()["post_open"] == "true",
+                "active": next(({"id": r["id"], "phase": r["phase"]} for r in attempts if not r["submitted"]), None),
+                "results": [{"phase": r["phase"], "form": r["form"], "started": r["started"], "submitted": r["submitted"],
+                             **({"score": json.loads(r["result"])["score"], "breakdown": json.loads(r["result"])["breakdown"]} if finished else {})}
+                            for r in attempts if r["submitted"]]}
+
+    def start(self, user, phase):
+        with self.db(write=True) as c:
+            existing = c.execute("SELECT * FROM attempts WHERE student=? AND phase=?", (user["id"], phase)).fetchone()
+            if existing:
+                return dict(existing)
+            if phase == "post":
+                pre = c.execute("SELECT submitted FROM attempts WHERE student=? AND phase='pre'", (user["id"],)).fetchone()
+                if not pre or not pre["submitted"]:
+                    raise HTTPException(403, "请先完成前测。")
+                if c.execute("SELECT value FROM settings WHERE key='post_open'").fetchone()[0] != "true":
+                    raise HTTPException(403, "后测尚未开放，请等待教师通知。")
+            form = user["first_form"] if phase == "pre" else ("B" if user["first_form"] == "A" else "A")
+            paper = self.make_paper(form)
+            ident = secrets.token_hex(16)
+            c.execute("INSERT INTO attempts (id,student,phase,form,version,paper,started) VALUES (?,?,?,?,?,?,?)",
+                      (ident, user["id"], phase, form, paper["version"], encode(paper), time.time()))
+            return dict(c.execute("SELECT * FROM attempts WHERE id=?", (ident,)).fetchone())
+
+    def attempt(self, user, ident, c):
+        row = c.execute("SELECT * FROM attempts WHERE id=? AND student=?", (ident, user["id"])).fetchone()
+        if not row:
+            raise HTTPException(404, "测验记录不存在。")
+        return dict(row)
+
+    def save(self, user, ident, answers, revision, submit=False):
+        with self.db(write=True) as c:
+            row = self.attempt(user, ident, c)
+            if row["submitted"]:
+                if submit:
+                    return row
+                raise HTTPException(409, "试卷已提交，不能再修改。")
+            if revision != row["revision"]:
+                raise HTTPException(409, "其他页面已更新作答，请刷新载入最新进度后继续。")
+            paper = json.loads(row["paper"])
+            allowed = {q["id"]: {o["id"] for o in q["options"]} for q in paper["questions"]}
+            if any(k not in allowed or v not in allowed[k] for k, v in answers.items()):
+                raise HTTPException(422, "作答包含不属于当前试卷的选项。")
+            if submit and set(answers) != set(allowed):
+                raise HTTPException(422, "请完成20道单选题及2道案例题的全部小题后提交。")
+            result = None
+            if submit:
+                breakdown = {}
+                rows = []
+                for q in paper["questions"]:
+                    earned = q["points"] if answers[q["id"]] == q["correct"] else 0
+                    bucket = breakdown.setdefault(q["domain"], {"score": 0, "total": 0})
+                    bucket["score"] += earned
+                    bucket["total"] += q["points"]
+                    rows.append({"id": q["id"], "pair": q["pair"], "earned": earned, "points": q["points"]})
+                result = {"score": sum(r["earned"] for r in rows), "total": 100, "breakdown": breakdown, "items": rows}
+            c.execute("UPDATE attempts SET answers=?, revision=revision+1, submitted=?, result=? WHERE id=?",
+                      (encode(answers), time.time() if submit else None, encode(result) if result else None, ident))
+            return dict(c.execute("SELECT * FROM attempts WHERE id=?", (ident,)).fetchone())
+
+    def activity(self, user_id, module):
+        with self.db() as c:
+            now = time.time()
+            c.execute("INSERT INTO activity VALUES (?, ?, 1, ?, ?) ON CONFLICT(student,module) DO UPDATE SET count=count+1,last=excluded.last",
+                      (user_id, module, now, now))
+
+
+@lru_cache(maxsize=1)
+def get_store():
+    folder = Path(os.getenv("STUDY_DATA_DIR", str(ROOT / "var")))
+    if os.getenv("STUDY_REQUIRE_VOLUME") == "true" and not os.path.ismount(folder):
+        raise HTTPException(503, "测验存储尚未就绪，请联系教师。")
+    return Store(folder / "study.sqlite3")
+
+
+def require_student(request: Request):
+    user = get_store().user(request.cookies.get(COOKIE))
+    if not user:
+        raise HTTPException(401, "请先输入学号和姓名登录。")
+    return user
+
+
+def require_learning(request: Request):
+    user = require_student(request)
+    rows = get_store().attempts(user["id"])
+    if not any(r["phase"] == "pre" and r["submitted"] for r in rows):
+        raise HTTPException(403, "请先完成04知识测验中的首次前测。")
+    if any(r["phase"] == "post" and not r["submitted"] for r in rows):
+        raise HTTPException(403, "后测正在进行，请完成后再返回学习。")
+    return user
+
+
+def faculty(x_admin_password: str | None = Header(default=None)):
+    password = os.getenv("ADMIN_PASSWORD", "")
+    if not password:
+        raise HTTPException(503, "教师管理尚未配置。")
+    if not x_admin_password or not hmac.compare_digest(password, x_admin_password):
+        raise HTTPException(401, "教师管理密码不正确。")
+
+
+def same_origin(request: Request):
+    from urllib.parse import urlsplit
+    origin = request.headers.get("origin")
+    if origin and urlsplit(origin).netloc != request.headers.get("host"):
+        raise HTTPException(403, "不允许跨站提交。")
+
+
+class Login(BaseModel):
+    student_no: str = Field(min_length=1, max_length=60)
+    name: str = Field(min_length=1, max_length=60)
+
+
+class Answers(BaseModel):
+    answers: dict[str, str] = Field(max_length=28)
+    revision: int = Field(ge=0)
+
+
+class Start(BaseModel):
+    phase: Literal["pre", "post"]
+
+
+def public_attempt(row, review=False):
+    paper = json.loads(row["paper"])
+    questions = []
+    for q in paper["questions"]:
+        visible = {k: q[k] for k in ("id", "stem", "options", "points", "case_id")}
+        if review:
+            visible.update({k: q[k] for k in ("correct", "point", "explanation", "sources", "domain")})
+        questions.append(visible)
+    return {"id": row["id"], "phase": row["phase"], "form": row["form"], "version": row["version"],
+            "started": row["started"], "submitted": row["submitted"], "revision": row["revision"],
+            "answers": json.loads(row["answers"]), "questions": questions, "cases": paper["cases"], "total": 100,
+            **({"result": json.loads(row["result"])} if review and row["result"] else {})}
+
+
+@router.post("/api/session/login", dependencies=[Depends(same_origin)])
+def login(body: Login, request: Request, response: Response):
+    number = unicodedata.normalize("NFKC", body.student_no).strip().upper()
+    name = unicodedata.normalize("NFKC", body.name).strip()
+    if not re.fullmatch(r"[A-Z0-9_-]{3,40}", number) or not 2 <= len(name) <= 40 or any(unicodedata.category(c).startswith("C") for c in name):
+        raise HTTPException(422, "学号请填写3—40位字母、数字或短横线，姓名请填写2—40个字。")
+    user, token = get_store().login(number, name, request.client.host if request.client else "unknown")
+    response.set_cookie(COOKIE, token, max_age=SESSION_SECONDS, httponly=True,
+                        secure=request.url.scheme == "https" or os.getenv("STUDY_REQUIRE_VOLUME") == "true", samesite="lax")
+    return get_store().status(user)
+
+
+@router.get("/api/session")
+def session(request: Request):
+    user = get_store().user(request.cookies.get(COOKIE))
+    return get_store().status(user) if user else {"authenticated": False}
+
+
+@router.post("/api/session/logout", dependencies=[Depends(same_origin)])
+def logout(request: Request, response: Response):
+    token = request.cookies.get(COOKIE, "")
+    with get_store().db() as c:
+        c.execute("DELETE FROM sessions WHERE hash=?", (hashlib.sha256(token.encode()).hexdigest(),))
+    response.delete_cookie(COOKIE)
+    return {"ok": True}
+
+
+@router.post("/api/assessments/start", dependencies=[Depends(same_origin)])
+def start(body: Start, user=Depends(require_student)):
+    return public_attempt(get_store().start(user, body.phase))
+
+
+@router.get("/api/assessments/{ident}")
+def attempt(ident: str, user=Depends(require_student)):
+    store = get_store()
+    with store.db() as c:
+        row = store.attempt(user, ident, c)
+    return public_attempt(row, review=store.status(user)["post_completed"])
+
+
+@router.put("/api/assessments/{ident}/draft", dependencies=[Depends(same_origin)])
+def draft(ident: str, body: Answers, user=Depends(require_student)):
+    row = get_store().save(user, ident, body.answers, body.revision)
+    return {"revision": row["revision"], "saved": True}
+
+
+@router.post("/api/assessments/{ident}/submit", dependencies=[Depends(same_origin)])
+def submit(ident: str, body: Answers, user=Depends(require_student)):
+    get_store().save(user, ident, body.answers, body.revision, submit=True)
+    return get_store().status(user)
+
+
+@router.get("/api/assessment-results")
+def results(user=Depends(require_student)):
+    store = get_store()
+    status = store.status(user)
+    if not status["post_completed"]:
+        return {"ready": False}
+    return {"ready": True, "attempts": [public_attempt(r, review=True) for r in store.attempts(user["id"])]}
+
+
+class Visit(BaseModel):
+    module: Literal["knowledge", "atlas", "cases"]
+
+
+@router.post("/api/study/visit", dependencies=[Depends(same_origin)])
+def visit(body: Visit, user=Depends(require_learning)):
+    get_store().activity(user["id"], body.module)
+    return {"ok": True}
+
+
+class Release(BaseModel):
+    open: bool
+
+
+@router.put("/api/admin/study/release", dependencies=[Depends(faculty), Depends(same_origin)])
+def release(body: Release):
+    with get_store().db(write=True) as c:
+        c.execute("UPDATE settings SET value=? WHERE key='post_open'", ("true" if body.open else "false",))
+        c.execute("INSERT OR REPLACE INTO settings VALUES ('post_updated', ?)", (str(time.time()),))
+    return {"post_open": body.open}
+
+
+def faculty_rows():
+    store = get_store()
+    with store.db() as c:
+        users = [dict(r) for r in c.execute("SELECT * FROM students ORDER BY created DESC")]
+        attempts = [dict(r) for r in c.execute("SELECT * FROM attempts")]
+        activities = [dict(r) for r in c.execute("SELECT * FROM activity")]
+    rows = []
+    for user in users:
+        exams = {r["phase"]: r for r in attempts if r["student"] == user["id"]}
+        row = {"student_no": user["student_no"], "name": user["name"], "sequence": user["first_form"] + ("B" if user["first_form"] == "A" else "A"),
+               "created": user["created"], "activity": {r["module"]: {"visits": r["count"], "first": r["first"], "last": r["last"]} for r in activities if r["student"] == user["id"]}}
+        for phase in ("pre", "post"):
+            r = exams.get(phase)
+            row[phase] = ({"status": "已完成" if r["submitted"] else "作答中", "started": r["started"], "submitted": r["submitted"],
+                           "form": r["form"], "version": r["version"], "score": json.loads(r["result"])["score"] if r["result"] else None} if r else {"status": "未开始", "score": None})
+        a, b = row["pre"]["score"], row["post"]["score"]
+        row["gain"] = b-a if a is not None and b is not None else None
+        row["interval_hours"] = round((row["post"]["started"] - row["pre"]["submitted"])/3600, 3) if row["post"].get("started") and row["pre"].get("submitted") else None
+        rows.append(row)
+    return rows, attempts
+
+
+@router.get("/api/admin/study", dependencies=[Depends(faculty)])
+def faculty_summary():
+    rows, _ = faculty_rows()
+    paired = [r for r in rows if r["gain"] is not None]
+    return {"post_open": get_store().settings()["post_open"] == "true", "version": get_store().settings()["version"],
+            "students": rows, "registered": len(rows), "pre_completed": sum(r["pre"]["score"] is not None for r in rows),
+            "post_completed": len(paired), "mean_gain": round(sum(r["gain"] for r in paired)/len(paired), 2) if paired else None}
+
+
+@router.get("/api/admin/study/papers", dependencies=[Depends(faculty)])
+def faculty_papers():
+    return {"version": get_store().settings()["version"], "forms": [get_store().make_paper(form) for form in ("A", "B")]}
+
+
+@router.get("/api/admin/study/export", dependencies=[Depends(faculty)])
+def export(kind: Literal["summary", "items"] = "summary"):
+    rows, attempts = faculty_rows()
+    data = []
+    if kind == "summary":
+        header = ["学号", "姓名", "试卷顺序", "前测状态", "前测成绩", "后测状态", "后测成绩", "提升分", "学习间隔小时", "知识问答访问次数", "图谱访问次数", "情景访问次数", "前测用时秒", "后测用时秒", "试卷版本"]
+        for r in rows:
+            duration = lambda p: round(r[p]["submitted"]-r[p]["started"]) if r[p].get("submitted") else ""
+            data.append([r["student_no"], r["name"], r["sequence"], r["pre"]["status"], r["pre"]["score"], r["post"]["status"], r["post"]["score"], r["gain"], r["interval_hours"], *[r["activity"].get(m, {}).get("visits", 0) for m in ("knowledge", "atlas", "cases")], duration("pre"), duration("post"), r["pre"].get("version", get_store().settings()["version"])])
+    else:
+        header = ["学号", "姓名", "阶段", "卷别", "配对知识点ID", "知识点", "疾病", "难度", "题号", "题干", "所选答案", "正确答案", "得分", "满分", "开始时间戳", "提交时间戳", "版本"]
+        with get_store().db() as c:
+            users = {r["id"]: dict(r) for r in c.execute("SELECT * FROM students")}
+        for r in attempts:
+            if not r["submitted"]:
+                continue
+            user = users[r["student"]]
+            answers = json.loads(r["answers"])
+            for q in json.loads(r["paper"])["questions"]:
+                options = {o["id"]: o["text"] for o in q["options"]}
+                selected = answers[q["id"]]
+                data.append([user["student_no"], user["name"], r["phase"], r["form"], q["pair"], q["point"], q["disease"], q["difficulty"], q["id"], q["stem"], options[selected], options[q["correct"]], q["points"] if selected == q["correct"] else 0, q["points"], r["started"], r["submitted"], r["version"]])
+    stream = io.StringIO()
+    writer = csv.writer(stream)
+    writer.writerow(header)
+    for row in data:
+        writer.writerow([("'" + v if isinstance(v, str) and v.lstrip().startswith(("=", "+", "-", "@", "\t", "\r")) else v) for v in row])
+    return Response("\ufeff" + stream.getvalue(), media_type="text/csv; charset=utf-8", headers={"Content-Disposition": f'attachment; filename="study-{kind}.csv"', "Cache-Control": "no-store"})

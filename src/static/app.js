@@ -17,6 +17,7 @@ const VIEW_PATHS = {
   knowledge: "AI TEACHING ASSISTANT / KNOWLEDGE CONSULT",
   atlas: "AI TEACHING ASSISTANT / RASH ATLAS",
   cases: "AI TEACHING ASSISTANT / CLINICAL SCENARIO",
+  assessment: "AI TEACHING ASSISTANT / KNOWLEDGE ASSESSMENT",
   admin: "AI TEACHING ASSISTANT / FACULTY CONTROL",
 };
 
@@ -252,6 +253,8 @@ function openSidebar(open) {
 }
 
 function switchView(viewName, updateUrl = true) {
+  viewName = window.Study.guard(viewName);
+  if (!viewName) return;
   const target = $(`#view-${viewName}`);
   if (!target) return;
   $$(".workspace-view").forEach((view) => view.classList.toggle("is-active", view === target));
@@ -272,7 +275,10 @@ function switchView(viewName, updateUrl = true) {
     void ensureAtlas().catch((error) => toast(errorMessage(error), true));
   } else if (viewName === "cases") {
     void ensureCases().catch((error) => toast(errorMessage(error), true));
+  } else if (viewName === "assessment") {
+    void window.Study.show();
   }
+  window.Study.visit(viewName);
 }
 
 function flattenAtlas(atlas) {
@@ -855,6 +861,7 @@ async function loadAdminContent() {
   els.caseList.innerHTML = data.cases.length
     ? data.cases.map((item) => `<div class="content-row"><div><strong title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</strong><small>${escapeHtml(item.id || "未知 ID")}${item.error ? " · 文件损坏" : ""}</small></div><button class="delete-button" type="button" data-delete-case="${escapeHtml(item.filename)}">移除</button></div>`).join("")
     : '<div class="empty-row">情景库目前为空</div>';
+  await window.Study.loadFaculty();
 }
 
 let atlasLoadPromise = null;
@@ -869,7 +876,7 @@ async function refreshPublicData(force = false) {
 }
 
 async function loadAtlas() {
-  const atlas = await api("/api/rash-atlas");
+  const atlas = await api("/api/rash-atlas?study=v1", { cache: "no-store" });
   state.atlas = atlas;
   state.diseases = flattenAtlas(atlas);
   renderAtlas();
@@ -905,6 +912,7 @@ function bindEvents() {
   $$('[data-view]').forEach((button) => {
     button.addEventListener("click", () => switchView(button.dataset.view));
     const prefetch = () => {
+      if (!window.Study.canLearn()) return;
       if (button.dataset.view === "atlas") void ensureAtlas().catch(() => {});
       if (button.dataset.view === "cases") void ensureCases().catch(() => {});
     };
@@ -1063,6 +1071,7 @@ async function init() {
   if (adminRequested) els.adminNav.classList.remove("is-hidden");
   els.chatFeed.innerHTML = initialChatMarkup();
   bindEvents();
+  await window.Study.init({ switchView, toast, adminApi, adminRequested });
 
   if (adminRequested) {
     switchView("admin", false);
@@ -1075,8 +1084,8 @@ async function init() {
       }
     }
   } else {
-    const requestedView = location.hash.slice(1);
-    if ($(`#view-${requestedView}`)) switchView(requestedView, false);
+    const requestedView = location.hash.slice(1) || "knowledge";
+    switchView($(`#view-${requestedView}`) ? requestedView : "knowledge", false);
   }
 
 }
