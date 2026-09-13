@@ -5882,8 +5882,70 @@ body {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+/* Match the original clinical worksheet scale and rhythm. */
+#view-cases .decision-column {
+  padding: 26px;
+}
+
+#view-cases .decision-heading {
+  gap: 17px;
+  padding-bottom: 20px;
+}
+
+#view-cases .decision-heading > span {
+  font-size: 24px;
+  line-height: 1;
+}
+
+#view-cases .decision-heading strong {
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+#view-cases .decision-heading small {
+  margin-top: 5px;
+  font-size: 9px;
+}
+
+#view-cases .decision-mode {
+  display: none;
+}
+
+#view-cases .decision-column .option-list {
+  gap: 10px;
+  margin-top: 22px;
+  grid-template-rows: repeat(4, minmax(58px, auto));
+}
+
+#view-cases .option-card > span {
+  display: flex;
+  min-height: 58px;
+  padding: 12px 18px 12px 46px;
+  align-items: center;
+  border-radius: 10px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+#view-cases .option-card > span::before {
+  top: 50%;
+  left: 16px;
+  width: 16px;
+  height: 16px;
+  border-radius: 1px;
+  transform: translateY(-50%);
+}
+
+#view-cases .option-card input[type="radio"] + span::before {
+  border-radius: 1px;
+}
+
 @media (max-width: 760px) {
   #view-cases .decision-board form {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  #view-cases .decision-column {
+    padding: 22px;
   }
 }

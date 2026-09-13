@@ -89,8 +89,33 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
       await selectCase(0);
       await page.locator("#decisionBoard").screenshot({ path: `${output}/clinical-all-${width}.png` });
     }
+    await page.setViewportSize({ width: 1440, height: 844 });
+    const visualTokens = await page.evaluate(() => {
+      const number = getComputedStyle(document.querySelector(".decision-heading > span"));
+      const title = getComputedStyle(document.querySelector(".decision-heading strong"));
+      const option = document.querySelector(".option-card > span");
+      const optionStyle = getComputedStyle(option);
+      const checkbox = getComputedStyle(option, "::before");
+      const list = getComputedStyle(document.querySelector(".option-list"));
+      return {
+        number: number.fontSize,
+        title: title.fontSize,
+        option: optionStyle.fontSize,
+        checkboxWidth: checkbox.width,
+        checkboxRadius: checkbox.borderRadius,
+        gap: list.rowGap,
+      };
+    });
+    assert.deepEqual(visualTokens, {
+      number: "24px",
+      title: "17px",
+      option: "15px",
+      checkboxWidth: "16px",
+      checkboxRadius: "1px",
+      gap: "10px",
+    });
     assert.deepEqual(errors, []);
-    console.log("PASS: all 10 cases show four columns; submit/retry; case-switch race; 1440/842/390px.");
+    console.log("PASS: all 10 cases show four decision cards; restored visual scale; submit/retry; case-switch race; 1440/842/390px.");
   } finally {
     await browser.close();
   }
