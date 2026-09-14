@@ -18,7 +18,6 @@ body[data-auth="ready"] .student-login { display: none; }
 .login-card input { width: 100%; min-width: 0; background: #f3f3f1; border: 1px solid transparent; border-radius: 12px; padding: 16px; color: #171817; font: inherit; font-size: 16px; }
 .login-card input:focus { outline: 2px solid #ff5100; outline-offset: 2px; }
 .login-card .solid-button { width: 100%; margin-top: 12px; justify-content: center; }
-.faculty-link { display: block; text-align: center; margin-top: 20px; color: #777b77; font-size: 13px; }
 .study-notice { color: #717570; font-size: 13px; line-height: 1.8; margin: 20px 0; }
 .study-error { color: #a93812 !important; line-height: 1.7; }
 .student-profile { margin: 24px 20px; padding: 20px 10px; border-top: 1px solid #e4e5e2; display: grid; gap: 8px; overflow-wrap: anywhere; }

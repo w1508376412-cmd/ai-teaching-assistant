@@ -97,8 +97,6 @@ const els = {
   adminDashboard: $("#adminDashboard"),
   adminLoginForm: $("#adminLoginForm"),
   adminPassword: $("#adminPassword"),
-  caseList: $("#caseList"),
-  adminCaseCount: $("#adminCaseCount"),
   toast: $("#toast"),
 };
 
@@ -856,13 +854,8 @@ async function submitStageMessage(event) {
 }
 
 async function loadAdminContent() {
-  const data = await adminApi("/api/admin/content");
   els.adminUnlock.classList.add("is-hidden");
   els.adminDashboard.classList.remove("is-hidden");
-  els.adminCaseCount.textContent = `${data.cases.length} 个`;
-  els.caseList.innerHTML = data.cases.length
-    ? data.cases.map((item) => `<div class="content-row"><div><strong title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</strong><small>${escapeHtml(item.id || "未知 ID")}${item.error ? " · 文件损坏" : ""}</small></div><button class="delete-button" type="button" data-delete-case="${escapeHtml(item.filename)}">移除</button></div>`).join("")
-    : '<div class="empty-row">情景库目前为空</div>';
   await window.Study.loadFaculty();
 }
 
@@ -1048,20 +1041,6 @@ function bindEvents() {
       setBusy(button, false);
     }
   });
-  els.caseList.addEventListener("click", async (event) => {
-    const button = event.target.closest("[data-delete-case]");
-    if (!button || !confirm("确认移除这个教学情景？")) return;
-    setBusy(button, true, "移除中");
-    try {
-      const data = await adminApi(`/api/admin/cases/${encodeURIComponent(button.dataset.deleteCase)}`, { method: "DELETE" });
-      toast(data.message);
-      await Promise.all([loadAdminContent(), refreshPublicData(true)]);
-    } catch (error) {
-      toast(errorMessage(error), true);
-      setBusy(button, false);
-    }
-  });
-
   window.addEventListener("hashchange", () => {
     const view = location.hash.slice(1);
     if ($(`#view-${view}`)) switchView(view, false);
