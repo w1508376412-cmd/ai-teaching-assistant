@@ -66,13 +66,35 @@ class Store:
             conn.execute("INSERT OR IGNORE INTO settings VALUES ('post_open', 'false')")
             conn.execute("INSERT OR IGNORE INTO settings VALUES ('version', ?)", (VERSION,))
         os.chmod(self.path, 0o600)
-        # Freeze the cohort's actual paired papers, not just the RNG seed. A later
-        # bank edit must never silently change an enrolled student's post-test.
-        if "paper_A" not in self.settings():
+        # Keep every released bank's paired papers. This lets a student who began
+        # an older pre-test receive the matching older post-test after an upgrade.
+        settings = self.settings()
+        previous = settings.get("version")
+        with self.db(write=True) as c:
+            if previous:
+                for form in ("A", "B"):
+                    legacy = settings.get(f"paper_{form}")
+                    if legacy:
+                        c.execute("INSERT OR IGNORE INTO settings VALUES (?, ?)",
+                                  (self.paper_key(previous, form), legacy))
+            c.execute("INSERT OR IGNORE INTO settings VALUES (?, ?)",
+                      (self.seed_key(VERSION), str(secrets.randbits(63))))
+            c.execute("INSERT INTO settings VALUES ('version', ?) "
+                      "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (VERSION,))
+        if self.paper_key(VERSION, "A") not in self.settings():
             forms = {form: self.build_paper(form) for form in ("A", "B")}
             with self.db(write=True) as c:
                 for form, paper in forms.items():
-                    c.execute("INSERT OR IGNORE INTO settings VALUES (?, ?)", (f"paper_{form}", encode(paper)))
+                    c.execute("INSERT OR IGNORE INTO settings VALUES (?, ?)",
+                              (self.paper_key(VERSION, form), encode(paper)))
+
+    @staticmethod
+    def paper_key(version, form):
+        return f"paper::{version}::{form}"
+
+    @staticmethod
+    def seed_key(version):
+        return f"seed::{version}"
 
     @contextmanager
     def db(self, write=False):
@@ -129,7 +151,8 @@ class Store:
             return {r["key"]: r["value"] for r in c.execute("SELECT * FROM settings")}
 
     def blueprint(self):
-        rng = random.Random(int(self.settings()["seed"]))
+        settings = self.settings()
+        rng = random.Random(int(settings.get(self.seed_key(VERSION), settings["seed"])))
         selected = []
         for difficulty, count in [("基础", 8), ("应用", 8), ("综合", 4)]:
             selected.extend(rng.sample([p for p in PAIRS if p["difficulty"] == difficulty], count))
@@ -161,13 +184,17 @@ class Store:
             refs = [sources[k] for k in p["source_ids"]]
             for j, q in enumerate(p[form]["questions"]):
                 add(q, f"{case_id}_{j+1}", 5,
-                    dict(pair=f"{p['id']}-{j+1}", point=p["points"][j], domain=["临床识别", "检查与诊断", "治疗原则", "风险与处置"][j],
+                    dict(pair=f"{p['id']}-{j+1}", point=p["points"][j], domain=p["domains"][j],
                          difficulty=p["difficulty"], disease=p["disease"], explanation=p["explanations"][j],
                          sources=[{"id": r["id"], "document": r["document"], "url": r["source"]} for r in refs]), case_id)
         return {"version": VERSION, "form": form, "questions": questions, "cases": cases, "total": 100}
 
-    def make_paper(self, form):
-        paper = json.loads(self.settings()[f"paper_{form}"])
+    def make_paper(self, form, version=VERSION):
+        settings = self.settings()
+        key = self.paper_key(version, form)
+        if key not in settings:
+            raise HTTPException(409, "该测验版本的配对试卷不存在，请联系管理员。")
+        paper = json.loads(settings[key])
         for question in paper["questions"]:
             for option in question["options"]:
                 old_id = option["id"]
@@ -205,14 +232,16 @@ class Store:
             existing = c.execute("SELECT * FROM attempts WHERE student=? AND phase=?", (user["id"], phase)).fetchone()
             if existing:
                 return dict(existing)
+            paper_version = VERSION
             if phase == "post":
-                pre = c.execute("SELECT submitted FROM attempts WHERE student=? AND phase='pre'", (user["id"],)).fetchone()
+                pre = c.execute("SELECT submitted, version FROM attempts WHERE student=? AND phase='pre'", (user["id"],)).fetchone()
                 if not pre or not pre["submitted"]:
                     raise HTTPException(403, "请先完成前测。")
                 if c.execute("SELECT value FROM settings WHERE key='post_open'").fetchone()[0] != "true":
                     raise HTTPException(403, "后测尚未开放，请等待教师通知。")
+                paper_version = pre["version"]
             form = user["first_form"] if phase == "pre" else ("B" if user["first_form"] == "A" else "A")
-            paper = self.make_paper(form)
+            paper = self.make_paper(form, paper_version)
             ident = secrets.token_hex(16)
             c.execute("INSERT INTO attempts (id,student,phase,form,version,paper,started) VALUES (?,?,?,?,?,?,?)",
                       (ident, user["id"], phase, form, paper["version"], encode(paper), time.time()))

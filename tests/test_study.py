@@ -49,6 +49,8 @@ class StudyTests(unittest.TestCase):
 
     def test_all_pairs_valid_and_source_mapped(self):
         bank_with_sources()
+        self.assertEqual(Counter(p["difficulty"] for p in PAIRS), {"基础": 10, "应用": 8, "综合": 7})
+        self.assertTrue(all(p["domain"] in {"临床识别", "检查与诊断", "病情评估", "治疗原则"} for p in PAIRS))
         for pair in PAIRS + CASE_PAIRS:
             for form in ("A", "B"):
                 questions = pair[form].get("questions", [pair[form]])
@@ -56,6 +58,7 @@ class StudyTests(unittest.TestCase):
                     self.assertEqual(len(q["choices"]), 4)
                     self.assertEqual(len(set(q["choices"])), 4)
                     self.assertIn(q["answer"], q["choices"])
+                    self.assertNotRegex(q["stem"], r"^\d+\.")
 
     def test_parallel_forms_frozen_and_equal_blueprint(self):
         a, b = [self.store.make_paper(f) for f in ("A", "B")]
@@ -71,6 +74,19 @@ class StudyTests(unittest.TestCase):
             reloaded = study.Store(self.store.path).make_paper("A")
         self.assertEqual([q["stem"] for q in a["questions"]], [q["stem"] for q in reloaded["questions"]])
         self.assertNotEqual(a["questions"][0]["options"], reloaded["questions"][0]["options"])
+
+    def test_bank_upgrade_keeps_matching_post_form_for_started_student(self):
+        self.finish_pre()
+        with self.store.db() as c:
+            user = dict(c.execute("SELECT * FROM students WHERE student_no='2026001'").fetchone())
+            pre = dict(c.execute("SELECT * FROM attempts WHERE student=? AND phase='pre'", (user["id"],)).fetchone())
+        with patch.object(study, "VERSION", "clinical-test-next"):
+            upgraded = study.Store(self.store.path)
+            with upgraded.db(write=True) as c:
+                c.execute("UPDATE settings SET value='true' WHERE key='post_open'")
+            post = upgraded.start(user, "post")
+        self.assertEqual(post["version"], pre["version"])
+        self.assertNotEqual(post["form"], pre["form"])
 
     def test_pretest_gate_server_side_and_no_answer_leak(self):
         for path in ("/api/cases", "/api/knowledge", "/api/rash-atlas", "/assets/rash-atlas/atlas.json"):
