@@ -54,7 +54,7 @@ body[data-auth="ready"] .student-login { display: none; }
 .exam-question legend { display: block; float: left; width: 100%; margin-bottom: 18px; padding: 0; font-size: 16px; font-weight: 600; line-height: 1.9; }
 .exam-question legend + * { clear: both; }
 .exam-question legend small { color: #777b77; font-size: 11px; font-weight: 400; white-space: nowrap; margin-left: 8px; }
-.question-number { color: #ef5000; font: 17px ui-monospace, monospace; margin-right: 12px; }
+.question-number { color: #171817; font: 17px ui-monospace, monospace; margin-right: 12px; }
 .exam-options { display: grid; gap: 10px; }
 .exam-option { display: block; position: relative; cursor: pointer; }
 .exam-option input { position: absolute; opacity: 0; width: 1px; height: 1px; }
