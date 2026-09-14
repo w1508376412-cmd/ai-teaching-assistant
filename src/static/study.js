@@ -32,7 +32,11 @@ window.Study = (() => {
     if (!data.authenticated) { loginScreen(); return; }
     document.body.dataset.auth = "ready";
     find("#studentProfile").classList.remove("is-hidden");
-    find("#studentIdentity").textContent = `${data.student.name} · ${data.student.student_no}`;
+    find("#studentProfile").classList.toggle("is-faculty", isTeacher());
+    find("#studentAvatar").textContent = data.student.name.slice(0, 1);
+    find("#studentRoleLabel").textContent = isTeacher() ? "FACULTY ACCESS" : "STUDENT ACCESS";
+    find("#studentIdentity").textContent = data.student.name;
+    find("#studentNumberLabel").textContent = `NO. ${data.student.student_no}`;
     find("#studentStage").textContent = isTeacher() ? "教师身份 · 无需参加前测" : data.post_completed ? "前后测已完成" : data.pre_completed ? "前测已完成 · 学习中" : "请先完成首次前测";
     find("#adminNav").classList.toggle("is-hidden", !isTeacher());
     document.querySelectorAll('[data-view="knowledge"], [data-view="atlas"], [data-view="cases"]').forEach(el => {

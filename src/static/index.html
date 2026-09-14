@@ -8,7 +8,7 @@
     <title>AI教学工具 · 传染病学教学工作台</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/static/styles.css?v=20260914-01" />
-    <link rel="stylesheet" href="/static/study.css?v=20260914-03" />
+    <link rel="stylesheet" href="/static/study.css?v=20260914-06" />
   </head>
   <body data-auth="loading">
     <section class="student-login" id="studentLogin" aria-labelledby="studentLoginTitle">
@@ -31,7 +31,14 @@
           <button class="nav-item" type="button" data-view="assessment"><span class="nav-index">04</span><span><strong>知识测验</strong></span></button>
           <button class="nav-item is-hidden" id="adminNav" type="button" data-view="admin"><span class="nav-index">05</span><span><strong>教师管理</strong></span></button>
         </nav>
-        <div class="student-profile is-hidden" id="studentProfile"><strong id="studentIdentity"></strong><small id="studentStage"></small><button type="button" id="studentLogout">退出登录</button></div>
+        <div class="student-profile is-hidden" id="studentProfile">
+          <div class="profile-identity">
+            <span class="profile-avatar" id="studentAvatar" aria-hidden="true"></span>
+            <span class="profile-copy"><small class="profile-role" id="studentRoleLabel"></small><strong id="studentIdentity"></strong><span class="profile-number" id="studentNumberLabel"></span></span>
+          </div>
+          <div class="profile-stage"><small id="studentStage"></small></div>
+          <button type="button" id="studentLogout"><span>退出登录</span><span aria-hidden="true">↗</span></button>
+        </div>
 
         <section class="sidebar-atlas-tools" id="sidebarAtlasTools" aria-label="图谱筛选">
           <div class="atlas-controls">
@@ -101,7 +108,7 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="sidebar-scrim" id="sidebarScrim"></div>
-    <script src="/static/study.js?v=20260914-04" defer></script>
+    <script src="/static/study.js?v=20260914-06" defer></script>
     <script src="/static/app.js?v=20260914-02" defer></script>
   </body>
 </html>
