@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 
 from src.rag import RetrievalCandidate, build_context, get_rag
 from src.case_training import public_case, public_case_id, validate_decision
-from src.study import router as study_router, require_learning
+from src.study import router as study_router, require_learning, faculty as require_admin
 
 
 if TYPE_CHECKING:
@@ -177,16 +177,6 @@ def get_client() -> "OpenAI":
         timeout=AI_TIMEOUT_SECONDS,
         max_retries=1,
     )
-
-
-def require_admin(x_admin_password: str | None = Header(default=None)) -> None:
-    if not ADMIN_PASSWORD:
-        raise HTTPException(
-            status_code=503,
-            detail="教师管理尚未启用，请先设置 ADMIN_PASSWORD。",
-        )
-    if x_admin_password != ADMIN_PASSWORD:
-        raise HTTPException(status_code=401, detail="教师管理密码不正确。")
 
 
 def query_terms(query: str) -> set[str]:

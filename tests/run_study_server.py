@@ -3,6 +3,8 @@ import os
 import tempfile
 
 os.environ["ADMIN_PASSWORD"] = "local-study-test-only"
+os.environ["TEACHER_STUDENT_NO"] = "TEACHER-TEST"
+os.environ["TEACHER_NAME"] = "本地测试教师"
 os.environ["STUDY_DATA_DIR"] = tempfile.mkdtemp(prefix="teaching-study-e2e-")
 os.environ["STUDY_REQUIRE_VOLUME"] = "false"
 

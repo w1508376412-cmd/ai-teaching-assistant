@@ -13,7 +13,7 @@
   <body data-auth="loading">
     <section class="student-login" id="studentLogin" aria-labelledby="studentLoginTitle">
       <div class="login-story"><div class="brand"><span class="brand-mark" aria-hidden="true"><i></i><b></b></span><span class="brand-copy"><strong>AI教学工具</strong><small>AI TEACHING ASSISTANT</small></span></div><span class="section-code">INFECTIOUS DISEASES · LEARNING STUDY</span><h1>从一次测验开始，<br>看见学习的变化。</h1><p>传染病学学习工作台</p><ol class="study-journey"><li><span>01</span><div><strong>记录起点</strong><p>独立完成首次知识测验。</p></div></li><li><span>02</span><div><strong>探索与练习</strong><p>知识问答、皮疹图谱与临床情景。</p></div></li><li><span>03</span><div><strong>回看进步</strong><p>教师开放后测后，完成另一套试卷。</p></div></li></ol></div>
-      <form class="login-card" id="studentLoginForm"><span class="section-code">STUDENT ACCESS</span><h2 id="studentLoginTitle">学生登录</h2><p>请使用同一学号和姓名，匹配前后两次测验。</p><label for="studentNumber">学号</label><input id="studentNumber" name="student_no" autocomplete="username" maxlength="40" minlength="3" required placeholder="请输入学号" autocapitalize="characters"><label for="studentName">姓名</label><input id="studentName" name="name" autocomplete="name" maxlength="40" minlength="2" required placeholder="请输入真实姓名"><p class="study-notice">系统保存姓名、学号、测验作答、成绩及模块访问次数，供任课教师进行教学评价。请勿填写患者信息。数据使用、保存期限及删除申请请联系任课教师。</p><button class="solid-button" type="submit" disabled>正在连接…</button><p id="studentLoginError" class="study-error" role="alert"></p><a href="/?admin=true" class="faculty-link">教师管理入口 →</a></form>
+      <form class="login-card" id="studentLoginForm"><span class="section-code">TEACHING ACCESS</span><h2 id="studentLoginTitle">姓名与学号登录</h2><p>学生与教师共用此入口，系统根据登记信息识别身份。</p><label for="studentNumber">学号</label><input id="studentNumber" name="student_no" autocomplete="username" maxlength="40" minlength="3" required placeholder="请输入学号" autocapitalize="characters"><label for="studentName">姓名</label><input id="studentName" name="name" autocomplete="name" maxlength="40" minlength="2" required placeholder="请输入真实姓名"><p class="study-notice">系统保存姓名、学号、测验作答、成绩及模块访问次数，供任课教师进行教学评价。请勿填写患者信息。数据使用、保存期限及删除申请请联系任课教师。</p><button class="solid-button" type="submit" disabled>正在连接…</button><p id="studentLoginError" class="study-error" role="alert"></p><a href="/?admin=true" class="faculty-link">教师管理入口 →</a></form>
     </section>
     <a class="skip-link" href="#mainContent">跳到主要内容</a>
 
@@ -87,7 +87,7 @@
           <section class="workspace-view" id="view-assessment" data-title="知识测验"><div id="assessmentRoot" class="assessment-root" aria-live="polite"></div></section>
           <section class="workspace-view" id="view-admin" data-title="教师管理">
             <div class="module-intro admin-intro"><div class="module-number" aria-hidden="true">04</div><div><span class="eyebrow">FACULTY CONTROL · 内容维护</span><h1>维护情景，<br />更新训练。</h1></div><div class="module-note"><strong>受保护入口</strong><p>情景变更会立即影响教学内容，请仅由授权教师操作。</p></div></div>
-            <div class="admin-unlock" id="adminUnlock"><form id="adminLoginForm"><span class="section-code">FACULTY ACCESS</span><h2>验证教师身份</h2><p>请输入部署环境中设置的管理密码。</p><label for="adminPassword">管理密码</label><input id="adminPassword" type="password" autocomplete="current-password" required /><button class="solid-button" type="submit">进入管理台 <span>→</span></button></form></div>
+            <div class="admin-unlock is-hidden" id="adminUnlock"><form id="adminLoginForm"><span class="section-code">FACULTY ACCESS</span><h2>验证教师身份</h2><p>请输入部署环境中设置的管理密码。</p><label for="adminPassword">管理密码</label><input id="adminPassword" type="password" autocomplete="current-password" required /><button class="solid-button" type="submit">进入管理台 <span>→</span></button></form></div>
             <div class="admin-dashboard is-hidden" id="adminDashboard"><section id="facultyStudy" class="faculty-study"></section><div class="admin-summary"><div><span>教学情景</span><strong id="adminCaseCount">—</strong></div></div><div class="admin-grid"><section class="admin-panel"><div class="panel-head"><div><span class="section-code">SCENARIO LIBRARY</span><h2>情景演练库</h2></div></div><div class="content-list" id="caseList"></div></section></div></div>
           </section>
         </main>
@@ -102,7 +102,7 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="sidebar-scrim" id="sidebarScrim"></div>
-    <script src="/static/study.js?v=20260913-02" defer></script>
-    <script src="/static/app.js?v=20260913-06" defer></script>
+    <script src="/static/study.js?v=20260913-03" defer></script>
+    <script src="/static/app.js?v=20260913-07" defer></script>
   </body>
 </html>

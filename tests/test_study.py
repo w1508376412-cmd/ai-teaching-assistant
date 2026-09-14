@@ -151,6 +151,24 @@ class StudyTests(unittest.TestCase):
             attempts = list(executor.map(lambda _: self.store.start(user, "pre"), range(4)))
         self.assertEqual(len({p["id"] for p in attempts}), 1)
 
+    def test_teacher_identity_login_bypasses_exam_but_not_student_permissions(self):
+        with patch.dict("os.environ", {"TEACHER_STUDENT_NO": "TEACHER-TEST", "TEACHER_NAME": "本地测试教师"}):
+            self.assertEqual(self.client.post("/api/session/login", json={"student_no": "TEACHER-TEST", "name": "错误姓名"}).status_code, 401)
+            result = self.login("TEACHER-TEST", "本地测试教师")
+            self.assertEqual(result["role"], "teacher")
+            self.assertFalse(result["pre_completed"])
+            self.assertEqual(self.client.get("/api/cases").status_code, 200)
+            self.assertEqual(self.client.post("/api/assessments/start", json={"phase": "pre"}).status_code, 403)
+            self.assertEqual(self.client.get("/api/admin/content").status_code, 200)
+            self.assertEqual(self.client.get("/api/admin/study/papers").status_code, 200)
+            self.assertEqual(self.client.put("/api/admin/study/release", json={"open": True}).status_code, 200)
+            self.assertEqual(self.client.get("/api/admin/study").json()["registered"], 0)
+            self.client.post("/api/session/logout")
+            self.login()
+            self.assertEqual(self.client.get("/api/admin/study").status_code, 401)
+            self.assertEqual(self.client.get("/api/admin/content").status_code, 401)
+            self.assertEqual(self.client.put("/api/admin/study/release", json={"open": False}).status_code, 401)
+
 
 if __name__ == "__main__":
     unittest.main()

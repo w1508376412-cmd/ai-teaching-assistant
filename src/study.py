@@ -31,6 +31,12 @@ def encode(value):
     return json.dumps(value, ensure_ascii=False)
 
 
+def is_teacher(user):
+    number = unicodedata.normalize("NFKC", os.getenv("TEACHER_STUDENT_NO", "")).strip().upper()
+    name = unicodedata.normalize("NFKC", os.getenv("TEACHER_NAME", "")).strip()
+    return bool(user and number and name and user["student_no"] == number and user["name"] == name)
+
+
 class Store:
     def __init__(self, path):
         self.path = Path(path)
@@ -94,6 +100,8 @@ class Store:
             if c.execute("SELECT COUNT(*) FROM login_limits WHERE key=?", (key,)).fetchone()[0] >= 40:
                 raise HTTPException(429, "登录尝试较多，请10分钟后再试。")
             c.execute("INSERT INTO login_limits VALUES (?, ?)", (key, now))
+        if student_no == os.getenv("TEACHER_STUDENT_NO", "").strip().upper() and not is_teacher({"student_no": student_no, "name": name}):
+            raise HTTPException(401, "姓名与学号不匹配，请核对后重新登录。")
         with self.db(write=True) as c:
             user = c.execute("SELECT * FROM students WHERE student_no=?", (student_no,)).fetchone()
             if user and user["name"] != name:
@@ -174,12 +182,15 @@ class Store:
             return [dict(r) for r in c.execute("SELECT * FROM attempts WHERE student=? ORDER BY started", (user_id,))]
 
     def status(self, user):
+        if is_teacher(user):
+            return {"authenticated": True, "role": "teacher", "student": {"student_no": user["student_no"], "name": user["name"]},
+                    "pre_completed": False, "post_completed": False, "post_open": self.settings()["post_open"] == "true", "active": None, "results": []}
         attempts = self.attempts(user["id"])
         pre = next((r for r in attempts if r["phase"] == "pre"), None)
         post = next((r for r in attempts if r["phase"] == "post"), None)
         completed = bool(pre and pre["submitted"])
         finished = bool(post and post["submitted"])
-        return {"authenticated": True, "student": {"student_no": user["student_no"], "name": user["name"]},
+        return {"authenticated": True, "role": "student", "student": {"student_no": user["student_no"], "name": user["name"]},
                 "pre_completed": completed, "post_completed": finished,
                 "post_open": self.settings()["post_open"] == "true",
                 "active": next(({"id": r["id"], "phase": r["phase"]} for r in attempts if not r["submitted"]), None),
@@ -188,6 +199,8 @@ class Store:
                             for r in attempts if r["submitted"]]}
 
     def start(self, user, phase):
+        if is_teacher(user):
+            raise HTTPException(403, "教师无需参加学生测验，请在教师管理中查看试卷。")
         with self.db(write=True) as c:
             existing = c.execute("SELECT * FROM attempts WHERE student=? AND phase=?", (user["id"], phase)).fetchone()
             if existing:
@@ -265,6 +278,8 @@ def require_student(request: Request):
 
 def require_learning(request: Request):
     user = require_student(request)
+    if is_teacher(user):
+        return user
     rows = get_store().attempts(user["id"])
     if not any(r["phase"] == "pre" and r["submitted"] for r in rows):
         raise HTTPException(403, "请先完成04知识测验中的首次前测。")
@@ -273,12 +288,13 @@ def require_learning(request: Request):
     return user
 
 
-def faculty(x_admin_password: str | None = Header(default=None)):
+def faculty(request: Request, x_admin_password: str | None = Header(default=None)):
+    if is_teacher(get_store().user(request.cookies.get(COOKIE))):
+        return
     password = os.getenv("ADMIN_PASSWORD", "")
-    if not password:
-        raise HTTPException(503, "教师管理尚未配置。")
-    if not x_admin_password or not hmac.compare_digest(password, x_admin_password):
-        raise HTTPException(401, "教师管理密码不正确。")
+    if password and x_admin_password and hmac.compare_digest(password.encode(), x_admin_password.encode()):
+        return
+    raise HTTPException(401, "请使用教师姓名和学号登录。")
 
 
 def same_origin(request: Request):
@@ -383,7 +399,8 @@ class Visit(BaseModel):
 
 @router.post("/api/study/visit", dependencies=[Depends(same_origin)])
 def visit(body: Visit, user=Depends(require_learning)):
-    get_store().activity(user["id"], body.module)
+    if not is_teacher(user):
+        get_store().activity(user["id"], body.module)
     return {"ok": True}
 
 
@@ -402,9 +419,11 @@ def release(body: Release):
 def faculty_rows():
     store = get_store()
     with store.db() as c:
-        users = [dict(r) for r in c.execute("SELECT * FROM students ORDER BY created DESC")]
+        users = [dict(r) for r in c.execute("SELECT * FROM students ORDER BY created DESC") if not is_teacher(r)]
         attempts = [dict(r) for r in c.execute("SELECT * FROM attempts")]
         activities = [dict(r) for r in c.execute("SELECT * FROM activity")]
+    student_ids = {r["id"] for r in users}
+    attempts = [r for r in attempts if r["student"] in student_ids]
     rows = []
     for user in users:
         exams = {r["phase"]: r for r in attempts if r["student"] == user["id"]}

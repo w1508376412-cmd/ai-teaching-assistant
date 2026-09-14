@@ -277,6 +277,8 @@ function switchView(viewName, updateUrl = true) {
     void ensureCases().catch((error) => toast(errorMessage(error), true));
   } else if (viewName === "assessment") {
     void window.Study.show();
+  } else if (viewName === "admin") {
+    void loadAdminContent().catch((error) => toast(errorMessage(error), true));
   }
   window.Study.visit(viewName);
 }
@@ -1073,16 +1075,8 @@ async function init() {
   bindEvents();
   await window.Study.init({ switchView, toast, adminApi, adminRequested });
 
-  if (adminRequested) {
+  if (adminRequested || window.Study.isTeacher()) {
     switchView("admin", false);
-    if (state.adminPassword) {
-      try {
-        await loadAdminContent();
-      } catch {
-        state.adminPassword = "";
-        sessionStorage.removeItem("adminPassword");
-      }
-    }
   } else {
     const requestedView = location.hash.slice(1) || "knowledge";
     switchView($(`#view-${requestedView}`) ? requestedView : "knowledge", false);

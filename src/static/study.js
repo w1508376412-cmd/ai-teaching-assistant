@@ -29,20 +29,23 @@ window.Study = (() => {
   }
   function updateSession(data) {
     session = data;
-    if (!data.authenticated) { if (!hooks.adminRequested) loginScreen(); return; }
+    if (!data.authenticated) { loginScreen(); return; }
     document.body.dataset.auth = "ready";
     find("#studentProfile").classList.remove("is-hidden");
     find("#studentIdentity").textContent = `${data.student.name} · ${data.student.student_no}`;
-    find("#studentStage").textContent = data.post_completed ? "前后测已完成" : data.pre_completed ? "前测已完成 · 学习中" : "请先完成首次前测";
+    find("#studentStage").textContent = isTeacher() ? "教师身份 · 无需参加前测" : data.post_completed ? "前后测已完成" : data.pre_completed ? "前测已完成 · 学习中" : "请先完成首次前测";
+    find("#adminNav").classList.toggle("is-hidden", !isTeacher());
     document.querySelectorAll('[data-view="knowledge"], [data-view="atlas"], [data-view="cases"]').forEach(el => {
       el.classList.toggle("study-locked", !canLearn());
       el.setAttribute("aria-disabled", String(!canLearn()));
     });
   }
-  const canLearn = () => !!(session?.authenticated && session.pre_completed && session.active?.phase !== "post");
+  const isTeacher = () => session?.role === "teacher";
+  const canLearn = () => !!(session?.authenticated && (isTeacher() || (session.pre_completed && session.active?.phase !== "post")));
   function guard(view) {
-    if (view === "admin" && hooks?.adminRequested) return view;
     if (!session?.authenticated) { loginScreen(); return null; }
+    if (isTeacher()) return view === "assessment" ? "admin" : view;
+    if (view === "admin") return session.pre_completed ? "knowledge" : "assessment";
     if (view !== "assessment" && !canLearn()) {
       message(session.active?.phase === "post" ? "请先完成正在进行的后测。" : "首次使用请先完成04知识测验。", true);
       return "assessment";
@@ -50,7 +53,7 @@ window.Study = (() => {
     return view;
   }
   function visit(view) {
-    if (canLearn() && ["knowledge", "atlas", "cases"].includes(view) && lastVisit !== view) {
+    if (canLearn() && !isTeacher() && ["knowledge", "atlas", "cases"].includes(view) && lastVisit !== view) {
       lastVisit = view;
       void request("/api/study/visit", "POST", { module: view }).catch(() => {});
     }
@@ -65,7 +68,7 @@ window.Study = (() => {
       try {
         updateSession(await request("/api/session/login", "POST", { student_no: find("#studentNumber").value, name: find("#studentName").value }));
         signal();
-        hooks.switchView(session.pre_completed ? "knowledge" : "assessment");
+        hooks.switchView(isTeacher() ? "admin" : session.pre_completed ? "knowledge" : "assessment");
       } catch (error) { find("#studentLoginError").textContent = error.message; }
       finally { submit.disabled = false; }
     });
@@ -119,7 +122,6 @@ window.Study = (() => {
     window.addEventListener("focus", sync);
     setInterval(sync, 30000);
     document.addEventListener("visibilitychange", () => { if (document.hidden && paper) void flush().catch(() => {}); else void sync(); });
-    if (config.adminRequested) { document.body.dataset.auth = "ready"; return; }
     try { updateSession(await request("/api/session")); }
     catch (error) { loginScreen(); find("#studentLoginError").textContent = error.message || "暂时无法连接，请稍后重新登录。"; }
   }
@@ -227,5 +229,5 @@ window.Study = (() => {
       } catch (error) { message(error.message, true); }
     };
   }
-  return { init, guard, show, canLearn, visit, loadFaculty };
+  return { init, guard, show, canLearn, isTeacher, visit, loadFaculty };
 })();
