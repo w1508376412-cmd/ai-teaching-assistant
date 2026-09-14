@@ -34,6 +34,8 @@ const admin = { "X-Admin-Password": "local-study-test-only" };
     assert(!(await page.locator("#exam-q01 legend").textContent()).includes("3分"));
     assert((await page.locator("#exam-q01 legend").textContent()).includes("单选"));
     assert.equal(await page.locator("#exam-q01 .question-number").evaluate(el => getComputedStyle(el).color), "rgb(23, 24, 23)");
+    assert.deepEqual((await page.locator(".question-number").allTextContents()).slice(0, 20), Array.from({ length: 20 }, (_, i) => `${i + 1}.`));
+    assert.deepEqual(await page.locator(".exam-case-stem").evaluateAll(stems => stems.map(stem => [...stem.parentElement.querySelectorAll(".question-number")].map(node => node.textContent.trim()))), [["1.", "2.", "3.", "4."], ["1.", "2.", "3.", "4."]]);
     await page.locator('#exam-q01 .exam-option > span').first().click();
     await page.waitForFunction(() => document.querySelector("#examSaveStatus").textContent === "进度已保存");
     await page.reload();
