@@ -4,7 +4,6 @@ body:not([data-auth="ready"]) .compare-dock { display: none; }
 body[data-auth="ready"] .student-login { display: none; }
 .student-login { min-height: 100svh; display: grid; grid-template-columns: 1.1fr 1fr; align-items: center; gap: clamp(30px, 6vw, 100px); max-width: 1220px; margin: auto; padding: 56px 40px; }
 .login-story .brand { margin-bottom: 64px; }
-.login-story h1 { font-size: clamp(30px, 3.6vw, 46px); line-height: 1.45; letter-spacing: -.04em; margin: 20px 0 14px; }
 .login-story > p { color: #787b77; font-size: 17px; }
 .login-story .section-code { font-size: 10px; }
 .study-journey { list-style: none; padding: 0; margin: 36px 0 0; display: grid; gap: 24px; }
@@ -92,7 +91,6 @@ body[data-auth="ready"] .student-login { display: none; }
   .assessment-root { padding: 22px 18px 32px; }
   .student-login { display: block; padding: 26px 18px; }
   .login-story .brand { margin: 10px 0 30px; }
-  .login-story h1 { font-size: 29px; }
   .study-journey { display: none; }
   .login-card { margin-top: 30px; }
   .login-card, .study-card { padding: 24px 20px; border-radius: 20px; }
