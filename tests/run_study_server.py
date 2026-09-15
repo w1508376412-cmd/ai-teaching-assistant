@@ -12,6 +12,7 @@ import uvicorn
 from src import main
 
 main.complete = lambda *args, **kwargs: "结论：本地功能测试。请核对诊断与检查。"
+main.stream_completion = lambda *args, **kwargs: iter(["结论：本地功能测试。请核对诊断与检查。"])
 
 if __name__ == "__main__":
     uvicorn.run(main.app, host="127.0.0.1", port=8766)

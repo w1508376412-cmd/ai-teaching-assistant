@@ -46,6 +46,11 @@ body[data-auth="ready"] .student-login { display: none; }
 .exam-specs strong { font: 30px ui-monospace, monospace; color: #191919; }
 .exam-specs span { color: #717570; font-size: 12px; line-height: 1.6; }
 .score-specs strong { color: #e74b00; }
+.pre-score { display: grid; gap: 8px; padding: 22px 0; }
+.pre-score strong { font: 46px ui-monospace, monospace; color: #e74b00; }
+.pre-score strong small { color: #717570; font-size: 18px; }
+.pre-score p { margin: 0; font-size: 14px; line-height: 1.8; color: #717570; }
+.exam-explanation .study-actions { margin: 16px 0 0; }
 .study-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 22px 0; }
 .study-actions .line-button, .study-actions .solid-button { font-size: 14px; padding: 13px 18px; }
 .study-confirmation { border-top: 1px solid #dedfdb; padding-top: 24px; margin-top: 24px; }

@@ -59,6 +59,8 @@ class StudyTests(unittest.TestCase):
                     self.assertEqual(len(set(q["choices"])), 4)
                     self.assertIn(q["answer"], q["choices"])
                     self.assertNotRegex(q["stem"], r"^\d+\.")
+                    for choice in q["choices"]:
+                        self.assertNotRegex(choice, r"仅凭|一律|唯一依据|无需|不需|只检测|只查|即可出院|停止所有|任意单药")
 
     def test_parallel_forms_frozen_and_equal_blueprint(self):
         a, b = [self.store.make_paper(f) for f in ("A", "B")]
@@ -100,6 +102,9 @@ class StudyTests(unittest.TestCase):
             for key in ("correct", "explanation", "pair", "sources", "disease"):
                 self.assertNotIn(key, q)
         self.assertEqual(self.client.get("/api/assessment-results").json(), {"ready": False})
+        with self.store.db() as c:
+            row = dict(c.execute("SELECT * FROM attempts WHERE id=?", (p["id"],)).fetchone())
+        self.assertNotIn("correct", study.public_attempt(row, review=True)["questions"][0])
         self.assertEqual(self.client.get("/api/admin/study/papers").status_code, 401)
         self.assertEqual(self.client.post("/api/assessments/start", json={"phase": "post"}).status_code, 403)
 
@@ -124,7 +129,16 @@ class StudyTests(unittest.TestCase):
     def test_full_workflow_teacher_release_scoring_and_exports(self):
         pre, status = self.finish_pre()
         self.assertTrue(status["pre_completed"])
-        self.assertNotIn("score", status["results"][0])
+        self.assertEqual(status["results"][0]["score"], 100)
+        feedback = self.client.get("/api/assessment-results").json()
+        self.assertTrue(feedback["ready"])
+        self.assertEqual(len(feedback["attempts"]), 1)
+        self.assertEqual(feedback["attempts"][0]["phase"], "pre")
+        self.assertEqual(len(feedback["attempts"][0]["questions"]), 28)
+        for q in feedback["attempts"][0]["questions"]:
+            self.assertTrue(q["explanation"] and q["sources"] and q["point"] and q["disease"])
+            self.assertEqual(q["correct"], feedback["attempts"][0]["answers"][q["id"]])
+        self.assertIn("correct", self.client.get(f"/api/assessments/{pre['id']}").json()["questions"][0])
         self.assertEqual(self.client.get("/api/cases").status_code, 200)
         self.client.post("/api/session/logout")
         self.assertTrue(self.login()["pre_completed"])
@@ -134,6 +148,9 @@ class StudyTests(unittest.TestCase):
         post = self.start("post")
         self.assertNotEqual(post["form"], pre["form"])
         self.assertEqual(self.client.get("/api/cases").status_code, 403)
+        self.assertEqual(self.client.get("/api/assessment-results").status_code, 403)
+        self.assertNotIn("correct", self.client.get(f"/api/assessments/{pre['id']}").json()["questions"][0])
+        self.assertNotIn("correct", self.client.get(f"/api/assessments/{post['id']}").json()["questions"][0])
         self.client.put("/api/admin/study/release", headers=self.admin, json={"open": False})
         key = self.answer_key(post)
         key["q01"] = next(o["id"] for o in post["questions"][0]["options"] if o["id"] != key["q01"])
@@ -142,7 +159,9 @@ class StudyTests(unittest.TestCase):
         self.assertEqual(done.status_code, 200)
         self.assertEqual([r["score"] for r in done.json()["results"]], [100, 97])
         self.assertEqual(self.client.get("/api/cases").status_code, 200)
-        self.assertTrue(self.client.get("/api/assessment-results").json()["ready"])
+        reviewed = self.client.get("/api/assessment-results").json()
+        self.assertEqual(len(reviewed["attempts"]), 2)
+        self.assertTrue(all("correct" in q for a in reviewed["attempts"] for q in a["questions"]))
         self.assertEqual(self.client.post(path + "/submit", json={"answers": {}, "revision": 0}).json(), done.json())
         self.assertEqual(self.client.put(path + "/draft", json={"answers": {}, "revision": 1}).status_code, 409)
         summary = self.client.get("/api/admin/study", headers=self.admin).json()

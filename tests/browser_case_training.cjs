@@ -112,7 +112,7 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
     assert.deepEqual(visualTokens, {
       number: "24px",
       title: "17px",
-      option: "15px",
+      option: "12px", // Existing smaller option typography, approved on 2026-09-14.
       checkboxWidth: "16px",
       checkboxRadius: "1px",
       gap: "10px",

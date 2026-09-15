@@ -257,7 +257,7 @@ function switchView(viewName, updateUrl = true) {
   if (!target) return;
   $$(".workspace-view").forEach((view) => view.classList.toggle("is-active", view === target));
   $$(".nav-item").forEach((button) => button.classList.toggle("is-active", button.dataset.view === viewName));
-  const atlasToolsVisible = viewName === "atlas";
+  const atlasToolsVisible = viewName === "atlas" && !window.RashQuiz.isActive();
   els.sidebar.classList.toggle("has-atlas-tools", atlasToolsVisible);
   els.sidebarAtlasTools.setAttribute("aria-hidden", String(!atlasToolsVisible));
   els.topbarKicker.textContent = VIEW_PATHS[viewName] || "AI TEACHING ASSISTANT";
@@ -374,7 +374,7 @@ function setCompare(id, selected) {
 function renderCompareDock() {
   const selected = [...state.compareIds].map(diseaseById).filter(Boolean);
   const atlasVisible = $("#view-atlas").classList.contains("is-active");
-  els.compareDock.classList.toggle("is-hidden", !selected.length || !atlasVisible);
+  els.compareDock.classList.toggle("is-hidden", !selected.length || !atlasVisible || window.RashQuiz.isActive());
   els.compareCount.textContent = `${selected.length} / 3`;
   els.compareNames.textContent = selected.map((item) => item.name).join(" · ") || "尚未选择病种";
   els.openCompare.disabled = selected.length < 2;
@@ -904,6 +904,16 @@ function ensureCases() {
 }
 
 function bindEvents() {
+  document.addEventListener("click", async event => {
+    const target = event.target.closest("[data-knowledge-question]");
+    if (!target || target.disabled) return;
+    if (!window.Study.canLearn()) { toast("请先完成正在进行的测验。", true); return; }
+    if (knowledgeRequestActive) { toast("上一条回答仍在生成，请稍候再提问。", true); return; }
+    target.disabled = true;
+    switchView("knowledge");
+    try { await sendKnowledgeQuestion(target.dataset.knowledgeQuestion); }
+    finally { target.disabled = false; }
+  });
   $$('[data-view]').forEach((button) => {
     button.addEventListener("click", () => switchView(button.dataset.view));
     const prefetch = () => {
@@ -1051,6 +1061,12 @@ async function init() {
   const adminRequested = new URLSearchParams(location.search).get("admin") === "true";
   if (adminRequested) els.adminNav.classList.remove("is-hidden");
   els.chatFeed.innerHTML = initialChatMarkup();
+  window.RashQuiz.init({toast, updateChrome: () => {
+    const visible = $("#view-atlas").classList.contains("is-active") && !window.RashQuiz.isActive();
+    els.sidebar.classList.toggle("has-atlas-tools", visible);
+    els.sidebarAtlasTools.setAttribute("aria-hidden", String(!visible));
+    renderCompareDock();
+  }});
   bindEvents();
   await window.Study.init({ switchView, toast, adminApi, adminRequested });
 

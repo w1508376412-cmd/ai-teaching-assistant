@@ -60,6 +60,9 @@ class Store:
               count INTEGER NOT NULL DEFAULT 1, first REAL NOT NULL, last REAL NOT NULL,
               PRIMARY KEY(student, module));
             CREATE TABLE IF NOT EXISTS login_limits (key TEXT NOT NULL, created REAL NOT NULL);
+            CREATE TABLE IF NOT EXISTS rash_quizzes (
+              id TEXT PRIMARY KEY, student TEXT NOT NULL REFERENCES students(id),
+              questions TEXT NOT NULL, answers TEXT NOT NULL DEFAULT '{}', started REAL NOT NULL);
             CREATE INDEX IF NOT EXISTS login_time ON login_limits(created);
             """)
             conn.execute("INSERT OR IGNORE INTO settings VALUES ('seed', ?)", (str(secrets.randbits(63)),))
@@ -222,7 +225,7 @@ class Store:
                 "post_open": self.settings()["post_open"] == "true",
                 "active": next(({"id": r["id"], "phase": r["phase"]} for r in attempts if not r["submitted"]), None),
                 "results": [{"phase": r["phase"], "form": r["form"], "started": r["started"], "submitted": r["submitted"],
-                             **({"score": json.loads(r["result"])["score"], "breakdown": json.loads(r["result"])["breakdown"]} if finished else {})}
+                             "score": json.loads(r["result"])["score"], "breakdown": json.loads(r["result"])["breakdown"]}
                             for r in attempts if r["submitted"]]}
 
     def start(self, user, phase):
@@ -348,12 +351,15 @@ class Start(BaseModel):
 
 
 def public_attempt(row, review=False):
+    # Unsubmitted papers never expose keys, even when a caller requests review.
+    review = bool(review and row["submitted"])
     paper = json.loads(row["paper"])
     questions = []
     for q in paper["questions"]:
         visible = {k: q[k] for k in ("id", "stem", "options", "points", "case_id")}
         if review:
             visible.update({k: q[k] for k in ("correct", "point", "explanation", "sources", "domain")})
+            visible["disease"] = q.get("disease", "")
         questions.append(visible)
     return {"id": row["id"], "phase": row["phase"], "form": row["form"], "version": row["version"],
             "started": row["started"], "submitted": row["submitted"], "revision": row["revision"],
@@ -398,7 +404,9 @@ def attempt(ident: str, user=Depends(require_student)):
     store = get_store()
     with store.db() as c:
         row = store.attempt(user, ident, c)
-    return public_attempt(row, review=store.status(user)["post_completed"])
+    status = store.status(user)
+    reviewing_allowed = not (status["active"] and status["active"]["phase"] == "post")
+    return public_attempt(row, review=reviewing_allowed)
 
 
 @router.put("/api/assessments/{ident}/draft", dependencies=[Depends(same_origin)])
@@ -417,9 +425,12 @@ def submit(ident: str, body: Answers, user=Depends(require_student)):
 def results(user=Depends(require_student)):
     store = get_store()
     status = store.status(user)
-    if not status["post_completed"]:
+    if status["active"] and status["active"]["phase"] == "post":
+        raise HTTPException(403, "后测正在进行，完成后可继续查看解析。")
+    completed = [r for r in store.attempts(user["id"]) if r["submitted"]]
+    if not completed:
         return {"ready": False}
-    return {"ready": True, "attempts": [public_attempt(r, review=True) for r in store.attempts(user["id"])]}
+    return {"ready": True, "attempts": [public_attempt(r, review=True) for r in completed]}
 
 
 class Visit(BaseModel):

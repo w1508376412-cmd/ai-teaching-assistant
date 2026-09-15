@@ -139,7 +139,7 @@ window.Study = (() => {
         if (!force && paper?.id === session.active.id && find("#assessmentForm")) return;
         paper = await request(`/api/assessments/${session.active.id}`);
         renderPaper();
-      } else { paper = null; dashboard(); }
+      } else { paper = null; dashboard(); if (session.pre_completed) await review(); }
     } catch (error) { root().innerHTML = `<section class="study-card"><h2>测验暂时无法载入</h2><p>${esc(error.message)}</p>${button("refresh", "重新载入")}</section>`; }
     finally { showing = false; }
   }
@@ -147,20 +147,28 @@ window.Study = (() => {
     const intro = `<div class="study-heading"><span class="section-code">04 / KNOWLEDGE ASSESSMENT</span><h1>记录起点，检验进步。</h1><p>两次测验围绕相同知识点，使用不同设问与临床情景。</p></div>`;
     const stats = `<div class="exam-specs"><div><strong>20</strong><span>单选题 · 每题3分</span></div><div><strong>02</strong><span>案例题 · 每题20分</span></div><div><strong>100</strong><span>总分 · 不设解锁分数线</span></div></div>`;
     let content;
-    if (!session.pre_completed) content = `<span class="study-pill">首次使用 · 必须完成</span><h2>先独立完成前测</h2><p>请按当前掌握程度作答，不查阅资料或使用AI。20道单选题按基础、应用、综合递进；每道案例含4个单选小题。</p><p>答案会自动保存，可以中断后继续；完成全部题目并提交即可进入学习，不要求达到及格分数。</p>${notice("前测暂不展示成绩和解析。完成后测后可查看两次成绩及逐题解析。提交后不能重做，请核对学号和姓名。")}${button("pre", "开始前测 →")}`;
-    else if (!session.post_completed) content = `<span class="study-pill">前测已完成</span><h2>${session.post_open ? "教师已开放后测" : "现在可以开始学习"}</h2><p>${session.post_open ? "请按教师要求，在完成学习后独立作答。" : "知识问答、皮疹图谱和情景演练均已开放。后测由教师统一开放，此页会自动更新。"}</p><div class="study-actions">${button("learn", "返回学习 →")}${session.post_open ? button("post-confirm", "准备开始后测", true) : button("refresh", "刷新开放状态", true)}</div><div id="postConfirmation" class="study-confirmation" hidden><strong>确认已完成教师安排的学习？</strong><p>开始后测后，本站学习模块将暂时锁定，提交全部答案后恢复。后测只能提交一次。</p>${button("post", "确认开始后测")}</div>${notice("前测作答已保存在服务器。以后使用同一学号和姓名登录，不需要重复前测。")}`;
+    if (!session.pre_completed) content = `<span class="study-pill">首次使用 · 必须完成</span><h2>先独立完成前测</h2><p>请按当前掌握程度作答，不查阅资料或使用AI。20道单选题按基础、应用、综合递进；每道案例含4个单选小题。</p><p>答案会自动保存，可以中断后继续；完成全部题目并提交即可进入学习，不要求达到及格分数。</p>${notice("提交后立即显示成绩与逐题解析，可从解析一键进入知识问答继续提问。提交后不能重做，请核对学号和姓名。")}${button("pre", "开始前测 →")}`;
+    else if (!session.post_completed) {
+      const pre = session.results.find(r => r.phase === "pre");
+      content = `<span class="study-pill">前测已完成</span><h2>你的前测成绩</h2><div class="pre-score score-specs"><strong>${pre.score}<small> / 100</small></strong><p>下方已展开逐题解析。每题都可以进入知识问答继续提问。</p></div><div class="study-table-wrap"><table><thead><tr><th>知识维度</th><th>得分</th></tr></thead><tbody>${Object.entries(pre.breakdown).map(([domain, data]) => `<tr><td>${esc(domain)}</td><td>${data.score} / ${data.total}</td></tr>`).join("")}</tbody></table></div><p>${session.post_open ? "教师已开放后测，请完成学习后独立作答。" : "知识问答、皮疹图谱和情景演练均已开放。后测由教师统一开放。"}</p><div class="study-actions">${button("learn", "进入知识问答")}${button("review", "查看逐题解析", true)}${session.post_open ? button("post-confirm", "准备开始后测", true) : button("refresh", "刷新开放状态", true)}</div><div id="postConfirmation" class="study-confirmation" hidden><strong>确认已完成教师安排的学习？</strong><p>开始后测后，本站学习模块与前测解析将暂时锁定，提交全部答案后恢复。后测只能提交一次。</p>${button("post", "确认开始后测")}</div>${notice("成绩和作答已保存，以后使用同一姓名与学号登录可继续复习。")}`;
+    }
     else {
       const pre = session.results.find(r => r.phase === "pre"), post = session.results.find(r => r.phase === "post");
       content = `<span class="study-pill">两次测验已完成</span><h2>你的学习记录</h2><div class="exam-specs score-specs"><div><strong>${pre.score}</strong><span>前测 / 100</span></div><div><strong>${post.score}</strong><span>后测 / 100</span></div><div><strong>${post.score - pre.score > 0 ? "+" : ""}${post.score - pre.score}</strong><span>分数变化</span></div></div><div class="study-table-wrap"><table><thead><tr><th>知识维度</th><th>前测</th><th>后测</th></tr></thead><tbody>${Object.entries(pre.breakdown).map(([domain, data]) => `<tr><td>${esc(domain)}</td><td>${data.score} / ${data.total}</td><td>${post.breakdown[domain]?.score ?? "—"} / ${post.breakdown[domain]?.total ?? "—"}</td></tr>`).join("")}</tbody></table></div><div class="study-actions">${button("review", "查看答案与解析", true)}${button("learn", "继续学习 →")}</div>${notice("分数变化用于帮助回顾学习，不能单凭个人前后测成绩判定AI工具的因果效果。")}`;
     }
-    root().innerHTML = `${intro}${session.post_completed ? "" : stats}<section class="study-card">${content}</section><div id="assessmentReview"></div>`;
+    root().innerHTML = `${intro}${session.pre_completed ? "" : stats}<section class="study-card">${content}</section><div id="assessmentReview"></div>`;
   }
-  function questionMarkup(q, index, reviewMode = false) {
-    const selected = answers[q.id];
-    return `<fieldset class="exam-question" id="exam-${q.id}" tabindex="-1"><legend><span class="question-number">${index}.</span>${esc(q.stem)} <small>单选</small></legend><div class="exam-options">${q.options.map((o, n) => `<label class="exam-option"><input type="radio" name="${q.id}" data-question="${q.id}" value="${o.id}" ${selected === o.id ? "checked" : ""} ${reviewMode ? "disabled" : ""}><span><b>${String.fromCharCode(65 + n)}</b>${esc(o.text)}</span></label>`).join("")}</div>${reviewMode ? `<div class="exam-explanation"><strong>${selected === q.correct ? "回答正确" : "需复习"} · 正确答案：${esc(q.options.find(o => o.id === q.correct)?.text)}</strong><p>${esc(q.explanation)}</p><small>知识点：${esc(q.point)} · ${q.sources.map(s => esc(s.document)).filter((v, i, a) => a.indexOf(v) === i).join("；")}</small></div>` : ""}</fieldset>`;
+  function questionMarkup(q, index, reviewMode, value) {
+    const selected = (reviewMode ? value.answers || {} : answers)[q.id];
+    const correct = q.options.find(o => o.id === q.correct)?.text || "";
+    const chosen = q.options.find(o => o.id === selected)?.text || "未作答";
+    const scope = reviewMode ? `review-${value.id || value.form}-` : "";
+    const background = value.cases.find(c => c.id === q.case_id)?.background || "";
+    const prompt = `我正在复习${q.disease || "传染病"}的“${q.point}”。${background ? `案例：${background}\n` : ""}题目：${q.stem}\n我的答案：${chosen}。参考答案：${correct}。请结合临床证据解释判断过程，并说明与其他选项（${q.options.filter(o => o.id !== q.correct).map(o => o.text).join("；")}）的区别。`;
+    return `<fieldset class="exam-question" id="exam-${scope}${q.id}" tabindex="-1"><legend><span class="question-number">${index}.</span>${esc(q.stem)} <small>单选</small></legend><div class="exam-options">${q.options.map((o, n) => `<label class="exam-option"><input type="radio" name="${scope}${q.id}" data-question="${q.id}" value="${o.id}" ${selected === o.id ? "checked" : ""} ${reviewMode ? "disabled" : ""}><span><b>${String.fromCharCode(65 + n)}</b>${esc(o.text)}</span></label>`).join("")}</div>${reviewMode ? `<div class="exam-explanation"><strong>${selected ? selected === q.correct ? "回答正确" : "需复习" : "参考解析"} · 正确答案：${esc(correct)}</strong>${selected ? `<p>你的答案：${esc(chosen)}</p>` : ""}<p>${esc(q.explanation)}</p><small>知识点：${esc(q.point)} · ${q.sources.map(s => esc(s.document)).filter((v, i, a) => a.indexOf(v) === i).join("；")}</small>${!isTeacher() ? `<div class="study-actions"><button type="button" class="line-button" data-knowledge-question="${esc(prompt)}">去知识问答提问</button></div>` : ""}</div>` : ""}</fieldset>`;
   }
   function paperMarkup(value, reviewMode = false) {
-    return `<section class="study-card"><div class="exam-section-title"><span class="section-code">PART 01 / SINGLE CHOICE</span><h2>一、单选题</h2><span>20题 · 60分</span></div>${value.questions.filter(q => !q.case_id).map((q, i) => questionMarkup(q, i + 1, reviewMode)).join("")}</section><div class="exam-section-title"><span class="section-code">PART 02 / CLINICAL CASES</span><h2>二、案例题</h2><span>2题 · 40分，每个小题只有一个最佳答案</span></div>${value.cases.map((c, i) => `<section class="study-card"><div class="exam-case-stem"><span class="section-code">CLINICAL CASE ${i + 1}</span><h3>${esc(c.title)}</h3><p>${esc(c.background)}</p></div>${value.questions.filter(q => q.case_id === c.id).map((q, j) => questionMarkup(q, j + 1, reviewMode)).join("")}</section>`).join("")}`;
+    return `<section class="study-card"><div class="exam-section-title"><span class="section-code">PART 01 / SINGLE CHOICE</span><h2>一、单选题</h2><span>20题 · 60分</span></div>${value.questions.filter(q => !q.case_id).map((q, i) => questionMarkup(q, i + 1, reviewMode, value)).join("")}</section><div class="exam-section-title"><span class="section-code">PART 02 / CLINICAL CASES</span><h2>二、案例题</h2><span>2题 · 40分，每个小题只有一个最佳答案</span></div>${value.cases.map((c, i) => `<section class="study-card"><div class="exam-case-stem"><span class="section-code">CLINICAL CASE ${i + 1}</span><h3>${esc(c.title)}</h3><p>${esc(c.background)}</p></div>${value.questions.filter(q => q.case_id === c.id).map((q, j) => questionMarkup(q, j + 1, reviewMode, value)).join("")}</section>`).join("")}`;
   }
   function renderPaper() {
     answers = { ...paper.answers }; saved = JSON.stringify(answers);
@@ -200,14 +208,21 @@ window.Study = (() => {
       await flush();
       const data = await request(`/api/assessments/${paper.id}/submit`, "POST", { answers, revision: paper.revision });
       paper.submitted = true; paper = null; updateSession(data); signal(); dashboard();
+      await review();
       window.scrollTo({ top: 0, behavior: "smooth" });
-      message(data.post_completed ? "后测已提交，可查看两次成绩。" : "前测已提交，学习模块已开放。");
+      message(data.post_completed ? "后测已提交，可查看两次成绩。" : "前测已提交，成绩和逐题解析已显示。");
     } finally { busy = false; find("#assessmentForm")?.querySelectorAll("input,button").forEach(el => el.disabled = false); }
   }
   async function review() {
-    const data = await request("/api/assessment-results");
-    if (!data.ready) return;
-    find("#assessmentReview").innerHTML = data.attempts.map(p => { answers = p.answers; return `<details class="study-review"><summary>${phaseName(p.phase)} · ${p.result.score} / 100 · 答案与解析</summary>${paperMarkup(p, true)}</details>`; }).join("");
+    const container = find("#assessmentReview");
+    if (!container) return;
+    try {
+      const data = await request("/api/assessment-results");
+      if (!data.ready || !container.isConnected) return;
+      container.innerHTML = data.attempts.map(p => `<details class="study-review" open><summary>${phaseName(p.phase)} · ${p.result.score} / 100 · 答案与解析</summary>${paperMarkup(p, true)}</details>`).join("");
+    } catch (error) {
+      if (container.isConnected) container.innerHTML = `<section class="study-card"><p>成绩已保存。解析加载失败：${esc(error.message)}</p>${button("review", "重新加载解析", true)}</section>`;
+    }
   }
   async function loadFaculty() {
     const data = await hooks.adminApi("/api/admin/study");
