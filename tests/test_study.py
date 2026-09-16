@@ -13,7 +13,7 @@ from src import main, study
 from src.assessment_bank import PAIRS, CASE_PAIRS, bank_with_sources
 from src.rash_assessment_bank import RASH_PAIRS, bank as rash_bank
 
-VERSION = "infectious-clinical-2026-09-v4"
+VERSION = "infectious-clinical-2026-09-v5"
 LEGACY_VERSION = "infectious-clinical-2026-09-v3"
 SECTION_TOTALS = {"basic": 60, "rash": 16, "case": 24}
 
