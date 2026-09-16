@@ -192,13 +192,15 @@ class StudyTests(unittest.TestCase):
                 self.assertTrue(q["explanation"])
                 self.assertEqual(bool(q.get("image_file")), n >= 4)
                 if q.get("image_file"):
-                    self.assertTrue(q["stem"].startswith("模拟病史"))
+                    self.assertNotIn("模拟病史", q["stem"])
                     source = next(i for i in atlas_disease["images"] if i["file"] == q["image_file"])
                     for key in ("provider", "source_label", "license", "caption", "links"):
                         self.assertEqual(q["image_source"][key], source.get(key, ""))
                     self.assertTrue(q["image_source"]["source_label"] and q["image_source"]["license"])
             if n >= 4:
                 self.assertNotEqual(pair["A"]["image_file"], pair["B"]["image_file"])
+            for variant in (pair["A"], pair["B"]):
+                self.assertNotRegex(variant["stem"], r"模拟病史|用药|服药|服用|新药|药物")
 
     def test_bank_upgrade_keeps_matching_post_form_for_started_student(self):
         self.finish_pre()
