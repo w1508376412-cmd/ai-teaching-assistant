@@ -318,12 +318,15 @@ class StudyTests(unittest.TestCase):
         self.assertEqual(opened.status_code, 200, opened.text)
         self.assertTrue(opened.json()["post_open"])
         self.assertEqual(opened.json()["post_open_reason"], "time")
+        self.assertEqual(opened.json()["post_open_notice_id"], "time:1800")
         self.assertGreaterEqual(opened.json()["learning_seconds"], 1800)
 
         # The teacher's global control remains available. Turning it off does
         # not revoke a student's independently earned 30-minute access.
         self.client.put("/api/admin/study/release", headers=self.admin, json={"open": True})
-        self.assertEqual(self.client.get("/api/session").json()["post_open_reason"], "teacher")
+        teacher_open = self.client.get("/api/session").json()
+        self.assertEqual(teacher_open["post_open_reason"], "teacher")
+        self.assertTrue(teacher_open["post_open_notice_id"].startswith("teacher:"))
         self.client.put("/api/admin/study/release", headers=self.admin, json={"open": False})
         self.assertEqual(self.client.get("/api/session").json()["post_open_reason"], "time")
         self.assertEqual(self.client.post("/api/assessments/start", json={"phase": "post"}).status_code, 200)
@@ -343,9 +346,36 @@ class StudyTests(unittest.TestCase):
         self.assertIn("HttpOnly", response.headers["set-cookie"])
         self.assertIn("SameSite=lax", response.headers["set-cookie"])
         self.assertIn("no-store", response.headers["cache-control"])
-        self.assertEqual(self.client.post("/api/session/login", json={"student_no": "2026003", "name": "其他姓名"}).status_code, 409)
+        self.assertEqual(self.client.post("/api/session/login", json={"student_no": "2026003", "name": "其他姓名"}).status_code, 200)
+        with self.store.db() as c:
+            self.assertEqual(c.execute("SELECT COUNT(*) FROM students WHERE student_no='2026003'").fetchone()[0], 2)
         self.assertEqual(self.client.post("/api/session/logout", headers={"Origin": "https://evil.example"}).status_code, 403)
         self.assertEqual(self.client.get("/api/admin/study", headers={"X-Admin-Password": "wrong"}).status_code, 401)
+
+    def test_named_course_faculty_share_number_without_entering_student_results(self):
+        for name in ("宋蕊", "田地", "穆雪纯"):
+            with self.subTest(name=name):
+                result = self.login("12345", name)
+                self.assertEqual(result["role"], "teacher")
+                self.assertEqual(self.client.get("/api/admin/study").status_code, 200)
+                self.client.post("/api/session/logout")
+        self.assertEqual(self.client.get("/api/admin/study", headers=self.admin).json()["registered"], 0)
+
+    def test_legacy_single_number_schema_migrates_to_name_number_pairs(self):
+        import sqlite3
+        folder = tempfile.TemporaryDirectory()
+        self.addCleanup(folder.cleanup)
+        path = folder.name + "/legacy.sqlite3"
+        with sqlite3.connect(path) as c:
+            c.execute("CREATE TABLE students (id TEXT PRIMARY KEY, student_no TEXT UNIQUE NOT NULL, name TEXT NOT NULL, first_form TEXT NOT NULL, created REAL NOT NULL)")
+            c.execute("INSERT INTO students VALUES ('legacy','SAME-NO','原姓名','A',1)")
+            c.execute("CREATE TABLE sessions (hash TEXT PRIMARY KEY, student TEXT NOT NULL REFERENCES students(id), expires REAL NOT NULL)")
+            c.execute("INSERT INTO sessions VALUES ('legacy-session','legacy',9999999999)")
+        migrated = study.Store(path)
+        migrated.login("SAME-NO", "新姓名", "local")
+        with migrated.db() as c:
+            self.assertEqual(c.execute("SELECT COUNT(*) FROM students WHERE student_no='SAME-NO'").fetchone()[0], 2)
+            self.assertIsNone(c.execute("PRAGMA foreign_key_check").fetchone())
 
     def test_all_36_answers_autosave_resume_and_reject_over_limit(self):
         self.login()
@@ -638,7 +668,9 @@ class StudyTests(unittest.TestCase):
 
     def test_teacher_identity_login_bypasses_exam_but_not_student_permissions(self):
         with patch.dict("os.environ", {"TEACHER_STUDENT_NO": "TEACHER-TEST", "TEACHER_NAME": "本地测试教师"}):
-            self.assertEqual(self.client.post("/api/session/login", json={"student_no": "TEACHER-TEST", "name": "错误姓名"}).status_code, 401)
+            wrong = self.client.post("/api/session/login", json={"student_no": "TEACHER-TEST", "name": "错误姓名"})
+            self.assertEqual(wrong.status_code, 200)
+            self.assertEqual(wrong.json()["role"], "student")
             result = self.login("TEACHER-TEST", "本地测试教师")
             self.assertEqual(result["role"], "teacher")
             self.assertFalse(result["pre_completed"])
@@ -647,7 +679,7 @@ class StudyTests(unittest.TestCase):
             self.assertEqual(self.client.get("/api/admin/content").status_code, 200)
             self.assertEqual(self.client.get("/api/admin/study/papers").status_code, 200)
             self.assertEqual(self.client.put("/api/admin/study/release", json={"open": True}).status_code, 200)
-            self.assertEqual(self.client.get("/api/admin/study").json()["registered"], 0)
+            self.assertEqual(self.client.get("/api/admin/study").json()["registered"], 1)
             self.client.post("/api/session/logout")
             self.login()
             self.assertEqual(self.client.get("/api/admin/study").status_code, 401)

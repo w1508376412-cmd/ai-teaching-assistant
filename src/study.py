@@ -6,7 +6,6 @@ import io
 import json
 import os
 import random
-import re
 import secrets
 import sqlite3
 import time
@@ -31,6 +30,11 @@ HEARTBEAT_CLOCK_SLOP = 2.0
 ROOT = Path(__file__).resolve().parents[1]
 router = APIRouter()
 SECTION_LABELS = {"basic": "基础知识", "rash": "皮疹辨别", "case": "模拟案例"}
+DEFAULT_TEACHERS = {
+    ("12345", "宋蕊"),
+    ("12345", "田地"),
+    ("12345", "穆雪纯"),
+}
 
 
 def question_section(question):
@@ -58,22 +62,37 @@ def encode(value):
     return json.dumps(value, ensure_ascii=False)
 
 
+def normalized_identity(student_no, name):
+    return (unicodedata.normalize("NFKC", student_no).strip().upper(),
+            unicodedata.normalize("NFKC", name).strip())
+
+
+def teacher_identities():
+    """Keep the named course faculty available while supporting local overrides."""
+    identities = set(DEFAULT_TEACHERS)
+    number, name = normalized_identity(os.getenv("TEACHER_STUDENT_NO", ""),
+                                       os.getenv("TEACHER_NAME", ""))
+    if number and name:
+        identities.add((number, name))
+    return identities
+
+
 def is_teacher(user):
-    number = unicodedata.normalize("NFKC", os.getenv("TEACHER_STUDENT_NO", "")).strip().upper()
-    name = unicodedata.normalize("NFKC", os.getenv("TEACHER_NAME", "")).strip()
-    return bool(user and number and name and user["student_no"] == number and user["name"] == name)
+    return bool(user and normalized_identity(user["student_no"], user["name"]) in teacher_identities())
 
 
 class Store:
     def __init__(self, path):
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.migrate_student_identity_schema()
         with self.db() as conn:
             conn.executescript("""
             CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS students (
-              id TEXT PRIMARY KEY, student_no TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
-              first_form TEXT NOT NULL, created REAL NOT NULL);
+              id TEXT PRIMARY KEY, student_no TEXT NOT NULL, name TEXT NOT NULL,
+              first_form TEXT NOT NULL, created REAL NOT NULL,
+              UNIQUE(student_no, name));
             CREATE TABLE IF NOT EXISTS sessions (
               hash TEXT PRIMARY KEY, student TEXT NOT NULL REFERENCES students(id), expires REAL NOT NULL);
             CREATE TABLE IF NOT EXISTS attempts (
@@ -94,6 +113,7 @@ class Store:
             """)
             conn.execute("INSERT OR IGNORE INTO settings VALUES ('seed', ?)", (str(secrets.randbits(63)),))
             conn.execute("INSERT OR IGNORE INTO settings VALUES ('post_open', 'false')")
+            conn.execute("INSERT OR IGNORE INTO settings VALUES ('post_updated', '0')")
             conn.execute("INSERT OR IGNORE INTO settings VALUES ('version', ?)", (VERSION,))
         os.chmod(self.path, 0o600)
         # Keep every released bank's paired papers. This lets a student who began
@@ -117,6 +137,43 @@ class Store:
                 for form, paper in forms.items():
                     c.execute("INSERT OR IGNORE INTO settings VALUES (?, ?)",
                               (self.paper_key(VERSION, form), encode(paper)))
+
+    def migrate_student_identity_schema(self):
+        """Allow the same student number to be registered under distinct names.
+
+        Older releases made ``student_no`` globally unique. The course now has
+        multiple faculty members sharing one institutional number, so identity
+        records are unique by the submitted name-number pair instead.
+        """
+        conn = sqlite3.connect(self.path, timeout=20)
+        try:
+            schema = conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='students'").fetchone()
+            if not schema:
+                return
+            indexes = []
+            for index in conn.execute("PRAGMA index_list(students)"):
+                if index[2]:
+                    indexes.append(tuple(row[2] for row in conn.execute(f"PRAGMA index_info('{index[1]}')")))
+            if ("student_no", "name") in indexes:
+                return
+            conn.execute("PRAGMA foreign_keys=OFF")
+            conn.execute("BEGIN IMMEDIATE")
+            conn.execute("""CREATE TABLE students_identity_migration (
+              id TEXT PRIMARY KEY, student_no TEXT NOT NULL, name TEXT NOT NULL,
+              first_form TEXT NOT NULL, created REAL NOT NULL,
+              UNIQUE(student_no, name))""")
+            conn.execute("INSERT INTO students_identity_migration SELECT id,student_no,name,first_form,created FROM students")
+            conn.execute("DROP TABLE students")
+            conn.execute("ALTER TABLE students_identity_migration RENAME TO students")
+            conn.commit()
+            conn.execute("PRAGMA foreign_keys=ON")
+            if conn.execute("PRAGMA foreign_key_check").fetchone():
+                raise RuntimeError("学生身份表迁移后外键校验失败")
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
 
     @staticmethod
     def paper_key(version, form):
@@ -152,16 +209,12 @@ class Store:
             if c.execute("SELECT COUNT(*) FROM login_limits WHERE key=?", (key,)).fetchone()[0] >= 40:
                 raise HTTPException(429, "登录尝试较多，请10分钟后再试。")
             c.execute("INSERT INTO login_limits VALUES (?, ?)", (key, now))
-        if student_no == os.getenv("TEACHER_STUDENT_NO", "").strip().upper() and not is_teacher({"student_no": student_no, "name": name}):
-            raise HTTPException(401, "姓名与学号不匹配，请核对后重新登录。")
         with self.db(write=True) as c:
-            user = c.execute("SELECT * FROM students WHERE student_no=?", (student_no,)).fetchone()
-            if user and user["name"] != name:
-                raise HTTPException(409, "学号与已登记的姓名不一致，请核对或联系教师。")
+            user = c.execute("SELECT * FROM students WHERE student_no=? AND name=?", (student_no, name)).fetchone()
             if not user:
                 c.execute("INSERT INTO students VALUES (?, ?, ?, ?, ?)",
                           (secrets.token_hex(16), student_no, name, secrets.choice(["A", "B"]), now))
-                user = c.execute("SELECT * FROM students WHERE student_no=?", (student_no,)).fetchone()
+                user = c.execute("SELECT * FROM students WHERE student_no=? AND name=?", (student_no, name)).fetchone()
             token = secrets.token_urlsafe(32)
             c.execute("DELETE FROM sessions WHERE expires < ?", (now,))
             c.execute("INSERT INTO sessions VALUES (?, ?, ?)",
@@ -266,9 +319,11 @@ class Store:
         finished = bool(post and post["submitted"])
         with self.db() as c:
             post_open, post_open_reason, learning_seconds = self.post_access(user["id"], c)
+        notice_id = (f"teacher:{self.settings().get('post_updated', '0')}" if post_open_reason == "teacher"
+                     else f"time:{AUTO_POST_SECONDS}" if post_open_reason == "time" else None)
         return {"authenticated": True, "role": "student", "student": {"student_no": user["student_no"], "name": user["name"]},
                 "pre_completed": completed, "post_completed": finished,
-                "post_open": post_open, "post_open_reason": post_open_reason,
+                "post_open": post_open, "post_open_reason": post_open_reason, "post_open_notice_id": notice_id,
                 "learning_seconds": round(learning_seconds), "auto_post_seconds": AUTO_POST_SECONDS,
                 "auto_post_remaining": max(0, round(AUTO_POST_SECONDS - learning_seconds)),
                 "active": next(({"id": r["id"], "phase": r["phase"]} for r in attempts if not r["submitted"]), None),
@@ -409,8 +464,8 @@ def same_origin(request: Request):
 
 
 class Login(BaseModel):
-    student_no: str = Field(min_length=1, max_length=60)
-    name: str = Field(min_length=1, max_length=60)
+    student_no: str
+    name: str
 
 
 class Answers(BaseModel):
@@ -455,10 +510,9 @@ def paper_image(paper, question_id):
 
 @router.post("/api/session/login", dependencies=[Depends(same_origin)])
 def login(body: Login, request: Request, response: Response):
-    number = unicodedata.normalize("NFKC", body.student_no).strip().upper()
-    name = unicodedata.normalize("NFKC", body.name).strip()
-    if not re.fullmatch(r"[A-Z0-9_-]{3,40}", number) or not 2 <= len(name) <= 40 or any(unicodedata.category(c).startswith("C") for c in name):
-        raise HTTPException(422, "学号请填写3—40位字母、数字或短横线，姓名请填写2—40个字。")
+    number, name = normalized_identity(body.student_no, body.name)
+    if not number or not name or any(unicodedata.category(c).startswith("C") for c in number + name):
+        raise HTTPException(422, "请填写姓名和学号，且不要包含控制字符。")
     user, token = get_store().login(number, name, request.client.host if request.client else "unknown")
     response.set_cookie(COOKIE, token, max_age=SESSION_SECONDS, httponly=True,
                         secure=request.url.scheme == "https" or os.getenv("STUDY_REQUIRE_VOLUME") == "true", samesite="lax")

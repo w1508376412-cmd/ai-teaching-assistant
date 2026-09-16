@@ -56,6 +56,15 @@ body[data-auth="ready"] .student-login { display: none; }
 .study-actions .line-button, .study-actions .solid-button { font-size: 14px; padding: 13px 18px; }
 .study-confirmation { border-top: 1px solid #dedfdb; padding-top: 24px; margin-top: 24px; }
 .study-confirmation p { line-height: 1.8; }
+.study-reminder-dialog { width: min(560px, calc(100vw - 32px)); max-width: 560px; padding: 0; overflow: hidden; color: #171817; background: #fff; border: 0; border-radius: 22px; box-shadow: 0 24px 80px #10111038; animation: study-reminder-arrive .22s ease-out; }
+.study-reminder-dialog::backdrop { background: #1718178a; backdrop-filter: blur(3px); }
+.study-reminder-shell { padding: 30px 32px 28px; border-top: 5px solid #ff5100; }
+.study-reminder-route { margin: 20px 0 24px; padding: 14px 16px; color: #5d615c; background: #f3f3f1; border-radius: 10px; font: 11px/1.7 ui-monospace, monospace; letter-spacing: .03em; }
+.study-reminder-dialog h2 { margin: 0 0 12px; font-size: 26px; letter-spacing: -.03em; }
+.study-reminder-dialog p { margin: 0; color: #646863; font-size: 15px; line-height: 1.85; }
+.study-reminder-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 28px; }
+.study-reminder-actions button { justify-content: center; min-width: 112px; }
+@keyframes study-reminder-arrive { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .exam-progress { position: sticky; top: 12px; z-index: 8; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 16px 22px; border: 1px solid #e2e3df; background: #fffffff5; backdrop-filter: blur(10px); border-radius: 14px; box-shadow: 0 5px 20px #19191908; font-size: 13px; }
 .exam-progress label { font-weight: 600; }
 .exam-progress progress { accent-color: #ff5100; height: 6px; flex: 1; min-width: 60px; max-width: 210px; }
@@ -136,7 +145,13 @@ body[data-auth="ready"] .student-login { display: none; }
   .exam-question legend { font-size: 16px; }
   .exam-image-button, .exam-image-large { padding: 10px; }
   .exam-image-dialog { padding: 20px 14px; }
+  .study-reminder-shell { padding: 24px 20px 20px; }
+  .study-reminder-dialog h2 { font-size: 23px; }
+  .study-reminder-route { margin: 17px 0 20px; font-size: 10px; }
+  .study-reminder-actions { display: grid; grid-template-columns: 1fr; }
+  .study-reminder-actions .solid-button { grid-row: 1; }
+  .study-reminder-actions button { width: 100%; }
   .study-heading { margin-top: 0; }
 }
 @media print { .sidebar, .topbar, .study-actions, .exam-progress, .toast { display: none !important; } .main-stage { margin: 0 !important; } .study-card { box-shadow: none; } .exam-question { break-inside: avoid; } }
-@media (prefers-reduced-motion: reduce) { html:has(.assessment-root), .exam-image-dialog { scroll-behavior: auto; } }
+@media (prefers-reduced-motion: reduce) { html:has(.assessment-root), .exam-image-dialog { scroll-behavior: auto; } .study-reminder-dialog { animation: none; } }

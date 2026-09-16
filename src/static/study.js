@@ -4,7 +4,7 @@ window.Study = (() => {
   const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const phaseName = p => p === "pre" ? "前测" : "后测";
   let hooks, session = null, paper = null, answers = {}, saved = "{}", saving = Promise.resolve(), timer, showing = false, busy = false, lastVisit = "";
-  let learningTickAt = 0, learningHeartbeatBusy = false;
+  let learningTickAt = 0, learningHeartbeatBusy = false, reminderQueue = [], activeReminder = null;
   const root = () => find("#assessmentRoot");
   const message = (text, bad = false) => hooks.toast(text, bad);
   const notice = text => `<p class="study-notice">${text}</p>`;
@@ -179,14 +179,59 @@ window.Study = (() => {
   }
   const isTeacher = () => session?.role === "teacher";
   const canLearn = () => !!(session?.authenticated && (isTeacher() || (session.pre_completed && session.active?.phase !== "post")));
+  function showNextReminder() {
+    const dialog = find("#studyReminderDialog");
+    if (!dialog || dialog.open || !reminderQueue.length) return;
+    activeReminder = reminderQueue.shift();
+    find("#studyReminderKicker").textContent = activeReminder.kicker;
+    find("#studyReminderRoute").textContent = activeReminder.route;
+    find("#studyReminderTitle").textContent = activeReminder.title;
+    find("#studyReminderCopy").textContent = activeReminder.copy;
+    find("#studyReminderPrimary").textContent = activeReminder.primary;
+    find("#studyReminderSecondary").textContent = activeReminder.secondary || "稍后";
+    dialog.showModal();
+    find("#studyReminderPrimary").focus();
+  }
+  function queueReminder(reminder) {
+    reminderQueue.push(reminder);
+    showNextReminder();
+  }
+  function navigationReminder() {
+    queueReminder({
+      kicker: "LEARNING GUIDE · 前测完成",
+      route: "01  知识问答   ·   02  皮疹图谱   ·   03  情景演练   ·   04  知识测验",
+      title: "现在可以开始学习",
+      copy: "点击页面左上角的菜单按钮，即可在不同学习板块之间切换。建议结合知识问答、皮疹图谱和情景演练进行学习。",
+      primary: "进入知识问答",
+      secondary: "留在成绩页",
+      view: "knowledge",
+    });
+  }
+  function postReminderIfNeeded(data) {
+    if (!data?.post_open || !data.pre_completed || data.post_completed || data.active?.phase === "post") return;
+    const noticeId = data.post_open_notice_id || `${data.post_open_reason || "open"}:default`;
+    const identity = `${data.student?.student_no || ""}:${data.student?.name || ""}`;
+    const storageKey = `study-post-reminder:${identity}`;
+    try {
+      if (localStorage.getItem(storageKey) === noticeId) return;
+      localStorage.setItem(storageKey, noticeId);
+    } catch {}
+    const automatic = data.post_open_reason === "time";
+    queueReminder({
+      kicker: automatic ? "POST-ASSESSMENT · 学习满30分钟" : "POST-ASSESSMENT · 教师已发放",
+      route: "04  知识测验   →   后测",
+      title: "后测已经开放",
+      copy: automatic ? "你已累计完成30分钟有效学习，请前往知识测验独立完成后测。" : "教师已向完成前测的学生发放后测，请前往知识测验独立完成。",
+      primary: "去完成后测",
+      secondary: "稍后完成",
+      view: "assessment",
+    });
+  }
   function activeLearningModule() {
     return ["knowledge", "atlas", "cases"].find(view => find(`#view-${view}`)?.classList.contains("is-active")) || "";
   }
   function pushPostIfOpened(previous, data) {
-    if (!previous?.post_open && data.post_open && data.pre_completed && !data.post_completed && data.active?.phase !== "post") {
-      hooks.switchView("assessment");
-      message(data.post_open_reason === "time" ? "已累计有效学习30分钟，后测现已开放。" : "教师已开放后测，请完成学习后独立作答。");
-    }
+    if (!previous?.post_open || previous.post_open_notice_id !== data.post_open_notice_id) postReminderIfNeeded(data);
   }
   async function learningHeartbeat(reset = false) {
     const module = activeLearningModule();
@@ -233,15 +278,28 @@ window.Study = (() => {
       submit.disabled = true;
       find("#studentLoginError").textContent = "";
       try {
-        updateSession(await request("/api/session/login", "POST", { student_no: find("#studentNumber").value, name: find("#studentName").value }));
+        const data = await request("/api/session/login", "POST", { student_no: find("#studentNumber").value, name: find("#studentName").value });
+        updateSession(data);
         signal();
         hooks.switchView(isTeacher() ? "admin" : session.pre_completed ? "knowledge" : "assessment");
+        pushPostIfOpened(null, data);
       } catch (error) { find("#studentLoginError").textContent = error.message; }
       finally { submit.disabled = false; }
     });
     find("#studentLogout").addEventListener("click", async () => {
       try { await flush(); await request("/api/session/logout", "POST"); signal(); location.replace("/"); }
       catch (error) { message(error.message, true); }
+    });
+    const reminderDialog = find("#studyReminderDialog");
+    find("#studyReminderSecondary").addEventListener("click", () => reminderDialog.close());
+    find("#studyReminderPrimary").addEventListener("click", () => {
+      const view = activeReminder?.view;
+      reminderDialog.close();
+      if (view) hooks.switchView(view);
+    });
+    reminderDialog.addEventListener("close", () => {
+      activeReminder = null;
+      setTimeout(showNextReminder, 0);
     });
     root().addEventListener("change", event => {
       if (!event.target.matches('input[data-question]') || busy) return;
@@ -296,14 +354,21 @@ window.Study = (() => {
       if (document.hidden) { learningTickAt = 0; if (paper) void flush().catch(() => {}); }
       else { void sync(); void learningHeartbeat(true); }
     });
-    try { updateSession(await request("/api/session")); }
+    try {
+      const data = await request("/api/session");
+      updateSession(data);
+      pushPostIfOpened(null, data);
+    }
     catch (error) { loginScreen(); find("#studentLoginError").textContent = error.message || "暂时无法连接，请稍后重新登录。"; }
   }
   async function show(force = false) {
     if (showing || !session?.authenticated) return;
     showing = true;
     try {
-      updateSession(await request("/api/session"));
+      const data = await request("/api/session");
+      const previous = session;
+      updateSession(data);
+      pushPostIfOpened(previous, data);
       if (!session?.authenticated) return;
       if (session.active) {
         if (!force && paper?.id === session.active.id && find("#assessmentForm")) return;
@@ -385,6 +450,7 @@ window.Study = (() => {
     return saving;
   }
   async function submit() {
+    const submittedPhase = paper.phase;
     const missing = paper.questions.filter(q => !answered(q));
     const questionElement = q => document.getElementById(`exam-${q.id}`);
     root().querySelectorAll(".exam-question").forEach(el => el.classList.remove("is-missing", "is-image-missing"));
@@ -409,6 +475,10 @@ window.Study = (() => {
       await review();
       window.scrollTo({ top: 0, behavior: "smooth" });
       message(data.post_completed ? "后测已提交，可查看两次成绩。" : "前测已提交，成绩和逐题解析已显示。");
+      if (submittedPhase === "pre") {
+        navigationReminder();
+        pushPostIfOpened(null, data);
+      }
     } finally {
       busy = false;
       const form = find("#assessmentForm");
