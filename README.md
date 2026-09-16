@@ -8,7 +8,10 @@
 2. **AI 鉴别训练**：根据学员的皮损观察记录，在完整图谱或已选择候选病种中梳理支持证据、冲突证据、下一步验证与危重红旗。
 3. **RAG 知识问答**：基于 267 个结构化知识块、33 个病种执行 BM25 与本地 TF-IDF 向量混合检索、加权 RRF 融合和确定性重排序，并通过流式响应实时显示模型答案；证据标签仅在后端上下文中使用，问答界面保持干净，不显示引用标注。
 4. **情景演练**：围绕知识库覆盖的传染病提供 10 个临床情景，训练症候识别、鉴别诊断、检查选择、隔离与治疗原则，并给出基于权威指南的教学反馈。
-5. **教师管理**：通过受保护入口查看和移除教学情景。知识库与情景内容均由版本化文件维护，不提供网页上传入口。
+5. **知识测验**：首次登录完成前测后解锁学习；教师统一开放后测。A/B配对试卷包含基础知识20题×3分、皮疹辨别8题×2分、模拟案例8小题×3分，共36小题、100分。皮疹辨别前4题纯文字、后4题配图；前后卷设问与图片不同，考点对应。前测即时出分，提供逐题解析和知识问答跳转。
+6. **教师管理**：教师身份登录后统一开放/关闭后测、预览A/B试卷与图片、导出配对成绩及逐题作答。知识库与情景内容均由版本化文件维护，不提供网页上传入口。
+
+图谱已移除独立小测验，保留原有浏览功能。已有测验按版本冻结，不因升级改写旧成绩；详细题量、配对规则和数据说明见[教师使用说明](docs/知识测验教师使用说明.md)。
 
 > 图谱和 AI 输出仅用于教学训练，不能替代面诊、病理或实验室诊断。
 
@@ -26,6 +29,9 @@
 │   └── import_rash_atlas.py
 ├── src/
 │   ├── main.py             # FastAPI、AI 接口与教师接口
+│   ├── study.py            # 登录、持久化作答、前后测权限与计分
+│   ├── assessment_bank.py  # 配对基础题与临床案例
+│   ├── rash_assessment_bank.py # 图谱来源的配对皮疹题
 │   ├── rag.py              # BM25、向量检索、RRF、上下文与引用构建
 │   └── static/             # 独立网页前端
 ├── Dockerfile
@@ -56,6 +62,10 @@ DEEPSEEK_API_KEY=你的 API Key
 OPENAI_BASE_URL=https://api.deepseek.com
 MODEL_NAME=deepseek-v4-flash
 ADMIN_PASSWORD=请设置一个安全密码
+TEACHER_NAME=教师姓名
+TEACHER_STUDENT_NO=教师学号
+STUDY_DATA_DIR=var
+STUDY_REQUIRE_VOLUME=false
 RAG_CANDIDATE_K=16
 RAG_CONTEXT_K=8
 RAG_LLM_RERANK_ENABLED=false
@@ -67,7 +77,7 @@ RETRIEVAL_HISTORY_QUESTIONS=2
 RETRIEVAL_QUERY_MAX_CHARACTERS=4000
 ```
 
-未配置 `DEEPSEEK_API_KEY` 时，图谱检索、图片查看和并排比较仍可使用；AI 问答、鉴别训练与情景反馈会提示等待配置。未配置 `ADMIN_PASSWORD` 时，教师管理功能保持关闭。
+未配置 `DEEPSEEK_API_KEY` 时，图谱检索、图片查看和并排比较仍可使用；AI 问答、鉴别训练与情景反馈会提示等待配置。通过 `TEACHER_NAME` 和 `TEACHER_STUDENT_NO` 识别教师账号；`ADMIN_PASSWORD` 是可选的管理API验证方式。生产环境需挂载持久卷，设置 `STUDY_DATA_DIR=/data` 和 `STUDY_REQUIRE_VOLUME=true`。
 
 ## 知识问答架构
 
@@ -95,9 +105,10 @@ python -m unittest discover -s tests -v
 浏览器回归测试见 `tests/browser_case_training.cjs`。先启动不调用真实模型的本地服务，再在另一终端运行测试：
 
 ```bash
-python -c 'import src.main as main; import uvicorn; main.complete = lambda *args, **kwargs: "本地测试反馈"; uvicorn.run(main.app, host="127.0.0.1", port=8766)'
+PYTHONPATH=. python tests/run_study_server.py
 # 另一个终端，安装或提供 Playwright 后运行：
 node tests/browser_case_training.cjs
+node tests/browser_study.cjs
 ```
 
 可用 `PLAYWRIGHT_MODULE` 指定 Playwright 模块路径、`CHROME_PATH` 指定浏览器、`CASE_TEST_OUTPUT` 指定截图目录。测试覆盖全部10个病例、四栏同时展示、跨案例异步隔离、提交失败重试，以及1440/842/390像素布局。勿对生产服务运行此脚本，以免产生真实模型调用。

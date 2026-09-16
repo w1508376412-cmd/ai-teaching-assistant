@@ -17,14 +17,38 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from src.assessment_bank import VERSION, PAIRS, CASE_PAIRS, bank_with_sources
+from src.rash_assessment_bank import bank as rash_bank, IMAGE_DIR
 
 COOKIE = "teaching_student"
 SESSION_SECONDS = 30 * 86400
 ROOT = Path(__file__).resolve().parents[1]
 router = APIRouter()
+SECTION_LABELS = {"basic": "基础知识", "rash": "皮疹辨别", "case": "模拟案例"}
+
+
+def question_section(question):
+    return question.get("section", "case" if question.get("case_id") else "basic")
+
+
+def section_scores(row):
+    """Also derive module totals for archived papers without rewriting records."""
+    if not row.get("result"):
+        return {}
+    result = json.loads(row["result"])
+    if "sections" in result:
+        return result["sections"]
+    scores = {}
+    answers = json.loads(row["answers"])
+    for q in json.loads(row["paper"])["questions"]:
+        key = question_section(q)
+        entry = scores.setdefault(key, {"label": SECTION_LABELS[key], "score": 0, "total": 0})
+        entry["total"] += q["points"]
+        entry["score"] += q["points"] if answers.get(q["id"]) == q["correct"] else 0
+    return scores
 
 
 def encode(value):
@@ -60,9 +84,6 @@ class Store:
               count INTEGER NOT NULL DEFAULT 1, first REAL NOT NULL, last REAL NOT NULL,
               PRIMARY KEY(student, module));
             CREATE TABLE IF NOT EXISTS login_limits (key TEXT NOT NULL, created REAL NOT NULL);
-            CREATE TABLE IF NOT EXISTS rash_quizzes (
-              id TEXT PRIMARY KEY, student TEXT NOT NULL REFERENCES students(id),
-              questions TEXT NOT NULL, answers TEXT NOT NULL DEFAULT '{}', started REAL NOT NULL);
             CREATE INDEX IF NOT EXISTS login_time ON login_limits(created);
             """)
             conn.execute("INSERT OR IGNORE INTO settings VALUES ('seed', ?)", (str(secrets.randbits(63)),))
@@ -166,13 +187,14 @@ class Store:
         questions = []
         cases = []
 
-        def add(q, ident, points, meta, case_id=None):
+        def add(q, ident, points, meta, case_id=None, section="basic"):
             choices = list(q["choices"])
             random.SystemRandom().shuffle(choices)
             options = [{"id": secrets.token_hex(5), "text": text} for text in choices]
             questions.append({"id": ident, "stem": q["stem"], "options": options,
                               "correct": next(o["id"] for o in options if o["text"] == q["answer"]),
-                              "points": points, "case_id": case_id, **meta})
+                              "points": points, "case_id": case_id, "section": section, **meta,
+                              **{k: q[k] for k in ("image_file", "image_source") if k in q}})
 
         for n, p in enumerate(self.blueprint(), 1):
             refs = [sources[k] for k in p["source_ids"]]
@@ -180,16 +202,21 @@ class Store:
                 dict(pair=p["id"], point=p["point"], domain=p["domain"], difficulty=p["difficulty"],
                      disease=refs[0]["disease"], explanation=p["explanation"],
                      sources=[{"id": r["id"], "document": r["document"], "url": r["source"]} for r in refs]))
+        for n, p in enumerate(rash_bank(), 1):
+            q = p[form]
+            add(q, f"r{n:02}", 2,
+                dict(pair=p["id"], point=p["point"], domain=p["domain"], difficulty=p["difficulty"],
+                     disease=p["disease"], explanation=q["explanation"], sources=p["sources"]), section="rash")
         # Same two case constructs in both forms, with distinct patients and wording.
         for n, p in enumerate(reversed(CASE_PAIRS), 1):
             case_id = f"c{n}"
             cases.append({"id": case_id, "title": f"案例题 {n}", "background": p[form]["background"]})
             refs = [sources[k] for k in p["source_ids"]]
             for j, q in enumerate(p[form]["questions"]):
-                add(q, f"{case_id}_{j+1}", 5,
+                add(q, f"{case_id}_{j+1}", 3,
                     dict(pair=f"{p['id']}-{j+1}", point=p["points"][j], domain=p["domains"][j],
                          difficulty=p["difficulty"], disease=p["disease"], explanation=p["explanations"][j],
-                         sources=[{"id": r["id"], "document": r["document"], "url": r["source"]} for r in refs]), case_id)
+                         sources=[{"id": r["id"], "document": r["document"], "url": r["source"]} for r in refs]), case_id, "case")
         return {"version": VERSION, "form": form, "questions": questions, "cases": cases, "total": 100}
 
     def make_paper(self, form, version=VERSION):
@@ -225,7 +252,8 @@ class Store:
                 "post_open": self.settings()["post_open"] == "true",
                 "active": next(({"id": r["id"], "phase": r["phase"]} for r in attempts if not r["submitted"]), None),
                 "results": [{"phase": r["phase"], "form": r["form"], "started": r["started"], "submitted": r["submitted"],
-                             "score": json.loads(r["result"])["score"], "breakdown": json.loads(r["result"])["breakdown"]}
+                             "score": json.loads(r["result"])["score"], "breakdown": json.loads(r["result"])["breakdown"],
+                             "sections": section_scores(r)}
                             for r in attempts if r["submitted"]]}
 
     def start(self, user, phase):
@@ -270,18 +298,24 @@ class Store:
             if any(k not in allowed or v not in allowed[k] for k, v in answers.items()):
                 raise HTTPException(422, "作答包含不属于当前试卷的选项。")
             if submit and set(answers) != set(allowed):
-                raise HTTPException(422, "请完成20道单选题及2道案例题的全部小题后提交。")
+                raise HTTPException(422, f"请完成本卷全部{len(allowed)}个小题后提交。")
             result = None
             if submit:
                 breakdown = {}
+                sections = {}
                 rows = []
                 for q in paper["questions"]:
                     earned = q["points"] if answers[q["id"]] == q["correct"] else 0
                     bucket = breakdown.setdefault(q["domain"], {"score": 0, "total": 0})
                     bucket["score"] += earned
                     bucket["total"] += q["points"]
+                    key = question_section(q)
+                    module = sections.setdefault(key, {"label": SECTION_LABELS[key], "score": 0, "total": 0})
+                    module["score"] += earned
+                    module["total"] += q["points"]
                     rows.append({"id": q["id"], "pair": q["pair"], "earned": earned, "points": q["points"]})
-                result = {"score": sum(r["earned"] for r in rows), "total": 100, "breakdown": breakdown, "items": rows}
+                result = {"score": sum(r["earned"] for r in rows), "total": paper["total"],
+                          "breakdown": breakdown, "sections": sections, "items": rows}
             c.execute("UPDATE attempts SET answers=?, revision=revision+1, submitted=?, result=? WHERE id=?",
                       (encode(answers), time.time() if submit else None, encode(result) if result else None, ident))
             return dict(c.execute("SELECT * FROM attempts WHERE id=?", (ident,)).fetchone())
@@ -342,7 +376,7 @@ class Login(BaseModel):
 
 
 class Answers(BaseModel):
-    answers: dict[str, str] = Field(max_length=28)
+    answers: dict[str, str] = Field(max_length=36)
     revision: int = Field(ge=0)
 
 
@@ -357,14 +391,28 @@ def public_attempt(row, review=False):
     questions = []
     for q in paper["questions"]:
         visible = {k: q[k] for k in ("id", "stem", "options", "points", "case_id")}
+        visible["section"] = question_section(q)
+        if q.get("image_file"):
+            visible.update(image_url=f"/api/assessments/{row['id']}/image/{q['id']}",
+                           image_alt="皮疹辨别教学图片")
         if review:
             visible.update({k: q[k] for k in ("correct", "point", "explanation", "sources", "domain")})
             visible["disease"] = q.get("disease", "")
+            if q.get("image_source"):
+                visible["image_source"] = q["image_source"]
         questions.append(visible)
     return {"id": row["id"], "phase": row["phase"], "form": row["form"], "version": row["version"],
             "started": row["started"], "submitted": row["submitted"], "revision": row["revision"],
-            "answers": json.loads(row["answers"]), "questions": questions, "cases": paper["cases"], "total": 100,
-            **({"result": json.loads(row["result"])} if review and row["result"] else {})}
+            "answers": json.loads(row["answers"]), "questions": questions, "cases": paper["cases"], "total": paper["total"],
+            **({"result": {**json.loads(row["result"]), "sections": section_scores(row)}} if review and row["result"] else {})}
+
+
+def paper_image(paper, question_id):
+    q = next((q for q in paper["questions"] if q["id"] == question_id), None)
+    filename = q.get("image_file") if q else None
+    if not filename or Path(filename).name != filename or not (IMAGE_DIR / filename).is_file():
+        raise HTTPException(404, "图片不存在。")
+    return FileResponse(IMAGE_DIR / filename, media_type="image/webp", headers={"Cache-Control": "private, no-store"})
 
 
 @router.post("/api/session/login", dependencies=[Depends(same_origin)])
@@ -413,6 +461,17 @@ def attempt(ident: str, user=Depends(require_student)):
 def draft(ident: str, body: Answers, user=Depends(require_student)):
     row = get_store().save(user, ident, body.answers, body.revision)
     return {"revision": row["revision"], "saved": True}
+
+
+@router.get("/api/assessments/{ident}/image/{question_id}")
+def assessment_image(ident: str, question_id: str, user=Depends(require_student)):
+    store = get_store()
+    with store.db() as c:
+        row = store.attempt(user, ident, c)
+    active = store.status(user)["active"]
+    if active and active["phase"] == "post" and row["phase"] != "post":
+        raise HTTPException(403, "后测正在进行，完成后可继续查看前测图片。")
+    return paper_image(json.loads(row["paper"]), question_id)
 
 
 @router.post("/api/assessments/{ident}/submit", dependencies=[Depends(same_origin)])
@@ -472,7 +531,8 @@ def faculty_rows():
         for phase in ("pre", "post"):
             r = exams.get(phase)
             row[phase] = ({"status": "已完成" if r["submitted"] else "作答中", "started": r["started"], "submitted": r["submitted"],
-                           "form": r["form"], "version": r["version"], "score": json.loads(r["result"])["score"] if r["result"] else None} if r else {"status": "未开始", "score": None})
+                           "form": r["form"], "version": r["version"], "score": json.loads(r["result"])["score"] if r["result"] else None,
+                           "sections": section_scores(r)} if r else {"status": "未开始", "score": None})
         a, b = row["pre"]["score"], row["post"]["score"]
         row["gain"] = b-a if a is not None and b is not None else None
         row["interval_hours"] = round((row["post"]["started"] - row["pre"]["submitted"])/3600, 3) if row["post"].get("started") and row["pre"].get("submitted") else None
@@ -491,7 +551,18 @@ def faculty_summary():
 
 @router.get("/api/admin/study/papers", dependencies=[Depends(faculty)])
 def faculty_papers():
-    return {"version": get_store().settings()["version"], "forms": [get_store().make_paper(form) for form in ("A", "B")]}
+    forms = [get_store().make_paper(form) for form in ("A", "B")]
+    for paper in forms:
+        for q in paper["questions"]:
+            if q.pop("image_file", None):
+                q["image_url"] = f"/api/admin/study/papers/{paper['form']}/image/{q['id']}"
+                q["image_alt"] = "皮疹辨别教学图片"
+    return {"version": get_store().settings()["version"], "forms": forms}
+
+
+@router.get("/api/admin/study/papers/{form}/image/{question_id}", dependencies=[Depends(faculty)])
+def faculty_image(form: Literal["A", "B"], question_id: str):
+    return paper_image(get_store().make_paper(form), question_id)
 
 
 @router.get("/api/admin/study/export", dependencies=[Depends(faculty)])
@@ -500,11 +571,15 @@ def export(kind: Literal["summary", "items"] = "summary"):
     data = []
     if kind == "summary":
         header = ["学号", "姓名", "试卷顺序", "前测状态", "前测成绩", "后测状态", "后测成绩", "提升分", "学习间隔小时", "知识问答访问次数", "图谱访问次数", "情景访问次数", "前测用时秒", "后测用时秒", "试卷版本"]
+        header.extend(f"{phase}{label}{suffix}" for phase in ("前测", "后测") for label in SECTION_LABELS.values() for suffix in ("得分", "满分"))
         for r in rows:
             duration = lambda p: round(r[p]["submitted"]-r[p]["started"]) if r[p].get("submitted") else ""
             data.append([r["student_no"], r["name"], r["sequence"], r["pre"]["status"], r["pre"]["score"], r["post"]["status"], r["post"]["score"], r["gain"], r["interval_hours"], *[r["activity"].get(m, {}).get("visits", 0) for m in ("knowledge", "atlas", "cases")], duration("pre"), duration("post"), r["pre"].get("version", get_store().settings()["version"])])
+            data[-1].extend(r[p].get("sections", {}).get(key, {}).get(field, "")
+                           for p in ("pre", "post") for key in SECTION_LABELS for field in ("score", "total"))
     else:
         header = ["学号", "姓名", "阶段", "卷别", "配对知识点ID", "知识点", "疾病", "难度", "题号", "题干", "所选答案", "正确答案", "得分", "满分", "开始时间戳", "提交时间戳", "版本"]
+        header.extend(["测验模块", "题目形式", "图片出处"])
         with get_store().db() as c:
             users = {r["id"]: dict(r) for r in c.execute("SELECT * FROM students")}
         for r in attempts:
@@ -516,6 +591,8 @@ def export(kind: Literal["summary", "items"] = "summary"):
                 options = {o["id"]: o["text"] for o in q["options"]}
                 selected = answers[q["id"]]
                 data.append([user["student_no"], user["name"], r["phase"], r["form"], q["pair"], q["point"], q["disease"], q["difficulty"], q["id"], q["stem"], options[selected], options[q["correct"]], q["points"] if selected == q["correct"] else 0, q["points"], r["started"], r["submitted"], r["version"]])
+                data[-1].extend([SECTION_LABELS[question_section(q)], "图片题" if q.get("image_file") else "文字题",
+                                 q.get("image_source", {}).get("source_label", "")])
     stream = io.StringIO()
     writer = csv.writer(stream)
     writer.writerow(header)

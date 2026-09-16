@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 
-VERSION = "infectious-clinical-2026-09-v3"
+VERSION = "infectious-clinical-2026-09-v4"
 
 
 def item(stem, correct, *distractors):

@@ -8,8 +8,7 @@
     <title>AI教学工具 · 传染病学教学工作台</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/static/styles.css?v=20260914-01" />
-    <link rel="stylesheet" href="/static/study.css?v=20260915-01" />
-    <link rel="stylesheet" href="/static/rash-quiz.css?v=20260915-01" />
+    <link rel="stylesheet" href="/static/study.css?v=20260916-01" />
   </head>
   <body data-auth="loading">
     <section class="student-login" id="studentLogin" aria-labelledby="studentLoginTitle">
@@ -59,11 +58,6 @@
         <main id="mainContent">
           <section class="workspace-view" id="view-atlas" data-title="皮疹图谱">
             <div class="atlas-workbench">
-              <div class="atlas-modebar" aria-label="皮疹学习方式">
-                <div><span class="section-code">RASH ATLAS</span><h2>观察皮损，练习鉴别</h2></div>
-                <div class="atlas-mode-switch"><button type="button" data-atlas-mode="browse" aria-pressed="true">图谱浏览</button><button type="button" data-atlas-mode="quiz" aria-pressed="false">看图辨病</button></div>
-              </div>
-              <div id="rashQuizRoot" class="is-hidden"></div>
               <div class="atlas-results">
                 <div class="disease-grid" id="diseaseGrid" aria-live="polite"></div>
                 <div class="atlas-empty is-hidden" id="atlasEmpty"><span>NO MATCH</span><h3>没有找到完全匹配的病种</h3><p>试试减少关键词，或清除一个形态条件。</p></div>
@@ -111,11 +105,11 @@
     <dialog class="drawer-dialog" id="diseaseDialog" aria-labelledby="diseaseDialogTitle"><div class="dialog-shell"><button class="dialog-close" type="button" data-close-dialog="diseaseDialog" aria-label="关闭病种详情">×</button><div id="diseaseDialogContent"></div></div></dialog>
     <dialog class="compare-dialog" id="compareDialog" aria-label="并排鉴别"><div class="compare-shell"><button class="dialog-close" type="button" data-close-dialog="compareDialog" aria-label="关闭比较">×</button><div id="compareDialogContent"></div></div></dialog>
     <dialog class="image-dialog" id="imageDialog" aria-label="查看临床图像"><button class="dialog-close" type="button" data-close-dialog="imageDialog" aria-label="关闭图像">×</button><figure><img id="lightboxImage" src="" alt="" /><figcaption id="lightboxCaption"></figcaption></figure></dialog>
+    <dialog class="exam-image-dialog" id="examImageDialog" aria-labelledby="examImageTitle"><button class="exam-image-close" type="button" data-exam-image-action="close" aria-label="关闭图片">×</button><h2 id="examImageTitle">皮损图片 · 放大查看</h2><div id="examImageContent"></div></dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="sidebar-scrim" id="sidebarScrim"></div>
-    <script src="/static/study.js?v=20260915-01" defer></script>
-    <script src="/static/rash-quiz.js?v=20260915-01" defer></script>
-    <script src="/static/app.js?v=20260915-01" defer></script>
+    <script src="/static/study.js?v=20260916-01" defer></script>
+    <script src="/static/app.js?v=20260916-01" defer></script>
   </body>
 </html>

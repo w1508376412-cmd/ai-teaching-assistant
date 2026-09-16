@@ -8,6 +8,138 @@ window.Study = (() => {
   const message = (text, bad = false) => hooks.toast(text, bad);
   const notice = text => `<p class="study-notice">${text}</p>`;
   const button = (action, text, secondary = false) => `<button type="button" class="${secondary ? "line-button" : "solid-button"}" data-study-action="${action}">${text}</button>`;
+  const sections = [
+    { id: "basic", label: "基础知识", code: "BASIC KNOWLEDGE" },
+    { id: "rash", label: "皮疹辨别", code: "RASH IDENTIFICATION" },
+    { id: "case", label: "模拟案例", code: "CLINICAL CASES" },
+  ];
+  const sectionFor = q => sections.some(s => s.id === q.section) ? q.section : q.case_id ? "case" : "basic";
+  const pointsOf = questions => questions.reduce((sum, q) => sum + (Number(q.points) || 0), 0);
+  const paperTotal = value => value.total ?? pointsOf(value.questions);
+  const resultTotal = result => result.total ?? Object.values(result.sections || result.breakdown || {}).reduce((sum, data) => sum + (Number(data.total) || 0), 0);
+  const answered = q => q.options.some(option => option.id === answers[q.id]);
+  function sectionStats(questions) {
+    const points = [...new Set(questions.map(q => Number(q.points)))];
+    return `${questions.length}小题 · ${pointsOf(questions)}分${points.length === 1 ? ` · 每小题${points[0]}分` : ""}`;
+  }
+  function paperSummary(value) {
+    return sections.map(s => {
+      const questions = value.questions.filter(q => sectionFor(q) === s.id);
+      return questions.length ? `${s.label}${questions.length}小题` : "";
+    }).filter(Boolean).join(" · ") + `；共${value.questions.length}小题，${paperTotal(value)}分`;
+  }
+  function scoreTable(results, field = "sections") {
+    const keys = [...new Set(results.flatMap(r => Object.keys(r[field] || {})))];
+    if (field === "sections") keys.sort((a, b) => sections.findIndex(s => s.id === a) - sections.findIndex(s => s.id === b));
+    if (!keys.length) return "";
+    const title = field === "sections" ? "模块得分" : "知识维度得分";
+    return `<div class="study-table-wrap study-score-table"><table><caption>${title}</caption><thead><tr><th scope="col">${field === "sections" ? "测验模块" : "知识维度"}</th>${results.map(r => `<th scope="col">${phaseName(r.phase)}</th>`).join("")}</tr></thead><tbody>${keys.map(key => {
+      const label = field === "sections" ? results.map(r => r[field]?.[key]?.label).find(Boolean) || sections.find(s => s.id === key)?.label || key : key;
+      return `<tr><th scope="row">${esc(label)}</th>${results.map(r => {
+        const data = r[field]?.[key];
+        return `<td>${data ? `${esc(data.score)} / ${esc(data.total)}` : "—"}</td>`;
+      }).join("")}</tr>`;
+    }).join("")}</tbody></table></div>`;
+  }
+  function safeUrl(value) {
+    if (!value) return "";
+    try {
+      const url = new URL(value, location.href);
+      return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+    } catch { return ""; }
+  }
+  function imageSourceMarkup(source) {
+    if (!source) return "";
+    const metadata = [source.provider, source.source_label, source.license].filter(Boolean).map(esc).join(" · ");
+    const links = (Array.isArray(source.links) ? source.links : []).map(link => {
+      const url = safeUrl(link.url);
+      return url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(link.label || "查看来源")}</a>` : "";
+    }).filter(Boolean).join(" · ");
+    return `<details class="exam-image-source"><summary>图片出处与许可</summary>${metadata ? `<p>${metadata}</p>` : ""}${source.caption ? `<p>${esc(source.caption)}</p>` : ""}${links ? `<p>${links}</p>` : ""}</details>`;
+  }
+  function previewImagePassword(url) {
+    if (!url) return "";
+    const parsed = new URL(url);
+    return parsed.origin === location.origin && /^\/api\/admin\/study\/papers\/[AB]\/image\/[^/]+$/.test(parsed.pathname) ? sessionStorage.getItem("adminPassword") || "" : "";
+  }
+  function imageMarkup(q, enlarged = false) {
+    if (!q.image_url) return "";
+    const url = safeUrl(q.image_url);
+    const image = `<img data-exam-image-url="${esc(url)}" ${url && !previewImagePassword(url) ? `src="${esc(url)}"` : ""} alt="${esc(q.image_alt || "皮损观察图片")}" loading="eager" decoding="async">`;
+    return `<figure class="exam-image" data-exam-image="loading">${enlarged ? `<div class="exam-image-large">${image}</div>` : `<button type="button" class="exam-image-button" data-exam-image-action="zoom" aria-label="放大查看皮损图片" disabled>${image}</button>`}<figcaption><span data-exam-image-status role="status">图片加载中…</span><button type="button" class="line-button" data-exam-image-action="retry" hidden>重新加载图片</button></figcaption></figure>`;
+  }
+  function bindImages(container) {
+    container.querySelectorAll("[data-exam-image]").forEach(figure => {
+      const img = figure.querySelector("img");
+      if (img.dataset.examImageBound) return;
+      img.dataset.examImageBound = "true";
+      let blobUrl;
+      const update = loaded => {
+        if (blobUrl) { URL.revokeObjectURL(blobUrl); blobUrl = null; }
+        if (!img.isConnected) return;
+        figure.dataset.examImage = loaded ? "loaded" : "error";
+        if (loaded) figure.closest(".exam-question")?.classList.remove("is-image-missing");
+        figure.querySelector("[data-exam-image-status]").textContent = loaded ? (figure.closest("dialog") ? "可滚动查看图片细节" : "点击图片可放大观察") : "图片加载失败，请重试。";
+        figure.querySelector('[data-exam-image-action="retry"]').hidden = loaded;
+        const zoom = figure.querySelector('[data-exam-image-action="zoom"]');
+        if (zoom) zoom.disabled = !loaded;
+      };
+      img.onload = () => update(img.naturalWidth > 0);
+      img.onerror = () => update(false);
+      const url = safeUrl(img.dataset.examImageUrl);
+      if (!url) { update(false); return; }
+      const password = previewImagePassword(url);
+      if (password) {
+        // Image elements cannot send the legacy faculty password header themselves.
+        void fetch(url, { credentials: "same-origin", cache: "no-store", headers: { "X-Admin-Password": password } })
+          .then(response => {
+            if (!response.ok) throw new Error("图片加载失败");
+            return response.blob();
+          }).then(blob => {
+            if (!img.isConnected) return;
+            blobUrl = URL.createObjectURL(blob);
+            img.src = blobUrl;
+          }).catch(() => update(false));
+        return;
+      }
+      // Eager loading and a retained success state also cover images outside the viewport.
+      if (img.complete) update(img.naturalWidth > 0);
+    });
+  }
+  function initImages() {
+    const dialog = find("#examImageDialog");
+    document.addEventListener("click", event => {
+      const target = event.target.closest("[data-exam-image-action]");
+      if (!target || target.disabled) return;
+      const action = target.dataset.examImageAction;
+      if (action === "close") { dialog.close(); return; }
+      const figure = target.closest("[data-exam-image]");
+      const img = figure.querySelector("img");
+      if (action === "zoom") {
+        if (figure.dataset.examImage !== "loaded") return;
+        find("#examImageContent").innerHTML = imageMarkup({ image_url: img.dataset.examImageUrl, image_alt: img.alt }, true);
+        dialog.showModal();
+        bindImages(dialog);
+      } else if (action === "retry") {
+        const url = safeUrl(img.dataset.examImageUrl);
+        if (!url) { message("图片地址暂不可用，请重新载入试卷。", true); return; }
+        const retryUrl = new URL(url);
+        retryUrl.searchParams.set("_retry", String(Date.now()));
+        const next = img.cloneNode();
+        delete next.dataset.examImageBound;
+        next.dataset.examImageUrl = retryUrl.href;
+        if (previewImagePassword(retryUrl.href)) next.removeAttribute("src");
+        else next.src = retryUrl.href;
+        figure.dataset.examImage = "loading";
+        figure.querySelector("[data-exam-image-status]").textContent = "图片重新加载中…";
+        target.hidden = true;
+        img.replaceWith(next);
+        bindImages(figure.parentElement);
+      }
+    });
+    dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
+    dialog.addEventListener("close", () => { find("#examImageContent").replaceChildren(); });
+  }
 
   async function request(path, method = "GET", body) {
     const response = await fetch(path, { method, cache: "no-store", credentials: "same-origin", headers: body ? { "Content-Type": "application/json" } : {}, ...(body ? { body: JSON.stringify(body) } : {}) });
@@ -64,6 +196,7 @@ window.Study = (() => {
   }
   async function init(config) {
     hooks = config;
+    initImages();
     find("#studentLoginForm").addEventListener("submit", async event => {
       event.preventDefault();
       const submit = find("#studentLoginForm button");
@@ -145,16 +278,16 @@ window.Study = (() => {
   }
   function dashboard() {
     const intro = `<div class="study-heading"><span class="section-code">04 / KNOWLEDGE ASSESSMENT</span><h1>记录起点，检验进步。</h1><p>两次测验围绕相同知识点，使用不同设问与临床情景。</p></div>`;
-    const stats = `<div class="exam-specs"><div><strong>20</strong><span>单选题 · 每题3分</span></div><div><strong>02</strong><span>案例题 · 每题20分</span></div><div><strong>100</strong><span>总分 · 不设解锁分数线</span></div></div>`;
+    const stats = `<div class="exam-specs"><div><strong>60<small>分</small></strong><span>一、基础知识 · 20小题 × 3分</span></div><div><strong>16<small>分</small></strong><span>二、皮疹辨别 · 8小题 × 2分<br>前4题文字，后4题图片</span></div><div><strong>24<small>分</small></strong><span>三、模拟案例 · 8小题 × 3分<br>2个案例，各4小题</span></div></div>`;
     let content;
-    if (!session.pre_completed) content = `<span class="study-pill">首次使用 · 必须完成</span><h2>先独立完成前测</h2><p>请按当前掌握程度作答，不查阅资料或使用AI。20道单选题按基础、应用、综合递进；每道案例含4个单选小题。</p><p>答案会自动保存，可以中断后继续；完成全部题目并提交即可进入学习，不要求达到及格分数。</p>${notice("提交后立即显示成绩与逐题解析，可从解析一键进入知识问答继续提问。提交后不能重做，请核对学号和姓名。")}${button("pre", "开始前测 →")}`;
+    if (!session.pre_completed) content = `<span class="study-pill">首次使用 · 必须完成</span><h2>先独立完成前测</h2><p>测验分为基础知识、皮疹辨别和模拟案例三节，共36个单选小题，总分100分。请按当前掌握程度作答，不查阅资料或使用AI。</p><p>答案会自动保存，可以中断后继续；完成全部题目并提交即可进入学习，不要求达到及格分数。图片可点击放大，请确认图片加载成功后提交。</p>${notice("提交后立即显示成绩、各模块得分与逐题解析，可从解析一键进入知识问答继续提问。提交后不能重做，请核对学号和姓名。")}${button("pre", "开始前测 →")}`;
     else if (!session.post_completed) {
       const pre = session.results.find(r => r.phase === "pre");
-      content = `<span class="study-pill">前测已完成</span><h2>你的前测成绩</h2><div class="pre-score score-specs"><strong>${pre.score}<small> / 100</small></strong><p>下方已展开逐题解析。每题都可以进入知识问答继续提问。</p></div><div class="study-table-wrap"><table><thead><tr><th>知识维度</th><th>得分</th></tr></thead><tbody>${Object.entries(pre.breakdown).map(([domain, data]) => `<tr><td>${esc(domain)}</td><td>${data.score} / ${data.total}</td></tr>`).join("")}</tbody></table></div><p>${session.post_open ? "教师已开放后测，请完成学习后独立作答。" : "知识问答、皮疹图谱和情景演练均已开放。后测由教师统一开放。"}</p><div class="study-actions">${button("learn", "进入知识问答")}${button("review", "查看逐题解析", true)}${session.post_open ? button("post-confirm", "准备开始后测", true) : button("refresh", "刷新开放状态", true)}</div><div id="postConfirmation" class="study-confirmation" hidden><strong>确认已完成教师安排的学习？</strong><p>开始后测后，本站学习模块与前测解析将暂时锁定，提交全部答案后恢复。后测只能提交一次。</p>${button("post", "确认开始后测")}</div>${notice("成绩和作答已保存，以后使用同一姓名与学号登录可继续复习。")}`;
+      content = `<span class="study-pill">前测已完成</span><h2>你的前测成绩</h2><div class="pre-score score-specs"><strong>${pre.score}<small> / ${resultTotal(pre)}</small></strong><p>下方已展开逐题解析。每题都可以进入知识问答继续提问。</p></div>${scoreTable([pre])}${scoreTable([pre], "breakdown")}<p>${session.post_open ? "教师已开放后测，请完成学习后独立作答。" : "知识问答、皮疹图谱和情景演练均已开放。后测由教师统一开放。"}</p><div class="study-actions">${button("learn", "进入知识问答")}${button("review", "查看逐题解析", true)}${session.post_open ? button("post-confirm", "准备开始后测", true) : button("refresh", "刷新开放状态", true)}</div><div id="postConfirmation" class="study-confirmation" hidden><strong>确认已完成教师安排的学习？</strong><p>开始后测后，本站学习模块与前测解析将暂时锁定，提交全部答案后恢复。后测只能提交一次。</p>${button("post", "确认开始后测")}</div>${notice("成绩和作答已保存，以后使用同一姓名与学号登录可继续复习。")}`;
     }
     else {
       const pre = session.results.find(r => r.phase === "pre"), post = session.results.find(r => r.phase === "post");
-      content = `<span class="study-pill">两次测验已完成</span><h2>你的学习记录</h2><div class="exam-specs score-specs"><div><strong>${pre.score}</strong><span>前测 / 100</span></div><div><strong>${post.score}</strong><span>后测 / 100</span></div><div><strong>${post.score - pre.score > 0 ? "+" : ""}${post.score - pre.score}</strong><span>分数变化</span></div></div><div class="study-table-wrap"><table><thead><tr><th>知识维度</th><th>前测</th><th>后测</th></tr></thead><tbody>${Object.entries(pre.breakdown).map(([domain, data]) => `<tr><td>${esc(domain)}</td><td>${data.score} / ${data.total}</td><td>${post.breakdown[domain]?.score ?? "—"} / ${post.breakdown[domain]?.total ?? "—"}</td></tr>`).join("")}</tbody></table></div><div class="study-actions">${button("review", "查看答案与解析", true)}${button("learn", "继续学习 →")}</div>${notice("分数变化用于帮助回顾学习，不能单凭个人前后测成绩判定AI工具的因果效果。")}`;
+      content = `<span class="study-pill">两次测验已完成</span><h2>你的学习记录</h2><div class="exam-specs score-specs"><div><strong>${pre.score}</strong><span>前测 / ${resultTotal(pre)}</span></div><div><strong>${post.score}</strong><span>后测 / ${resultTotal(post)}</span></div><div><strong>${post.score - pre.score > 0 ? "+" : ""}${post.score - pre.score}</strong><span>分数变化</span></div></div>${scoreTable([pre, post])}${scoreTable([pre, post], "breakdown")}<div class="study-actions">${button("review", "查看答案与解析", true)}${button("learn", "继续学习 →")}</div>${notice("分数变化用于帮助回顾学习，不能单凭个人前后测成绩判定AI工具的因果效果。")}`;
     }
     root().innerHTML = `${intro}${session.pre_completed ? "" : stats}<section class="study-card">${content}</section><div id="assessmentReview"></div>`;
   }
@@ -163,22 +296,40 @@ window.Study = (() => {
     const correct = q.options.find(o => o.id === q.correct)?.text || "";
     const chosen = q.options.find(o => o.id === selected)?.text || "未作答";
     const scope = reviewMode ? `review-${value.id || value.form}-` : "";
-    const background = value.cases.find(c => c.id === q.case_id)?.background || "";
+    const background = (value.cases || []).find(c => c.id === q.case_id)?.background || "";
     const prompt = `我正在复习${q.disease || "传染病"}的“${q.point}”。${background ? `案例：${background}\n` : ""}题目：${q.stem}\n我的答案：${chosen}。参考答案：${correct}。请结合临床证据解释判断过程，并说明与其他选项（${q.options.filter(o => o.id !== q.correct).map(o => o.text).join("；")}）的区别。`;
-    return `<fieldset class="exam-question" id="exam-${scope}${q.id}" tabindex="-1"><legend><span class="question-number">${index}.</span>${esc(q.stem)} <small>单选</small></legend><div class="exam-options">${q.options.map((o, n) => `<label class="exam-option"><input type="radio" name="${scope}${q.id}" data-question="${q.id}" value="${o.id}" ${selected === o.id ? "checked" : ""} ${reviewMode ? "disabled" : ""}><span><b>${String.fromCharCode(65 + n)}</b>${esc(o.text)}</span></label>`).join("")}</div>${reviewMode ? `<div class="exam-explanation"><strong>${selected ? selected === q.correct ? "回答正确" : "需复习" : "参考解析"} · 正确答案：${esc(correct)}</strong>${selected ? `<p>你的答案：${esc(chosen)}</p>` : ""}<p>${esc(q.explanation)}</p><small>知识点：${esc(q.point)} · ${q.sources.map(s => esc(s.document)).filter((v, i, a) => a.indexOf(v) === i).join("；")}</small>${!isTeacher() ? `<div class="study-actions"><button type="button" class="line-button" data-knowledge-question="${esc(prompt)}">去知识问答提问</button></div>` : ""}</div>` : ""}</fieldset>`;
+    return `<fieldset class="exam-question" id="exam-${esc(scope + q.id)}" tabindex="-1"><legend><span class="question-number">${index}.</span>${esc(q.stem)} <small>${q.image_url ? "看图单选" : "单选"}</small></legend>${imageMarkup(q)}<div class="exam-options">${q.options.map((o, n) => `<label class="exam-option"><input type="radio" name="${esc(scope + q.id)}" data-question="${esc(q.id)}" value="${esc(o.id)}" ${selected === o.id ? "checked" : ""} ${reviewMode ? "disabled" : ""}><span><b>${String.fromCharCode(65 + n)}</b>${esc(o.text)}</span></label>`).join("")}</div>${reviewMode ? `<div class="exam-explanation"><strong>${selected ? selected === q.correct ? "回答正确" : "需复习" : "参考解析"} · 正确答案：${esc(correct)}</strong>${selected ? `<p>你的答案：${esc(chosen)}</p>` : ""}<p>${esc(q.explanation)}</p><small>知识点：${esc(q.point)} · ${(q.sources || []).map(s => esc(s.document)).filter((v, i, a) => a.indexOf(v) === i).join("；")}</small>${imageSourceMarkup(q.image_source)}${!isTeacher() ? `<div class="study-actions"><button type="button" class="line-button" data-knowledge-question="${esc(prompt)}">去知识问答提问</button></div>` : ""}</div>` : ""}</fieldset>`;
   }
   function paperMarkup(value, reviewMode = false) {
-    return `<section class="study-card"><div class="exam-section-title"><span class="section-code">PART 01 / SINGLE CHOICE</span><h2>一、单选题</h2><span>20题 · 60分</span></div>${value.questions.filter(q => !q.case_id).map((q, i) => questionMarkup(q, i + 1, reviewMode, value)).join("")}</section><div class="exam-section-title"><span class="section-code">PART 02 / CLINICAL CASES</span><h2>二、案例题</h2><span>2题 · 40分，每个小题只有一个最佳答案</span></div>${value.cases.map((c, i) => `<section class="study-card"><div class="exam-case-stem"><span class="section-code">CLINICAL CASE ${i + 1}</span><h3>${esc(c.title)}</h3><p>${esc(c.background)}</p></div>${value.questions.filter(q => q.case_id === c.id).map((q, j) => questionMarkup(q, j + 1, reviewMode, value)).join("")}</section>`).join("")}`;
+    return sections.map(section => ({ ...section, questions: value.questions.filter(q => sectionFor(q) === section.id) }))
+      .filter(section => section.questions.length).map((section, index) => {
+        const title = `<div class="exam-section-title"><span class="section-code">PART ${String(index + 1).padStart(2, "0")} / ${section.code}</span><h2>${["一", "二", "三"][index]}、${section.label}</h2><span>${sectionStats(section.questions)}</span></div>`;
+        if (section.id === "case") {
+          const groups = [...new Set(section.questions.map(q => q.case_id))];
+          return `<section class="exam-section" data-exam-section="case">${title}${groups.map((id, i) => {
+            const c = (value.cases || []).find(item => item.id === id);
+            const questions = section.questions.filter(q => q.case_id === id);
+            return `<section class="study-card"><div class="exam-case-stem"><span class="section-code">CLINICAL CASE ${i + 1} / ${sectionStats(questions)}</span><h3>${esc(c?.title || `案例 ${i + 1}`)}</h3>${c?.background ? `<p>${esc(c.background)}</p>` : ""}</div>${questions.map((q, j) => questionMarkup(q, j + 1, reviewMode, value)).join("")}</section>`;
+          }).join("")}</section>`;
+        }
+        // Keep the server's order within each question type; text precedes images in the rash section.
+        const questions = section.id === "rash" ? [...section.questions.filter(q => !q.image_url), ...section.questions.filter(q => q.image_url)] : section.questions;
+        return `<section class="study-card" data-exam-section="${section.id}">${title}${questions.map((q, i) => {
+          const subheading = section.id === "rash" && (i === 0 || !!q.image_url !== !!questions[i - 1].image_url) ? `<h3 class="exam-question-group">${q.image_url ? "图片辨别" : "文字辨别"} · ${questions.filter(item => !!item.image_url === !!q.image_url).length}小题</h3>` : "";
+          return subheading + questionMarkup(q, i + 1, reviewMode, value);
+        }).join("")}</section>`;
+      }).join("");
   }
   function renderPaper() {
     answers = { ...paper.answers }; saved = JSON.stringify(answers);
-    root().innerHTML = `<div class="study-heading"><span class="section-code">KNOWLEDGE ASSESSMENT / ${paper.phase.toUpperCase()}</span><h1>${phaseName(paper.phase)}</h1><p>请独立作答。每题只有一个最佳答案，提交后不可更改。</p></div><div class="exam-progress"><label for="examProgress" id="examCount"></label><progress id="examProgress" max="28" value="0"></progress><span id="examSaveStatus" role="status"></span><button class="text-button" type="button" data-study-action="retry-save">保存进度</button></div><form id="assessmentForm" onsubmit="return false">${paperMarkup(paper)}<div class="study-card exam-submit"><div><strong>已检查全部答案？</strong><p>完成20道单选题和2道案例题的全部小题后提交。</p></div>${button("submit", `提交${phaseName(paper.phase)}`)}</div></form>`;
+    root().innerHTML = `<div class="study-heading"><span class="section-code">KNOWLEDGE ASSESSMENT / ${paper.phase.toUpperCase()}</span><h1>${phaseName(paper.phase)}</h1><p>${paperSummary(paper)}。<br>请独立作答。每题只有一个最佳答案，提交后不可更改。</p></div><div class="exam-progress"><label for="examProgress" id="examCount"></label><progress id="examProgress" max="${paper.questions.length}" value="0"></progress><span id="examSaveStatus" role="status"></span><button class="text-button" type="button" data-study-action="retry-save">保存进度</button></div><form id="assessmentForm" onsubmit="return false">${paperMarkup(paper)}<div class="study-card exam-submit"><div><strong>已检查全部答案？</strong><p>完成全部${paper.questions.length}个小题${paper.questions.some(q => q.image_url) ? "，确认题目图片均已成功加载" : ""}后提交。</p></div>${button("submit", `提交${phaseName(paper.phase)}`)}</div></form>`;
+    bindImages(root());
     progress("进度已保存");
   }
   function progress(text, error = false) {
-    const count = Object.keys(answers).length;
-    if (find("#examCount")) find("#examCount").textContent = `已答 ${count} / 28 小题`;
-    if (find("#examProgress")) find("#examProgress").value = count;
+    const count = paper?.questions.filter(answered).length || 0;
+    if (find("#examCount")) find("#examCount").textContent = `已答 ${count} / ${paper.questions.length} 小题`;
+    if (find("#examProgress")) { find("#examProgress").max = paper.questions.length; find("#examProgress").value = count; }
     if (find("#examSaveStatus")) { find("#examSaveStatus").textContent = text; find("#examSaveStatus").classList.toggle("study-error", error); }
   }
   function flush() {
@@ -194,12 +345,19 @@ window.Study = (() => {
     return saving;
   }
   async function submit() {
-    const missing = paper.questions.filter(q => !answers[q.id]);
-    document.querySelectorAll(".exam-question").forEach(el => el.classList.remove("is-missing"));
+    const missing = paper.questions.filter(q => !answered(q));
+    const questionElement = q => document.getElementById(`exam-${q.id}`);
+    root().querySelectorAll(".exam-question").forEach(el => el.classList.remove("is-missing", "is-image-missing"));
     if (missing.length) {
-      missing.forEach(q => find(`#exam-${q.id}`).classList.add("is-missing"));
-      find(`#exam-${missing[0].id}`).focus();
+      missing.forEach(q => questionElement(q).classList.add("is-missing"));
+      questionElement(missing[0]).focus();
       message(`还有${missing.length}个小题未作答，请补全后提交。`, true); return;
+    }
+    const unloaded = paper.questions.filter(q => q.image_url && questionElement(q)?.querySelector("[data-exam-image]")?.dataset.examImage !== "loaded");
+    if (unloaded.length) {
+      unloaded.forEach(q => questionElement(q)?.classList.add("is-image-missing"));
+      questionElement(unloaded[0])?.focus();
+      message(`还有${unloaded.length}张题目图片未成功加载，请等待加载完成；如加载失败，请点击“重新加载图片”后再提交。`, true); return;
     }
     if (!confirm(`确定提交${phaseName(paper.phase)}？提交后不能修改或重新作答。`)) return;
     busy = true;
@@ -211,7 +369,11 @@ window.Study = (() => {
       await review();
       window.scrollTo({ top: 0, behavior: "smooth" });
       message(data.post_completed ? "后测已提交，可查看两次成绩。" : "前测已提交，成绩和逐题解析已显示。");
-    } finally { busy = false; find("#assessmentForm")?.querySelectorAll("input,button").forEach(el => el.disabled = false); }
+    } finally {
+      busy = false;
+      const form = find("#assessmentForm");
+      if (form) { form.querySelectorAll("input,button").forEach(el => el.disabled = false); bindImages(form); }
+    }
   }
   async function review() {
     const container = find("#assessmentReview");
@@ -219,7 +381,8 @@ window.Study = (() => {
     try {
       const data = await request("/api/assessment-results");
       if (!data.ready || !container.isConnected) return;
-      container.innerHTML = data.attempts.map(p => `<details class="study-review" open><summary>${phaseName(p.phase)} · ${p.result.score} / 100 · 答案与解析</summary>${paperMarkup(p, true)}</details>`).join("");
+      container.innerHTML = data.attempts.map(p => `<details class="study-review" open><summary>${phaseName(p.phase)} · ${p.result.score} / ${p.result.total ?? paperTotal(p)} · ${p.questions.length}小题 · 答案与解析</summary>${p.result.sections ? `<section class="study-card">${scoreTable([{ ...p.result, phase: p.phase }])}</section>` : ""}${paperMarkup(p, true)}</details>`).join("");
+      bindImages(container);
     } catch (error) {
       if (container.isConnected) container.innerHTML = `<section class="study-card"><p>成绩已保存。解析加载失败：${esc(error.message)}</p>${button("review", "重新加载解析", true)}</section>`;
     }
@@ -244,7 +407,8 @@ window.Study = (() => {
     find("#previewPapers").onclick = async () => {
       try {
         const result = await hooks.adminApi("/api/admin/study/papers");
-        find("#facultyPapers").innerHTML = `<section class="study-card"><h2>教师专用 · 平行试卷</h2><p>同一批次随机抽取8道基础、8道应用、4道综合单选题，A/B卷使用相同知识点。每名学生随机采用A→B或B→A顺序；试卷内容固定，选项顺序随机。</p>${notice("请在正式教学评价前审阅题目。下方包含答案，不要向正在测验的学生展示。")}</section>` + result.forms.map(p => { answers = {}; return `<details class="study-review"><summary>${p.form}卷 · 20道单选 + 2道案例</summary>${paperMarkup(p, true)}</details>`; }).join("");
+        find("#facultyPapers").innerHTML = `<section class="study-card"><h2>教师专用 · 平行试卷</h2><p>A/B卷使用相同知识点，按知识点、分值和预设难度匹配。每名学生随机采用A→B或B→A顺序；试卷内容固定，选项顺序随机。各节题量与分值见下方试卷，皮疹图片可放大查看。</p>${notice("请在正式教学评价前审阅题目。下方包含答案和图片出处，不要向正在测验的学生展示。")}</section>` + result.forms.map(p => `<details class="study-review"><summary>${esc(p.form)}卷 · ${paperSummary(p)}</summary>${paperMarkup(p, true)}</details>`).join("");
+        bindImages(find("#facultyPapers"));
       } catch (error) { message(error.message, true); }
     };
   }

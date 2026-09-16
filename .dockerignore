@@ -5,6 +5,8 @@ __pycache__
 *.log
 .DS_Store
 exports
+output
+tmp
 var
 *.sqlite3*
 knowledge_base

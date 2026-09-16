@@ -17,7 +17,6 @@ from pydantic import BaseModel, Field
 from src.rag import RetrievalCandidate, build_context, get_rag
 from src.case_training import public_case, public_case_id, validate_decision
 from src.study import router as study_router, require_learning, faculty as require_admin
-from src.rash_quiz import router as rash_quiz_router
 
 
 if TYPE_CHECKING:
@@ -99,7 +98,6 @@ app = FastAPI(
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
 app.include_router(study_router)
-app.include_router(rash_quiz_router)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
 
