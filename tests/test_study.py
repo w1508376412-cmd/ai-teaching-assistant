@@ -297,6 +297,47 @@ class StudyTests(unittest.TestCase):
         self.assertIn("配对知识点ID", items.text)
         self.assertIn("2026001", items.text)
 
+    def test_active_learning_automatically_opens_posttest_and_manual_release_remains(self):
+        self.finish_pre()
+        initial = self.client.get("/api/session").json()
+        self.assertFalse(initial["post_open"])
+        self.assertEqual(initial["auto_post_seconds"], 1800)
+        self.assertEqual(initial["auto_post_remaining"], 1800)
+
+        # A first heartbeat establishes the active-use clock without crediting
+        # time before the learning page was actually in the foreground.
+        baseline = self.client.post("/api/study/heartbeat", json={"module": "knowledge", "seconds": 15})
+        self.assertEqual(baseline.status_code, 200, baseline.text)
+        self.assertEqual(baseline.json()["learning_seconds"], 0)
+        with self.store.db(write=True) as c:
+            user_id = c.execute("SELECT id FROM students WHERE student_no='2026001'").fetchone()[0]
+            c.execute("UPDATE learning_time SET seconds=?,last_seen=? WHERE student=?",
+                      (1789, time.time() - 20, user_id))
+
+        opened = self.client.post("/api/study/heartbeat", json={"module": "cases", "seconds": 15})
+        self.assertEqual(opened.status_code, 200, opened.text)
+        self.assertTrue(opened.json()["post_open"])
+        self.assertEqual(opened.json()["post_open_reason"], "time")
+        self.assertGreaterEqual(opened.json()["learning_seconds"], 1800)
+
+        # The teacher's global control remains available. Turning it off does
+        # not revoke a student's independently earned 30-minute access.
+        self.client.put("/api/admin/study/release", headers=self.admin, json={"open": True})
+        self.assertEqual(self.client.get("/api/session").json()["post_open_reason"], "teacher")
+        self.client.put("/api/admin/study/release", headers=self.admin, json={"open": False})
+        self.assertEqual(self.client.get("/api/session").json()["post_open_reason"], "time")
+        self.assertEqual(self.client.post("/api/assessments/start", json={"phase": "post"}).status_code, 200)
+
+        exported = self.export_rows()
+        self.assertIn("有效学习秒数", exported[0])
+        self.assertEqual(exported[0]["后测开放方式"], "学习满30分钟")
+
+    def test_learning_heartbeat_requires_completed_pretest_and_caps_payload(self):
+        self.login()
+        self.assertEqual(self.client.post("/api/study/heartbeat", json={"module": "knowledge", "seconds": 1}).status_code, 403)
+        self.finish_pre()
+        self.assertEqual(self.client.post("/api/study/heartbeat", json={"module": "knowledge", "seconds": 21}).status_code, 422)
+
     def test_identity_cookie_origin_and_teacher_authorization(self):
         response = self.client.post("/api/session/login", json={"student_no": "2026003", "name": "测试学生"})
         self.assertIn("HttpOnly", response.headers["set-cookie"])

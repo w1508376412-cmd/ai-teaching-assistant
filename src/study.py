@@ -25,6 +25,9 @@ from src.rash_assessment_bank import bank as rash_bank, IMAGE_DIR
 
 COOKIE = "teaching_student"
 SESSION_SECONDS = 30 * 86400
+AUTO_POST_SECONDS = int(os.getenv("STUDY_AUTO_POST_SECONDS", str(30 * 60)))
+HEARTBEAT_MAX_SECONDS = 20.0
+HEARTBEAT_CLOCK_SLOP = 2.0
 ROOT = Path(__file__).resolve().parents[1]
 router = APIRouter()
 SECTION_LABELS = {"basic": "基础知识", "rash": "皮疹辨别", "case": "模拟案例"}
@@ -83,6 +86,9 @@ class Store:
               student TEXT NOT NULL REFERENCES students(id), module TEXT NOT NULL,
               count INTEGER NOT NULL DEFAULT 1, first REAL NOT NULL, last REAL NOT NULL,
               PRIMARY KEY(student, module));
+            CREATE TABLE IF NOT EXISTS learning_time (
+              student TEXT PRIMARY KEY REFERENCES students(id),
+              seconds REAL NOT NULL DEFAULT 0, last_seen REAL NOT NULL);
             CREATE TABLE IF NOT EXISTS login_limits (key TEXT NOT NULL, created REAL NOT NULL);
             CREATE INDEX IF NOT EXISTS login_time ON login_limits(created);
             """)
@@ -238,6 +244,17 @@ class Store:
         with self.db() as c:
             return [dict(r) for r in c.execute("SELECT * FROM attempts WHERE student=? ORDER BY started", (user_id,))]
 
+    @staticmethod
+    def learning_seconds(user_id, c):
+        row = c.execute("SELECT seconds FROM learning_time WHERE student=?", (user_id,)).fetchone()
+        return float(row["seconds"]) if row else 0.0
+
+    def post_access(self, user_id, c):
+        manual = c.execute("SELECT value FROM settings WHERE key='post_open'").fetchone()[0] == "true"
+        seconds = self.learning_seconds(user_id, c)
+        automatic = seconds >= AUTO_POST_SECONDS
+        return manual or automatic, "teacher" if manual else "time" if automatic else None, seconds
+
     def status(self, user):
         if is_teacher(user):
             return {"authenticated": True, "role": "teacher", "student": {"student_no": user["student_no"], "name": user["name"]},
@@ -247,9 +264,13 @@ class Store:
         post = next((r for r in attempts if r["phase"] == "post"), None)
         completed = bool(pre and pre["submitted"])
         finished = bool(post and post["submitted"])
+        with self.db() as c:
+            post_open, post_open_reason, learning_seconds = self.post_access(user["id"], c)
         return {"authenticated": True, "role": "student", "student": {"student_no": user["student_no"], "name": user["name"]},
                 "pre_completed": completed, "post_completed": finished,
-                "post_open": self.settings()["post_open"] == "true",
+                "post_open": post_open, "post_open_reason": post_open_reason,
+                "learning_seconds": round(learning_seconds), "auto_post_seconds": AUTO_POST_SECONDS,
+                "auto_post_remaining": max(0, round(AUTO_POST_SECONDS - learning_seconds)),
                 "active": next(({"id": r["id"], "phase": r["phase"]} for r in attempts if not r["submitted"]), None),
                 "results": [{"phase": r["phase"], "form": r["form"], "started": r["started"], "submitted": r["submitted"],
                              "score": json.loads(r["result"])["score"], "breakdown": json.loads(r["result"])["breakdown"],
@@ -268,8 +289,8 @@ class Store:
                 pre = c.execute("SELECT submitted, version FROM attempts WHERE student=? AND phase='pre'", (user["id"],)).fetchone()
                 if not pre or not pre["submitted"]:
                     raise HTTPException(403, "请先完成前测。")
-                if c.execute("SELECT value FROM settings WHERE key='post_open'").fetchone()[0] != "true":
-                    raise HTTPException(403, "后测尚未开放，请等待教师通知。")
+                if not self.post_access(user["id"], c)[0]:
+                    raise HTTPException(403, "后测尚未开放；累计有效学习30分钟后将自动开放，教师也可提前统一开放。")
                 paper_version = pre["version"]
             form = user["first_form"] if phase == "pre" else ("B" if user["first_form"] == "A" else "A")
             paper = self.make_paper(form, paper_version)
@@ -321,10 +342,27 @@ class Store:
             return dict(c.execute("SELECT * FROM attempts WHERE id=?", (ident,)).fetchone())
 
     def activity(self, user_id, module):
-        with self.db() as c:
+        with self.db(write=True) as c:
             now = time.time()
             c.execute("INSERT INTO activity VALUES (?, ?, 1, ?, ?) ON CONFLICT(student,module) DO UPDATE SET count=count+1,last=excluded.last",
                       (user_id, module, now, now))
+
+    def heartbeat(self, user_id, seconds):
+        """Credit foreground learning time while preventing gaps or extra tabs from double counting."""
+        now = time.time()
+        with self.db(write=True) as c:
+            pre = c.execute("SELECT submitted FROM attempts WHERE student=? AND phase='pre'", (user_id,)).fetchone()
+            post = c.execute("SELECT submitted FROM attempts WHERE student=? AND phase='post'", (user_id,)).fetchone()
+            if not pre or not pre["submitted"] or post:
+                return
+            row = c.execute("SELECT seconds,last_seen FROM learning_time WHERE student=?", (user_id,)).fetchone()
+            if not row:
+                c.execute("INSERT INTO learning_time VALUES (?, 0, ?)", (user_id, now))
+                return
+            elapsed = max(0.0, now - row["last_seen"])
+            credit = min(float(seconds), HEARTBEAT_MAX_SECONDS, elapsed + HEARTBEAT_CLOCK_SLOP)
+            c.execute("UPDATE learning_time SET seconds=seconds+?,last_seen=? WHERE student=?",
+                      (max(0.0, credit), now, user_id))
 
 
 @lru_cache(maxsize=1)
@@ -503,6 +541,18 @@ def visit(body: Visit, user=Depends(require_learning)):
     return {"ok": True}
 
 
+class Heartbeat(BaseModel):
+    module: Literal["knowledge", "atlas", "cases"]
+    seconds: float = Field(ge=0, le=HEARTBEAT_MAX_SECONDS)
+
+
+@router.post("/api/study/heartbeat", dependencies=[Depends(same_origin)])
+def heartbeat(body: Heartbeat, user=Depends(require_learning)):
+    if not is_teacher(user):
+        get_store().heartbeat(user["id"], body.seconds)
+    return get_store().status(user)
+
+
 class Release(BaseModel):
     open: bool
 
@@ -521,6 +571,8 @@ def faculty_rows():
         users = [dict(r) for r in c.execute("SELECT * FROM students ORDER BY created DESC") if not is_teacher(r)]
         attempts = [dict(r) for r in c.execute("SELECT * FROM attempts")]
         activities = [dict(r) for r in c.execute("SELECT * FROM activity")]
+        learning = {r["student"]: dict(r) for r in c.execute("SELECT * FROM learning_time")}
+        manual_post_open = c.execute("SELECT value FROM settings WHERE key='post_open'").fetchone()[0] == "true"
     student_ids = {r["id"] for r in users}
     attempts = [r for r in attempts if r["student"] in student_ids]
     rows = []
@@ -528,6 +580,8 @@ def faculty_rows():
         exams = {r["phase"]: r for r in attempts if r["student"] == user["id"]}
         row = {"student_no": user["student_no"], "name": user["name"], "sequence": user["first_form"] + ("B" if user["first_form"] == "A" else "A"),
                "created": user["created"], "activity": {r["module"]: {"visits": r["count"], "first": r["first"], "last": r["last"]} for r in activities if r["student"] == user["id"]}}
+        row["learning_seconds"] = round(learning.get(user["id"], {}).get("seconds", 0))
+        row["post_access"] = "教师统一开放" if manual_post_open else "学习满30分钟" if row["learning_seconds"] >= AUTO_POST_SECONDS else "未开放"
         for phase in ("pre", "post"):
             r = exams.get(phase)
             row[phase] = ({"status": "已完成" if r["submitted"] else "作答中", "started": r["started"], "submitted": r["submitted"],
@@ -570,11 +624,11 @@ def export(kind: Literal["summary", "items"] = "summary"):
     rows, attempts = faculty_rows()
     data = []
     if kind == "summary":
-        header = ["学号", "姓名", "试卷顺序", "前测状态", "前测成绩", "后测状态", "后测成绩", "提升分", "学习间隔小时", "知识问答访问次数", "图谱访问次数", "情景访问次数", "前测用时秒", "后测用时秒", "试卷版本"]
+        header = ["学号", "姓名", "试卷顺序", "前测状态", "前测成绩", "后测状态", "后测成绩", "提升分", "学习间隔小时", "有效学习秒数", "后测开放方式", "知识问答访问次数", "图谱访问次数", "情景访问次数", "前测用时秒", "后测用时秒", "试卷版本"]
         header.extend(f"{phase}{label}{suffix}" for phase in ("前测", "后测") for label in SECTION_LABELS.values() for suffix in ("得分", "满分"))
         for r in rows:
             duration = lambda p: round(r[p]["submitted"]-r[p]["started"]) if r[p].get("submitted") else ""
-            data.append([r["student_no"], r["name"], r["sequence"], r["pre"]["status"], r["pre"]["score"], r["post"]["status"], r["post"]["score"], r["gain"], r["interval_hours"], *[r["activity"].get(m, {}).get("visits", 0) for m in ("knowledge", "atlas", "cases")], duration("pre"), duration("post"), r["pre"].get("version", get_store().settings()["version"])])
+            data.append([r["student_no"], r["name"], r["sequence"], r["pre"]["status"], r["pre"]["score"], r["post"]["status"], r["post"]["score"], r["gain"], r["interval_hours"], r["learning_seconds"], r["post_access"], *[r["activity"].get(m, {}).get("visits", 0) for m in ("knowledge", "atlas", "cases")], duration("pre"), duration("post"), r["pre"].get("version", get_store().settings()["version"])])
             data[-1].extend(r[p].get("sections", {}).get(key, {}).get(field, "")
                            for p in ("pre", "post") for key in SECTION_LABELS for field in ("score", "total"))
     else:

@@ -4,6 +4,7 @@ window.Study = (() => {
   const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const phaseName = p => p === "pre" ? "前测" : "后测";
   let hooks, session = null, paper = null, answers = {}, saved = "{}", saving = Promise.resolve(), timer, showing = false, busy = false, lastVisit = "";
+  let learningTickAt = 0, learningHeartbeatBusy = false;
   const root = () => find("#assessmentRoot");
   const message = (text, bad = false) => hooks.toast(text, bad);
   const notice = text => `<p class="study-notice">${text}</p>`;
@@ -178,6 +179,33 @@ window.Study = (() => {
   }
   const isTeacher = () => session?.role === "teacher";
   const canLearn = () => !!(session?.authenticated && (isTeacher() || (session.pre_completed && session.active?.phase !== "post")));
+  function activeLearningModule() {
+    return ["knowledge", "atlas", "cases"].find(view => find(`#view-${view}`)?.classList.contains("is-active")) || "";
+  }
+  function pushPostIfOpened(previous, data) {
+    if (!previous?.post_open && data.post_open && data.pre_completed && !data.post_completed && data.active?.phase !== "post") {
+      hooks.switchView("assessment");
+      message(data.post_open_reason === "time" ? "已累计有效学习30分钟，后测现已开放。" : "教师已开放后测，请完成学习后独立作答。");
+    }
+  }
+  async function learningHeartbeat(reset = false) {
+    const module = activeLearningModule();
+    const eligible = session?.authenticated && !isTeacher() && session.pre_completed && !session.post_completed && session.active?.phase !== "post";
+    if (!eligible || !module || document.hidden || !document.hasFocus()) { learningTickAt = 0; return; }
+    const now = Date.now();
+    const seconds = reset || !learningTickAt ? 0 : Math.min(20, Math.max(0, (now - learningTickAt) / 1000));
+    learningTickAt = now;
+    if (learningHeartbeatBusy) return;
+    learningHeartbeatBusy = true;
+    try {
+      const previous = session;
+      const data = await request("/api/study/heartbeat", "POST", { module, seconds });
+      updateSession(data);
+      pushPostIfOpened(previous, data);
+    } catch (error) {
+      if (error.status === 401 || error.status === 403) learningTickAt = 0;
+    } finally { learningHeartbeatBusy = false; }
+  }
   function guard(view) {
     if (!session?.authenticated) { loginScreen(); return null; }
     if (isTeacher()) return view === "assessment" ? "admin" : view;
@@ -193,6 +221,8 @@ window.Study = (() => {
       lastVisit = view;
       void request("/api/study/visit", "POST", { module: view }).catch(() => {});
     }
+    learningTickAt = 0;
+    void learningHeartbeat(true);
   }
   async function init(config) {
     hooks = config;
@@ -248,17 +278,24 @@ window.Study = (() => {
     const sync = async () => {
       if (!session?.authenticated || document.hidden || busy) return;
       try {
+        const previous = session;
         const data = await request("/api/session");
         const changed = data.active?.id !== session.active?.id || data.pre_completed !== session.pre_completed || data.post_completed !== session.post_completed || data.post_open !== session.post_open;
         updateSession(data);
+        pushPostIfOpened(previous, data);
         if (!data.authenticated) return;
         if (!canLearn() && !find("#view-assessment").classList.contains("is-active")) hooks.switchView("assessment");
         else if (changed && find("#view-assessment").classList.contains("is-active")) await show();
       } catch {}
     };
-    window.addEventListener("focus", sync);
+    window.addEventListener("focus", () => { void sync(); void learningHeartbeat(true); });
+    window.addEventListener("blur", () => { learningTickAt = 0; });
     setInterval(sync, 30000);
-    document.addEventListener("visibilitychange", () => { if (document.hidden && paper) void flush().catch(() => {}); else void sync(); });
+    setInterval(() => void learningHeartbeat(), 15000);
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) { learningTickAt = 0; if (paper) void flush().catch(() => {}); }
+      else { void sync(); void learningHeartbeat(true); }
+    });
     try { updateSession(await request("/api/session")); }
     catch (error) { loginScreen(); find("#studentLoginError").textContent = error.message || "暂时无法连接，请稍后重新登录。"; }
   }
@@ -283,7 +320,10 @@ window.Study = (() => {
     if (!session.pre_completed) content = `<span class="study-pill">首次使用 · 必须完成</span><h2>先独立完成前测</h2><p>测验分为基础知识、皮疹辨别和模拟案例三节，共36个单选小题，总分100分。请按当前掌握程度作答，不查阅资料或使用AI。</p><p>答案会自动保存，可以中断后继续；完成全部题目并提交即可进入学习，不要求达到及格分数。图片可点击放大，请确认图片加载成功后提交。</p>${notice("提交后立即显示成绩、各模块得分与逐题解析，可从解析一键进入知识问答继续提问。提交后不能重做，请核对学号和姓名。")}${button("pre", "开始前测 →")}`;
     else if (!session.post_completed) {
       const pre = session.results.find(r => r.phase === "pre");
-      content = `<span class="study-pill">前测已完成</span><h2>你的前测成绩</h2><div class="pre-score score-specs"><strong>${pre.score}<small> / ${resultTotal(pre)}</small></strong><p>下方已展开逐题解析。每题都可以进入知识问答继续提问。</p></div>${scoreTable([pre])}${scoreTable([pre], "breakdown")}<p>${session.post_open ? "教师已开放后测，请完成学习后独立作答。" : "知识问答、皮疹图谱和情景演练均已开放。后测由教师统一开放。"}</p><div class="study-actions">${button("learn", "进入知识问答")}${button("review", "查看逐题解析", true)}${session.post_open ? button("post-confirm", "准备开始后测", true) : button("refresh", "刷新开放状态", true)}</div><div id="postConfirmation" class="study-confirmation" hidden><strong>确认已完成教师安排的学习？</strong><p>开始后测后，本站学习模块与前测解析将暂时锁定，提交全部答案后恢复。后测只能提交一次。</p>${button("post", "确认开始后测")}</div>${notice("成绩和作答已保存，以后使用同一姓名与学号登录可继续复习。")}`;
+      const targetMinutes = Math.round((session.auto_post_seconds || 1800) / 60);
+      const remainingMinutes = Math.max(1, Math.ceil((session.auto_post_remaining || 0) / 60));
+      const availability = session.post_open ? (session.post_open_reason === "time" ? `已累计有效学习${targetMinutes}分钟，后测现已开放，请独立作答。` : "教师已开放后测，请完成学习后独立作答。") : `知识问答、皮疹图谱和情景演练均已开放。累计有效学习${targetMinutes}分钟后将自动开放后测，目前约剩${remainingMinutes}分钟；教师也可提前统一开放。`;
+      content = `<span class="study-pill">前测已完成</span><h2>你的前测成绩</h2><div class="pre-score score-specs"><strong>${pre.score}<small> / ${resultTotal(pre)}</small></strong><p>下方已展开逐题解析。每题都可以进入知识问答继续提问。</p></div>${scoreTable([pre])}${scoreTable([pre], "breakdown")}<p>${availability}</p><div class="study-actions">${button("learn", "进入知识问答", true)}${button("review", "查看逐题解析", true)}${session.post_open ? button("post-confirm", "准备开始后测") : button("refresh", "刷新开放状态", true)}</div><div id="postConfirmation" class="study-confirmation" hidden><strong>确认已完成本阶段学习？</strong><p>开始后测后，本站学习模块与前测解析将暂时锁定，提交全部答案后恢复。后测只能提交一次。</p>${button("post", "确认开始后测")}</div>${notice("成绩和作答已保存，以后使用同一姓名与学号登录可继续复习。")}`;
     }
     else {
       const pre = session.results.find(r => r.phase === "pre"), post = session.results.find(r => r.phase === "post");
@@ -389,9 +429,9 @@ window.Study = (() => {
   }
   async function loadFaculty() {
     const data = await hooks.adminApi("/api/admin/study");
-    find("#facultyStudy").innerHTML = `<section class="study-card"><span class="section-code">ASSESSMENT CONTROL</span><h2>知识测验与学习评价</h2><div class="exam-specs"><div><strong>${data.registered}</strong><span>登记学生</span></div><div><strong>${data.pre_completed}</strong><span>已完成前测</span></div><div><strong>${data.post_completed}</strong><span>已完成后测</span></div></div><div class="study-release"><div><strong>${data.post_open ? "后测已向学生开放" : "后测未开放"}</strong><p>教师统一控制新后测的开始。关闭后，已开始的学生仍可完成作答。</p></div><button type="button" class="solid-button" id="togglePost">${data.post_open ? "关闭后测入口" : "统一开放后测"}</button></div><div class="study-actions"><button type="button" class="line-button" data-study-export="summary">导出配对成绩 CSV</button><button type="button" class="line-button" data-study-export="items">导出逐题作答 CSV</button><button type="button" class="line-button" id="previewPapers">查看 A/B 试卷与答案</button><button type="button" class="text-button" id="refreshFaculty">刷新记录</button></div>${notice("配对完成学生的平均分变化：" + (data.mean_gain == null ? "暂无数据" : `${data.mean_gain > 0 ? "+" : ""}${data.mean_gain}分`) + "。两卷按知识点、分值和预设难度匹配，尚需教师审题与小样本预测试验证等值性。学号和姓名是登记信息，不等同于强身份认证。")}</section><section class="study-card"><h2>学生测验记录</h2><div class="study-table-wrap"><table><thead><tr><th>学号</th><th>姓名</th><th>顺序</th><th>前测</th><th>后测</th><th>变化</th></tr></thead><tbody>${data.students.map(s => `<tr><td>${esc(s.student_no)}</td><td>${esc(s.name)}</td><td>${s.sequence}</td><td>${s.pre.score ?? esc(s.pre.status)}</td><td>${s.post.score ?? esc(s.post.status)}</td><td>${s.gain ?? "—"}</td></tr>`).join("") || '<tr><td colspan="6">还没有学生记录。学生登录后会在此显示。</td></tr>'}</tbody></table></div></section><div id="facultyPapers"></div>`;
+    find("#facultyStudy").innerHTML = `<section class="study-card"><span class="section-code">ASSESSMENT CONTROL</span><h2>知识测验与学习评价</h2><div class="exam-specs"><div><strong>${data.registered}</strong><span>登记学生</span></div><div><strong>${data.pre_completed}</strong><span>已完成前测</span></div><div><strong>${data.post_completed}</strong><span>已完成后测</span></div></div><div class="study-release"><div><strong>${data.post_open ? "教师统一后测入口已开放" : "教师统一后测入口未开放"}</strong><p>学生累计有效学习30分钟会自动获得个人后测入口；教师也可在此提前统一开放。关闭仅影响统一入口，已自动获得资格或已开始的学生不受影响。</p></div><button type="button" class="solid-button" id="togglePost">${data.post_open ? "关闭统一入口" : "统一开放后测"}</button></div><div class="study-actions"><button type="button" class="line-button" data-study-export="summary">导出配对成绩 CSV</button><button type="button" class="line-button" data-study-export="items">导出逐题作答 CSV</button><button type="button" class="line-button" id="previewPapers">查看 A/B 试卷与答案</button><button type="button" class="text-button" id="refreshFaculty">刷新记录</button></div>${notice("配对完成学生的平均分变化：" + (data.mean_gain == null ? "暂无数据" : `${data.mean_gain > 0 ? "+" : ""}${data.mean_gain}分`) + "。两卷按知识点、分值和预设难度匹配，尚需教师审题与小样本预测试验证等值性。学号和姓名是登记信息，不等同于强身份认证。")}</section><section class="study-card"><h2>学生测验记录</h2><div class="study-table-wrap"><table><thead><tr><th>学号</th><th>姓名</th><th>顺序</th><th>有效学习</th><th>后测开放</th><th>前测</th><th>后测</th><th>变化</th></tr></thead><tbody>${data.students.map(s => `<tr><td>${esc(s.student_no)}</td><td>${esc(s.name)}</td><td>${s.sequence}</td><td>${Math.floor(s.learning_seconds / 60)}分${s.learning_seconds % 60}秒</td><td>${esc(s.post_access)}</td><td>${s.pre.score ?? esc(s.pre.status)}</td><td>${s.post.score ?? esc(s.post.status)}</td><td>${s.gain ?? "—"}</td></tr>`).join("") || '<tr><td colspan="8">还没有学生记录。学生登录后会在此显示。</td></tr>'}</tbody></table></div></section><div id="facultyPapers"></div>`;
     find("#togglePost").onclick = async event => {
-      if (!confirm(data.post_open ? "关闭后测入口？已开始的作答不受影响。" : "确认统一开放后测？所有已完成前测的学生将可以开始后测。")) return;
+      if (!confirm(data.post_open ? "关闭教师统一入口？已累计学习30分钟或已开始后测的学生不受影响。" : "确认统一开放后测？所有已完成前测的学生将可以开始后测。")) return;
       event.target.disabled = true;
       try { await hooks.adminApi("/api/admin/study/release", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ open: !data.post_open }) }); await loadFaculty(); }
       catch (error) { message(error.message, true); event.target.disabled = false; }
