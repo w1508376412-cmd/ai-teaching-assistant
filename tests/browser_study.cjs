@@ -187,6 +187,10 @@ const admin = { "X-Admin-Password": "local-study-test-only" };
     assert.equal(await teacher.locator("#facultyPapers .study-review").count(), 2);
     assert.equal(await teacher.locator("#facultyPapers .exam-question").count(), 72);
     await teacher.waitForFunction(() => document.querySelectorAll('#facultyPapers [data-exam-image="loaded"]').length === 8);
+    await teacher.locator("#resetStudentState").click();
+    await teacher.waitForSelector(".faculty-history");
+    assert.equal((await teacher.locator(".exam-specs strong").first().textContent()).trim(), "0");
+    assert.equal(await teacher.locator(".faculty-history tbody tr").count(), 1);
     assert.deepEqual(errors, []);
     console.log("PASS: 36-question 60/16/24 papers; text/image ordering; image retry/zoom; mobile; autosave; immediate feedback; Q&A; restored atlas; posttest locks; 72 reviewed answers; teacher images and exports.");
   } finally { await browser.close(); }

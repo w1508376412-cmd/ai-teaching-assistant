@@ -108,6 +108,11 @@ class Store:
             CREATE TABLE IF NOT EXISTS learning_time (
               student TEXT PRIMARY KEY REFERENCES students(id),
               seconds REAL NOT NULL DEFAULT 0, last_seen REAL NOT NULL);
+            CREATE TABLE IF NOT EXISTS study_history (
+              id TEXT PRIMARY KEY, reset_at REAL NOT NULL,
+              student_no TEXT NOT NULL, name TEXT NOT NULL,
+              snapshot TEXT NOT NULL);
+            CREATE INDEX IF NOT EXISTS study_history_reset ON study_history(reset_at);
             CREATE TABLE IF NOT EXISTS login_limits (key TEXT NOT NULL, created REAL NOT NULL);
             CREATE INDEX IF NOT EXISTS login_time ON login_limits(created);
             """)
@@ -419,6 +424,46 @@ class Store:
             c.execute("UPDATE learning_time SET seconds=seconds+?,last_seen=? WHERE student=?",
                       (max(0.0, credit), now, user_id))
 
+    def reset_student_state(self, snapshots):
+        """Archive the current student view, then start a clean active batch.
+
+        The archive is intentionally stored in the same durable database so the
+        faculty view keeps the pre-reset records while students get new state.
+        """
+        now = time.time()
+        reset_id = secrets.token_hex(16)
+        with self.db(write=True) as c:
+            users = [dict(row) for row in c.execute("SELECT * FROM students") if not is_teacher(row)]
+            pairs = {(row["student_no"], row["name"]): row["id"] for row in users}
+            for snapshot in snapshots:
+                student_id = pairs.get((snapshot["student_no"], snapshot["name"]))
+                if not student_id:
+                    continue
+                c.execute("INSERT INTO study_history (id,reset_at,student_no,name,snapshot) VALUES (?,?,?,?,?)",
+                          (secrets.token_hex(16), now, snapshot["student_no"], snapshot["name"], encode(snapshot)))
+            student_ids = [row["id"] for row in users]
+            if student_ids:
+                marks = ",".join("?" for _ in student_ids)
+                c.execute(f"DELETE FROM sessions WHERE student IN ({marks})", student_ids)
+                c.execute(f"DELETE FROM attempts WHERE student IN ({marks})", student_ids)
+                c.execute(f"DELETE FROM activity WHERE student IN ({marks})", student_ids)
+                c.execute(f"DELETE FROM learning_time WHERE student IN ({marks})", student_ids)
+                c.execute(f"DELETE FROM students WHERE id IN ({marks})", student_ids)
+            c.execute("DELETE FROM login_limits")
+        return {"reset_id": reset_id, "reset_at": now, "students": len(users),
+                "archived": sum(1 for snapshot in snapshots if (snapshot["student_no"], snapshot["name"]) in pairs)}
+
+    def history_rows(self):
+        with self.db() as c:
+            rows = [dict(row) for row in c.execute("SELECT reset_at,snapshot FROM study_history ORDER BY reset_at DESC, id DESC")]
+        history = []
+        for row in rows:
+            snapshot = json.loads(row["snapshot"])
+            snapshot["history"] = True
+            snapshot["reset_at"] = row["reset_at"]
+            history.append(snapshot)
+        return history
+
 
 @lru_cache(maxsize=1)
 def get_store():
@@ -654,7 +699,14 @@ def faculty_summary():
     paired = [r for r in rows if r["gain"] is not None]
     return {"post_open": get_store().settings()["post_open"] == "true", "version": get_store().settings()["version"],
             "students": rows, "registered": len(rows), "pre_completed": sum(r["pre"]["score"] is not None for r in rows),
-            "post_completed": len(paired), "mean_gain": round(sum(r["gain"] for r in paired)/len(paired), 2) if paired else None}
+            "post_completed": len(paired), "mean_gain": round(sum(r["gain"] for r in paired)/len(paired), 2) if paired else None,
+            "history": get_store().history_rows()}
+
+
+@router.post("/api/admin/study/reset", dependencies=[Depends(faculty), Depends(same_origin)])
+def reset_student_state():
+    rows, _ = faculty_rows()
+    return get_store().reset_student_state(rows)
 
 
 @router.get("/api/admin/study/papers", dependencies=[Depends(faculty)])

@@ -361,6 +361,40 @@ class StudyTests(unittest.TestCase):
                 self.client.post("/api/session/logout")
         self.assertEqual(self.client.get("/api/admin/study", headers=self.admin).json()["registered"], 0)
 
+    def test_reset_archives_student_state_and_allows_a_clean_new_batch(self):
+        self.finish_pre()
+        self.assertEqual(self.client.post("/api/study/visit", json={"module": "knowledge"}).status_code, 200)
+        self.client.post("/api/study/heartbeat", json={"module": "knowledge", "seconds": 15})
+        with self.store.db(write=True) as c:
+            user_id = c.execute("SELECT id FROM students WHERE name='测试学生'").fetchone()[0]
+            c.execute("UPDATE learning_time SET seconds=? WHERE student=?", (123, user_id))
+        self.client.post("/api/session/logout")
+        self.login("12345", "宋蕊")
+
+        reset = self.client.post("/api/admin/study/reset")
+        self.assertEqual(reset.status_code, 200, reset.text)
+        self.assertEqual(reset.json()["students"], 1)
+        self.assertEqual(reset.json()["archived"], 1)
+        summary = self.client.get("/api/admin/study").json()
+        self.assertEqual(summary["registered"], 0)
+        self.assertEqual(len(summary["history"]), 1)
+        self.assertEqual(summary["history"][0]["name"], "测试学生")
+        self.assertEqual(summary["history"][0]["pre"]["score"], 100)
+        self.assertEqual(summary["history"][0]["learning_seconds"], 123)
+
+        self.client.post("/api/session/logout")
+        fresh = self.login()
+        self.assertFalse(fresh["pre_completed"])
+        self.assertFalse(fresh["post_completed"])
+        self.assertEqual(self.client.get("/api/assessment-results").json(), {"ready": False})
+        new_pre = self.start("pre")
+        with self.store.db() as c:
+            self.assertIsNotNone(c.execute("SELECT 1 FROM students WHERE student_no='12345' AND name='宋蕊'").fetchone())
+            self.assertIsNotNone(c.execute("SELECT 1 FROM attempts WHERE id=?", (new_pre["id"],)).fetchone())
+            self.assertEqual(c.execute("SELECT COUNT(*) FROM attempts").fetchone()[0], 1)
+            self.assertEqual(c.execute("SELECT COUNT(*) FROM activity").fetchone()[0], 0)
+            self.assertEqual(c.execute("SELECT COUNT(*) FROM learning_time").fetchone()[0], 0)
+
     def test_legacy_single_number_schema_migrates_to_name_number_pairs(self):
         import sqlite3
         folder = tempfile.TemporaryDirectory()

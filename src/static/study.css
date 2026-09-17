@@ -54,6 +54,8 @@ body[data-auth="ready"] .student-login { display: none; }
 .exam-explanation .study-actions { margin: 16px 0 0; }
 .study-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 22px 0; }
 .study-actions .line-button, .study-actions .solid-button { font-size: 14px; padding: 13px 18px; }
+.study-actions .reset-button { color: #a93812; border-color: #d9a18f; }
+.study-actions .reset-button:hover { color: #fff; background: #a93812; border-color: #a93812; }
 .study-confirmation { border-top: 1px solid #dedfdb; padding-top: 24px; margin-top: 24px; }
 .study-confirmation p { line-height: 1.8; }
 .study-reminder-dialog { width: min(560px, calc(100vw - 32px)); max-width: 560px; padding: 0; overflow: hidden; color: #171817; background: #fff; border: 0; border-radius: 22px; box-shadow: 0 24px 80px #10111038; animation: study-reminder-arrive .22s ease-out; }

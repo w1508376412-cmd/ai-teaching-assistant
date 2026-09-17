@@ -497,9 +497,14 @@ window.Study = (() => {
       if (container.isConnected) container.innerHTML = `<section class="study-card"><p>成绩已保存。解析加载失败：${esc(error.message)}</p>${button("review", "重新加载解析", true)}</section>`;
     }
   }
+  function facultyTable(rows, emptyText, archived = false) {
+    const date = value => value ? new Date(Number(value) * 1000).toLocaleString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
+    return `<div class="study-table-wrap"><table><thead><tr><th>学号</th><th>姓名</th><th>顺序</th><th>有效学习</th><th>后测开放</th><th>前测</th><th>后测</th><th>变化</th>${archived ? "<th>清空时间</th>" : ""}</tr></thead><tbody>${rows.map(s => `<tr><td>${esc(s.student_no)}</td><td>${esc(s.name)}</td><td>${s.sequence}</td><td>${Math.floor(s.learning_seconds / 60)}分${s.learning_seconds % 60}秒</td><td>${esc(s.post_access)}</td><td>${s.pre.score ?? esc(s.pre.status)}</td><td>${s.post.score ?? esc(s.post.status)}</td><td>${s.gain ?? "—"}</td>${archived ? `<td>${date(s.reset_at)}</td>` : ""}</tr>`).join("") || `<tr><td colspan="${archived ? 9 : 8}">${emptyText}</td></tr>`}</tbody></table></div>`;
+  }
   async function loadFaculty() {
     const data = await hooks.adminApi("/api/admin/study");
-    find("#facultyStudy").innerHTML = `<section class="study-card"><span class="section-code">ASSESSMENT CONTROL</span><h2>知识测验与学习评价</h2><div class="exam-specs"><div><strong>${data.registered}</strong><span>登记学生</span></div><div><strong>${data.pre_completed}</strong><span>已完成前测</span></div><div><strong>${data.post_completed}</strong><span>已完成后测</span></div></div><div class="study-release"><div><strong>${data.post_open ? "教师统一后测入口已开放" : "教师统一后测入口未开放"}</strong><p>学生累计有效学习30分钟会自动获得个人后测入口；教师也可在此提前统一开放。关闭仅影响统一入口，已自动获得资格或已开始的学生不受影响。</p></div><button type="button" class="solid-button" id="togglePost">${data.post_open ? "关闭统一入口" : "统一开放后测"}</button></div><div class="study-actions"><button type="button" class="line-button" data-study-export="summary">导出配对成绩 CSV</button><button type="button" class="line-button" data-study-export="items">导出逐题作答 CSV</button><button type="button" class="line-button" id="previewPapers">查看 A/B 试卷与答案</button><button type="button" class="text-button" id="refreshFaculty">刷新记录</button></div>${notice("配对完成学生的平均分变化：" + (data.mean_gain == null ? "暂无数据" : `${data.mean_gain > 0 ? "+" : ""}${data.mean_gain}分`) + "。两卷按知识点、分值和预设难度匹配，尚需教师审题与小样本预测试验证等值性。学号和姓名是登记信息，不等同于强身份认证。")}</section><section class="study-card"><h2>学生测验记录</h2><div class="study-table-wrap"><table><thead><tr><th>学号</th><th>姓名</th><th>顺序</th><th>有效学习</th><th>后测开放</th><th>前测</th><th>后测</th><th>变化</th></tr></thead><tbody>${data.students.map(s => `<tr><td>${esc(s.student_no)}</td><td>${esc(s.name)}</td><td>${s.sequence}</td><td>${Math.floor(s.learning_seconds / 60)}分${s.learning_seconds % 60}秒</td><td>${esc(s.post_access)}</td><td>${s.pre.score ?? esc(s.pre.status)}</td><td>${s.post.score ?? esc(s.post.status)}</td><td>${s.gain ?? "—"}</td></tr>`).join("") || '<tr><td colspan="8">还没有学生记录。学生登录后会在此显示。</td></tr>'}</tbody></table></div></section><div id="facultyPapers"></div>`;
+    const history = data.history || [];
+    find("#facultyStudy").innerHTML = `<section class="study-card"><span class="section-code">ASSESSMENT CONTROL</span><h2>知识测验与学习评价</h2><div class="exam-specs"><div><strong>${data.registered}</strong><span>登记学生</span></div><div><strong>${data.pre_completed}</strong><span>已完成前测</span></div><div><strong>${data.post_completed}</strong><span>已完成后测</span></div></div><div class="study-release"><div><strong>${data.post_open ? "教师统一后测入口已开放" : "教师统一后测入口未开放"}</strong><p>学生累计有效学习30分钟会自动获得个人后测入口；教师也可在此提前统一开放。关闭仅影响统一入口，已自动获得资格或已开始的学生不受影响。</p></div><button type="button" class="solid-button" id="togglePost">${data.post_open ? "关闭统一入口" : "统一开放后测"}</button></div><div class="study-actions"><button type="button" class="line-button" data-study-export="summary">导出配对成绩 CSV</button><button type="button" class="line-button" data-study-export="items">导出逐题作答 CSV</button><button type="button" class="line-button" id="previewPapers">查看 A/B 试卷与答案</button><button type="button" class="line-button reset-button" id="resetStudentState">清空学生当前状态</button><button type="button" class="text-button" id="refreshFaculty">刷新记录</button></div>${notice("配对完成学生的平均分变化：" + (data.mean_gain == null ? "暂无数据" : `${data.mean_gain > 0 ? "+" : ""}${data.mean_gain}分`) + "。两卷按知识点、分值和预设难度匹配，尚需教师审题与小样本预测试验证等值性。学号和姓名是登记信息，不等同于强身份认证。")}</section><section class="study-card"><h2>学生测验记录</h2>${facultyTable(data.students, "还没有学生记录。学生登录后会在此显示。")}</section>${history.length ? `<section class="study-card faculty-history"><h2>历史学习记录</h2><p class="study-notice">以下记录来自清空前的历史批次，仅供教师查看，不会影响学生重新开始测验和学习。</p>${facultyTable(history, "暂无历史记录。", true)}</section>` : ""}<div id="facultyPapers"></div>`;
     find("#togglePost").onclick = async event => {
       if (!confirm(data.post_open ? "关闭教师统一入口？已累计学习30分钟或已开始后测的学生不受影响。" : "确认统一开放后测？所有已完成前测的学生将可以开始后测。")) return;
       event.target.disabled = true;
@@ -507,6 +512,15 @@ window.Study = (() => {
       catch (error) { message(error.message, true); event.target.disabled = false; }
     };
     find("#refreshFaculty").onclick = () => loadFaculty().catch(e => message(e.message, true));
+    find("#resetStudentState").onclick = async event => {
+      if (!confirm("确认清空所有学生当前的问卷回答、草稿、学习时间和模块访问状态？清空前记录会保留在教师端历史记录中，教师账号不受影响。")) return;
+      event.target.disabled = true;
+      try {
+        const result = await hooks.adminApi("/api/admin/study/reset", { method: "POST" });
+        message(`已清空${result.students}名学生的当前状态，历史记录已保留。`);
+        await loadFaculty();
+      } catch (error) { message(error.message, true); event.target.disabled = false; }
+    };
     document.querySelectorAll("[data-study-export]").forEach(el => { el.onclick = async () => {
       try {
         const response = await fetch(`/api/admin/study/export?kind=${el.dataset.studyExport}`, { cache: "no-store", headers: { "X-Admin-Password": sessionStorage.getItem("adminPassword") || "" } });
