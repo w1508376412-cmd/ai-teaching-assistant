@@ -368,6 +368,8 @@ class StudyTests(unittest.TestCase):
         with self.store.db(write=True) as c:
             user_id = c.execute("SELECT id FROM students WHERE name='测试学生'").fetchone()[0]
             c.execute("UPDATE learning_time SET seconds=? WHERE student=?", (123, user_id))
+            c.execute("CREATE TABLE rash_quizzes (id TEXT PRIMARY KEY, student TEXT NOT NULL REFERENCES students(id), questions TEXT NOT NULL, answers TEXT NOT NULL DEFAULT '{}', started REAL NOT NULL)")
+            c.execute("INSERT INTO rash_quizzes VALUES ('legacy-rash', ?, '[]', '{}', ?)", (user_id, time.time()))
         self.client.post("/api/session/logout")
         self.login("12345", "宋蕊")
 
@@ -394,6 +396,7 @@ class StudyTests(unittest.TestCase):
             self.assertEqual(c.execute("SELECT COUNT(*) FROM attempts").fetchone()[0], 1)
             self.assertEqual(c.execute("SELECT COUNT(*) FROM activity").fetchone()[0], 0)
             self.assertEqual(c.execute("SELECT COUNT(*) FROM learning_time").fetchone()[0], 0)
+            self.assertEqual(c.execute("SELECT COUNT(*) FROM rash_quizzes").fetchone()[0], 0)
 
     def test_legacy_single_number_schema_migrates_to_name_number_pairs(self):
         import sqlite3

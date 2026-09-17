@@ -448,6 +448,8 @@ class Store:
                 c.execute(f"DELETE FROM attempts WHERE student IN ({marks})", student_ids)
                 c.execute(f"DELETE FROM activity WHERE student IN ({marks})", student_ids)
                 c.execute(f"DELETE FROM learning_time WHERE student IN ({marks})", student_ids)
+                if c.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='rash_quizzes'").fetchone():
+                    c.execute(f"DELETE FROM rash_quizzes WHERE student IN ({marks})", student_ids)
                 c.execute(f"DELETE FROM students WHERE id IN ({marks})", student_ids)
             c.execute("DELETE FROM login_limits")
         return {"reset_id": reset_id, "reset_at": now, "students": len(users),
