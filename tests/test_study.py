@@ -134,6 +134,8 @@ class StudyTests(unittest.TestCase):
 
     def test_parallel_forms_frozen_and_equal_blueprint(self):
         a, b = [self.store.make_paper(f) for f in ("A", "B")]
+        expected_rash_letters = {"A": ["A", "D", "B", "B"],
+                                 "B": ["B", "B", "B", "D"]}
         self.assertEqual(study.VERSION, VERSION)
         for paper in (a, b):
             self.assertEqual(paper["version"], VERSION)
@@ -150,6 +152,11 @@ class StudyTests(unittest.TestCase):
             self.assertEqual(Counter(q["case_id"] for q in paper["questions"] if q["section"] == "case"), {"c1": 4, "c2": 4})
             rash = [q for q in paper["questions"] if q["section"] == "rash"]
             self.assertEqual([q["id"] for q in rash], [f"r{n:02}" for n in range(1, 9)])
+            self.assertEqual(
+                ["ABCD"[next(i for i, o in enumerate(q["options"]) if o["id"] == q["correct"])]
+                 for q in rash[:4]],
+                expected_rash_letters[paper["form"]],
+            )
             self.assertEqual(len({q["pair"] for q in rash}), 8)
             self.assertTrue(all(q.get("image_file") and q.get("image_source") for q in rash))
             for q in rash:
@@ -170,11 +177,18 @@ class StudyTests(unittest.TestCase):
             reloaded = study.Store(self.store.path).make_paper("A")
         self.assertEqual([q["stem"] for q in a["questions"]], [q["stem"] for q in reloaded["questions"]])
         self.assertNotEqual(a["questions"][0]["options"], reloaded["questions"][0]["options"])
+        reloaded_rash = [q for q in reloaded["questions"] if q["section"] == "rash"]
+        self.assertEqual(
+            ["ABCD"[next(i for i, o in enumerate(q["options"]) if o["id"] == q["correct"])]
+             for q in reloaded_rash[:4]],
+            expected_rash_letters["A"],
+        )
 
     def test_eight_rash_pairs_use_existing_atlas_images_and_record_sources(self):
         atlas = json.loads((study.ROOT / "assets/rash-atlas/atlas.json").read_text())
         diseases = {d["id"]: d for category in atlas["categories"] for d in category["diseases"]}
         bank = rash_bank()
+        expected_positions = {"A": [0, 3, 1, 1], "B": [1, 1, 1, 3]}
         self.assertEqual(len(RASH_PAIRS), 8)
         self.assertEqual(len(bank), 8)
         self.assertEqual(len({p["atlas_id"] for p in bank}), 8)
@@ -190,6 +204,8 @@ class StudyTests(unittest.TestCase):
                 self.assertIn(q["answer"], q["choices"])
                 self.assertTrue(q["explanation"])
                 self.assertTrue(q.get("image_file"))
+                if n < 4:
+                    self.assertEqual(q.get("correct_index"), expected_positions[form][n])
                 self.assertNotIn("模拟病史", q["stem"])
                 self.assertTrue((study.ROOT / "assets/rash-atlas/images" / q["image_file"]).is_file())
                 self.assertTrue(q["image_source"]["source_label"] and q["image_source"]["license"])
@@ -219,7 +235,7 @@ class StudyTests(unittest.TestCase):
         self.assertEqual(self.client.post("/api/chat/knowledge", json={"messages": [{"role": "user", "content": "测试"}]}).status_code, 403)
         p = self.start()
         for q in p["questions"]:
-            for key in ("correct", "answer", "explanation", "pair", "sources", "disease", "image_file", "image_source", "source"):
+            for key in ("correct", "answer", "explanation", "pair", "sources", "disease", "image_file", "image_source", "source", "fixed_correct_index"):
                 self.assertNotIn(key, q)
             self.assertIn(q["section"], SECTION_TOTALS)
         self.assertEqual(self.client.get("/api/assessment-results").json(), {"ready": False})

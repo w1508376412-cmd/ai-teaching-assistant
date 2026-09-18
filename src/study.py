@@ -253,11 +253,21 @@ class Store:
 
         def add(q, ident, points, meta, case_id=None, section="basic"):
             choices = list(q["choices"])
-            random.SystemRandom().shuffle(choices)
+            fixed_index = q.get("correct_index")
+            if fixed_index is None:
+                random.SystemRandom().shuffle(choices)
+            else:
+                if fixed_index not in range(len(choices)):
+                    raise ValueError(f"Invalid correct option index for {ident}: {fixed_index}")
+                distractors = [choice for choice in choices if choice != q["answer"]]
+                random.SystemRandom().shuffle(distractors)
+                choices = distractors
+                choices.insert(fixed_index, q["answer"])
             options = [{"id": secrets.token_hex(5), "text": text} for text in choices]
             questions.append({"id": ident, "stem": q["stem"], "options": options,
                               "correct": next(o["id"] for o in options if o["text"] == q["answer"]),
                               "points": points, "case_id": case_id, "section": section, **meta,
+                              **({"fixed_correct_index": fixed_index} if fixed_index is not None else {}),
                               **{k: q[k] for k in ("image_file", "image_source") if k in q}})
 
         for n, p in enumerate(self.blueprint(), 1):
@@ -295,7 +305,16 @@ class Store:
                 option["id"] = secrets.token_hex(8)
                 if question["correct"] == old_id:
                     question["correct"] = option["id"]
-            random.SystemRandom().shuffle(question["options"])
+            fixed_index = question.get("fixed_correct_index")
+            if fixed_index is None:
+                random.SystemRandom().shuffle(question["options"])
+            else:
+                correct = next(option for option in question["options"]
+                               if option["id"] == question["correct"])
+                distractors = [option for option in question["options"] if option is not correct]
+                random.SystemRandom().shuffle(distractors)
+                question["options"] = distractors
+                question["options"].insert(fixed_index, correct)
         return paper
 
     def attempts(self, user_id):
@@ -716,6 +735,7 @@ def faculty_papers():
     forms = [get_store().make_paper(form) for form in ("A", "B")]
     for paper in forms:
         for q in paper["questions"]:
+            q.pop("fixed_correct_index", None)
             if q.pop("image_file", None):
                 q["image_url"] = f"/api/admin/study/papers/{paper['form']}/image/{q['id']}"
                 q["image_alt"] = "皮疹辨别教学图片"
