@@ -534,24 +534,15 @@
           "images": [
             {
               "file": "ebv_1620.webp",
-              "alt": "传染性单核细胞增多症皮疹",
-              "width": 1200,
-              "height": 790,
-              "source_label": "CDC PHIL 1620",
-              "license": "公有领域",
-              "dimensions": "2400×1580",
-              "caption": "口腔内近观：硬腭黏膜与舌前背面均见炎症改变。传染性单核细胞增多症可在硬腭出现瘀点，为其特征性口腔体征。",
-              "provider": "CDC/ Emory Univ.; Dr. Sellers",
-              "links": [
-                {
-                  "label": "出处",
-                  "url": "https://wwwn.cdc.gov/PHIL/Details.aspx?pid=1620"
-                },
-                {
-                  "label": "原始档",
-                  "url": "https://wwwn.cdc.gov/phil/PHIL_Images/1620/1620.tif"
-                }
-              ],
+              "alt": "传染性单核细胞增多症咽峡部表现",
+              "width": 444,
+              "height": 392,
+              "source_label": "《传染病学（第10版）》",
+              "license": "教材图片；版权归原出版方所有",
+              "dimensions": "444×392",
+              "caption": "咽峡部近观：双侧扁桃体见黄白色渗出，伴咽部充血。该表现可见于传染性单核细胞增多症，但需结合病史、血常规及异型淋巴细胞等检查综合判断。",
+              "provider": "《传染病学（第10版）》",
+              "links": [],
               "textbook": false
             },
             {
