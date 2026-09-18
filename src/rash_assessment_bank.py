@@ -1,8 +1,9 @@
-"""Eight parallel rash-recognition items, authored from the existing atlas.
+"""Eight parallel image-based rash-recognition items from the existing atlas.
 
-The first four pairs are text-only; the last four use distinct atlas images
-in A and B. Histories are teaching simulations, not photographed-patient data.
-Image filenames and diagnostic captions stay in the frozen server-side paper.
+Every item requires inspection of a clinical image.  A and B use different
+views or crops while testing the same paired knowledge point. Histories are
+teaching simulations, not photographed-patient data. Image filenames and
+diagnostic captions stay in the frozen server-side paper.
 """
 import json
 from pathlib import Path
@@ -13,48 +14,57 @@ ROOT = Path(__file__).resolve().parents[1]
 IMAGE_DIR = ROOT / "assets/rash-atlas/images"
 
 
-def variant(stem, correct, distractors, explanation, image_file=None):
+def variant(stem, correct, distractors, explanation, image_file, source_image_file=None):
     return {**item(stem, correct, *distractors), "explanation": explanation,
-            **({"image_file": image_file} if image_file else {})}
+            "image_file": image_file,
+            **({"source_image_file": source_image_file} if source_image_file else {})}
 
 
 RASH_PAIRS = [
     dict(id="rash-varicella", atlas_id="varicella", difficulty="基础",
          point="分批出疹与多期皮损并存的识别",
          reference="https://www.cdc.gov/chickenpox/hcp/clinical-signs/index.html",
-         A=variant("患者发热后躯干部出现瘙痒性皮疹，查体同时见红色丘疹、薄壁水疱和结痂，四肢远端皮损较少。最符合哪种疾病？",
+         A=variant("患者发热后出现瘙痒性皮疹，躯干较四肢远端明显。结合图示皮损形态和分布，最符合哪种疾病？",
                    "水痘", ["猴痘", "播散性带状疱疹", "大疱性脓疱疮"],
-                   "躯干为主的向心性分布、分批出现及不同阶段皮损并存支持水痘。猴痘常见较深在的皮损并可伴淋巴结肿大；播散性带状疱疹需注意起始的皮节分布及免疫抑制背景；大疱性脓疱疮主要为浅表松弛性大疱、糜烂与痂皮。"),
-         B=variant("患者全身皮疹2天，头皮和胸背部较多，瘙痒明显；今日仍出现新水疱，原有皮损部分已结痂。最可能的诊断是？",
+                   "图中躯干部可见散在、分批出现的丘疹与疱疹样皮损，结合向心性分布和瘙痒支持水痘。猴痘皮损通常更深在、质硬；播散性带状疱疹需关注起始的皮节性疼痛；大疱性脓疱疮以浅表松弛性大疱、糜烂和痂皮为主。",
+                   "varicella_book00_p93.webp"),
+         B=variant("患者全身皮疹2天，头皮和胸背部较多，瘙痒明显，今日仍有新疹出现。观察图示皮损，最可能的诊断是？",
                    "水痘", ["播散性带状疱疹", "大疱性脓疱疮", "猴痘"],
-                   "头皮、躯干较多，持续有新疱出现且旧疹已结痂，符合水痘的分批出疹和多期皮损共存。其他选项虽可有疱疹，但需分别结合皮节性起病、浅表大疱或深在疼痛性皮损等特征鉴别。")),
+                   "图中可见不同阶段的散在丘疹、疱疹样皮损，结合头皮和躯干为主、持续出现新疹及明显瘙痒，符合水痘。其他选项需分别结合皮节性起病、浅表大疱或深在疼痛性皮损等特征鉴别。",
+                   "varicella_book00_p93_detail.webp", "varicella_book00_p93.webp")),
     dict(id="rash-zoster", atlas_id="zoster", difficulty="基础",
          point="单侧皮节分布与神经痛的识别",
          reference="https://www.cdc.gov/shingles/hcp/clinical-signs/index.html",
-         A=variant("56岁患者右胸部灼痛3天后出疹，红斑上见成簇水疱，从背部延伸至同侧胸前，沿肋间分布，未越过中线。最可能的诊断是？",
+         A=variant("56岁患者右侧腰腹部灼痛3天后出现图示皮损，病变局限于一侧。结合疼痛与分布，最可能的诊断是？",
                    "带状疱疹", ["接触性皮炎", "单纯疱疹", "水痘"],
-                   "先有局部神经痛，再出现沿单侧皮节排列的成簇水疱，是带状疱疹的典型组合。接触性皮炎符合接触部位且以瘙痒更常见；单纯疱疹常在局部复发；水痘通常呈全身分批出疹。"),
-         B=variant("61岁患者左腰部触痛，次日出现簇集性小水疱，沿左侧腰腹形成带状分布，对侧皮肤正常。哪项诊断最能解释皮损分布与疼痛的关系？",
+                   "图中红斑、水疱样皮损沿单侧皮节呈带状分布，结合出疹前局部神经痛，支持带状疱疹。接触性皮炎由接触范围决定分布且瘙痒更常见；单纯疱疹常局限复发；水痘通常为全身分批出疹。",
+                   "zoster_book00_p93_trunk.webp", "zoster_book00_p93.webp"),
+         B=variant("61岁患者左侧额部和眼周先有灼痛，随后出现图示簇集性皮损，病变未越过面部中线。哪项诊断最符合？",
                    "带状疱疹", ["单纯疱疹", "水痘", "接触性皮炎"],
-                   "单侧腰腹沿皮节的带状疱疹与出疹前疼痛相吻合，支持带状疱疹。接触性皮炎由接触范围决定分布，单纯疱疹常为局限复发性皮损，水痘的皮损不局限于单一皮节。")),
+                   "图示皮损局限于单侧额部及眼周，呈簇集性疱疹样改变，与出疹前神经痛相吻合，支持眼支带状疱疹；还需评估眼部受累。单纯疱疹、水痘和接触性皮炎通常不能同时解释这种单侧神经分布与疼痛。",
+                   "zoster_book00_p93_face.webp", "zoster_book00_p93.webp")),
     dict(id="rash-scarlet", atlas_id="scarlet", difficulty="应用",
          point="砂纸样疹伴咽炎的鉴别",
          reference="https://www.cdc.gov/group-a-strep/hcp/clinical-guidance/scarlet-fever.html",
-         A=variant("患者发热、咽痛2天，胸腹部出现弥漫细小红色丘疹，触之粗糙，腋窝与肘窝皮疹加深，舌乳头突出。最可能的诊断是？",
+         A=variant("患者发热、咽痛2天后出现图示弥漫性皮疹，舌乳头突出，腋窝与肘窝皮疹较深。最可能的诊断是？",
                    "猩红热", ["麻疹", "风疹", "发疹型药疹"],
-                   "细密砂纸样皮疹、皮肤皱褶处加深及咽炎、草莓舌共同支持猩红热，可通过咽拭子A群链球菌检测确认。麻疹更常伴明显卡他症状，风疹常伴耳后或枕后淋巴结肿大；药疹需结合用药与出疹时序。"),
-         B=variant("青年患者急性咽痛、高热后出现躯干细密皮疹，按压可褪色、触感如砂纸，伴口周苍白、扁桃体充血。首先考虑哪种疾病？",
+                   "图中可见弥漫充血基础上的细密丘疹，结合急性咽炎、皮肤皱褶处加深和草莓舌，支持猩红热，可通过咽拭子A群链球菌检测确认。麻疹更常伴明显卡他症状，风疹常伴耳后或枕后淋巴结肿大。",
+                   "scarlet_5163.webp"),
+         B=variant("青年患者急性咽痛、高热后出现图示皮疹，伴口周苍白和扁桃体充血。结合近观皮损，首先考虑哪种疾病？",
                    "猩红热", ["发疹型药疹", "风疹", "麻疹"],
-                   "急性咽炎、砂纸样皮疹及口周苍白相结合，最支持猩红热。病毒性斑丘疹与药疹外观可重叠，需结合卡他症状、淋巴结分布和用药史鉴别，诊断需A群链球菌检测支持。")),
+                   "图中近观可见弥漫性细小丘疹形成的砂纸样外观，结合急性咽炎及口周苍白，最支持猩红热。其他发疹性疾病可有相似红疹，但伴随体征和皮损质地不同，诊断需A群链球菌检测支持。",
+                   "scarlet_5163_detail.webp", "scarlet_5163.webp")),
     dict(id="rash-syphilis", atlas_id="syphilis", difficulty="应用",
          point="掌跖斑丘疹与二期梅毒的识别",
          reference="https://www.cdc.gov/syphilis/about/index.html",
-         A=variant("成人躯干、手掌及足底出现铜红色斑丘疹，部分边缘有薄鳞屑，瘙痒不明显，伴全身淋巴结肿大。两个月前曾有自行愈合的无痛性生殖器溃疡。最可能的诊断是？",
+         A=variant("成人出现图示躯干皮疹，瘙痒不明显，伴全身淋巴结肿大；两个月前有自行愈合的无痛性生殖器溃疡。最可能的诊断是？",
                    "二期梅毒", ["玫瑰糠疹", "手足口病", "多形红斑"],
-                   "掌跖受累、无明显瘙痒的泛发斑丘疹及既往无痛性溃疡的病程支持二期梅毒。玫瑰糠疹常沿躯干皮纹分布，手足口病常有急性发热和疼痛性口腔损害，多形红斑以靶形损害为特征；需梅毒血清学试验确认。"),
-         B=variant("患者掌跖及躯干部持续出疹10天，皮损为带薄鳞屑的红褐色斑丘疹，无明显瘙痒，口腔见黏膜斑并有斑片状脱发。最需要优先排查哪种疾病？",
+                   "图中躯干可见泛发、较对称的斑丘疹，结合无明显瘙痒、全身淋巴结肿大和既往无痛性溃疡的病程，支持二期梅毒。玫瑰糠疹、手足口病及多形红斑不能同样充分解释这一组合，需梅毒血清学试验确认。",
+                   "syphilis_book00_p235_trunk.webp", "syphilis_book00_p235.webp"),
+         B=variant("患者持续出疹10天，口腔见黏膜斑并有斑片状脱发，掌部皮损如下图。最需要优先排查哪种疾病？",
                    "二期梅毒", ["多形红斑", "玫瑰糠疹", "手足口病"],
-                   "掌跖斑丘疹合并黏膜斑和斑片状脱发符合二期梅毒的多系统表现。其外观可模拟其他皮肤病，应结合梅毒螺旋体及非梅毒螺旋体试验判断；其他选项不能同样充分解释这一组合。")),
+                   "图示掌部斑丘疹伴薄鳞屑，结合黏膜斑和斑片状脱发，符合二期梅毒的多系统表现。其外观可模拟其他皮肤病，应结合梅毒螺旋体及非梅毒螺旋体试验判断。",
+                   "syphilis_book00_p235_palms.webp", "syphilis_book00_p235.webp")),
     dict(id="rash-measles-image", atlas_id="measles", difficulty="应用",
          point="斑丘疹图像与高热卡他症状的综合识别",
          reference="https://www.cdc.gov/measles/hcp/clinical-overview/index.html",
@@ -114,12 +124,13 @@ def bank():
         for form in ("A", "B"):
             q = dict(pair[form])
             assert len(set(q["choices"])) == 4 and q["answer"] in q["choices"]
-            assert bool(q.get("image_file")) == (n >= 4)
-            if q.get("image_file"):
-                source = next(i for i in disease["images"] if i["file"] == q["image_file"])
-                if not (IMAGE_DIR / q["image_file"]).is_file():
-                    raise ValueError("Missing assessment image: " + q["image_file"])
-                q["image_source"] = {k: source.get(k, "") for k in ("provider", "source_label", "license", "caption", "links")}
+            source_file = q.pop("source_image_file", q["image_file"])
+            source = next(i for i in disease["images"] if i["file"] == source_file)
+            if not (IMAGE_DIR / q["image_file"]).is_file():
+                raise ValueError("Missing assessment image: " + q["image_file"])
+            q["image_source"] = {k: source.get(k, "") for k in ("provider", "source_label", "license", "caption", "links")}
+            if q["image_file"] != source_file:
+                q["image_source"]["caption"] = (q["image_source"].get("caption", "") + "（测验中使用原图局部裁切。）").strip()
             result[form] = q
         pairs.append(result)
     return pairs

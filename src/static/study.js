@@ -380,7 +380,7 @@ window.Study = (() => {
   }
   function dashboard() {
     const intro = `<div class="study-heading"><span class="section-code">04 / KNOWLEDGE ASSESSMENT</span><h1>记录起点，检验进步。</h1><p>两次测验围绕相同知识点，使用不同设问与临床情景。</p></div>`;
-    const stats = `<div class="exam-specs"><div><strong>60<small>分</small></strong><span>一、基础知识 · 20小题 × 3分</span></div><div><strong>16<small>分</small></strong><span>二、皮疹辨别 · 8小题 × 2分<br>前4题文字，后4题图片</span></div><div><strong>24<small>分</small></strong><span>三、模拟案例 · 8小题 × 3分<br>2个案例，各4小题</span></div></div>`;
+    const stats = `<div class="exam-specs"><div><strong>60<small>分</small></strong><span>一、基础知识 · 20小题 × 3分</span></div><div><strong>16<small>分</small></strong><span>二、皮疹辨别 · 8小题 × 2分<br>8题均结合图片辨别</span></div><div><strong>24<small>分</small></strong><span>三、模拟案例 · 8小题 × 3分<br>2个案例，各4小题</span></div></div>`;
     let content;
     if (!session.pre_completed) content = `<span class="study-pill">首次使用 · 必须完成</span><h2>先独立完成前测</h2><p>测验分为基础知识、皮疹辨别和模拟案例三节，共36个单选小题，总分100分。请按当前掌握程度作答，不查阅资料或使用AI。</p><p>答案会自动保存，可以中断后继续；完成全部题目并提交即可进入学习，不要求达到及格分数。图片可点击放大，请确认图片加载成功后提交。</p>${notice("提交后立即显示成绩、各模块得分与逐题解析，可从解析一键进入知识问答继续提问。提交后不能重做，请核对学号和姓名。")}${button("pre", "开始前测 →")}`;
     else if (!session.post_completed) {

@@ -13,7 +13,7 @@ from src import main, study
 from src.assessment_bank import PAIRS, CASE_PAIRS, bank_with_sources
 from src.rash_assessment_bank import RASH_PAIRS, bank as rash_bank
 
-VERSION = "infectious-clinical-2026-09-v5"
+VERSION = "infectious-clinical-2026-09-v6"
 LEGACY_VERSION = "infectious-clinical-2026-09-v3"
 SECTION_TOTALS = {"basic": 60, "rash": 16, "case": 24}
 
@@ -151,8 +151,7 @@ class StudyTests(unittest.TestCase):
             rash = [q for q in paper["questions"] if q["section"] == "rash"]
             self.assertEqual([q["id"] for q in rash], [f"r{n:02}" for n in range(1, 9)])
             self.assertEqual(len({q["pair"] for q in rash}), 8)
-            self.assertTrue(all(not q.get("image_file") for q in rash[:4]))
-            self.assertTrue(all(q.get("image_file") and q.get("image_source") for q in rash[4:]))
+            self.assertTrue(all(q.get("image_file") and q.get("image_source") for q in rash))
             for q in rash:
                 self.assertEqual(len({o["text"] for o in q["options"]}), 4)
                 self.assertIn(q["correct"], {o["id"] for o in q["options"]})
@@ -190,15 +189,11 @@ class StudyTests(unittest.TestCase):
                 self.assertEqual(len(set(q["choices"])), 4)
                 self.assertIn(q["answer"], q["choices"])
                 self.assertTrue(q["explanation"])
-                self.assertEqual(bool(q.get("image_file")), n >= 4)
-                if q.get("image_file"):
-                    self.assertNotIn("模拟病史", q["stem"])
-                    source = next(i for i in atlas_disease["images"] if i["file"] == q["image_file"])
-                    for key in ("provider", "source_label", "license", "caption", "links"):
-                        self.assertEqual(q["image_source"][key], source.get(key, ""))
-                    self.assertTrue(q["image_source"]["source_label"] and q["image_source"]["license"])
-            if n >= 4:
-                self.assertNotEqual(pair["A"]["image_file"], pair["B"]["image_file"])
+                self.assertTrue(q.get("image_file"))
+                self.assertNotIn("模拟病史", q["stem"])
+                self.assertTrue((study.ROOT / "assets/rash-atlas/images" / q["image_file"]).is_file())
+                self.assertTrue(q["image_source"]["source_label"] and q["image_source"]["license"])
+            self.assertNotEqual(pair["A"]["image_file"], pair["B"]["image_file"])
             for variant in (pair["A"], pair["B"]):
                 self.assertNotRegex(variant["stem"], r"模拟病史|用药|服药|服用|新药|药物")
 
@@ -500,7 +495,7 @@ class StudyTests(unittest.TestCase):
         private = self.private_paper(pre)
         private_by_id = {q["id"]: q for q in private["questions"]}
         pictures = [q for q in pre["questions"] if q.get("image_url")]
-        self.assertEqual([q["id"] for q in pictures], ["r05", "r06", "r07", "r08"])
+        self.assertEqual([q["id"] for q in pictures], [f"r{n:02}" for n in range(1, 9)])
         image_bytes = {}
         for q in pictures:
             self.assertEqual(q["image_url"], f"/api/assessments/{pre['id']}/image/{q['id']}")
@@ -521,7 +516,7 @@ class StudyTests(unittest.TestCase):
             for q in pictures:
                 self.assertEqual(other.get(q["image_url"]).status_code, 404)
             self.assertEqual(other.get(pictures[0]["image_url"], headers=self.admin).status_code, 404)
-        for qid in ("q01", "r01", "c1_1", "missing"):
+        for qid in ("q01", "c1_1", "missing"):
             self.assertEqual(self.client.get(f"/api/assessments/{pre['id']}/image/{qid}").status_code, 404)
         self.assertEqual(self.client.get("/api/assessments/" + "0" * 32 + "/image/r05").status_code, 404)
         self.assertEqual(self.client.post(f"/api/assessments/{pre['id']}/submit", json={"answers": self.answer_key(pre), "revision": 0}).status_code, 200)
@@ -570,7 +565,7 @@ class StudyTests(unittest.TestCase):
             self.assertEqual(len(paper["questions"]), 36)
             self.assertEqual(paper["version"], VERSION)
             images = [q for q in paper["questions"] if q.get("image_url")]
-            self.assertEqual(len(images), 4)
+            self.assertEqual(len(images), 8)
             for q in paper["questions"]:
                 self.assertIn("correct", q)
                 self.assertNotIn("image_file", q)
@@ -587,7 +582,7 @@ class StudyTests(unittest.TestCase):
                 self.assertNotIn("content-disposition", result.headers)
         self.login()
         self.assertEqual(self.client.get("/api/admin/study/papers/A/image/r05").status_code, 401)
-        for form, qid in (("A", "q01"), ("B", "r01"), ("A", "missing")):
+        for form, qid in (("A", "q01"), ("B", "c1_1"), ("A", "missing")):
             self.assertEqual(self.client.get(f"/api/admin/study/papers/{form}/image/{qid}", headers=self.admin).status_code, 404)
         self.assertEqual(self.client.get("/api/admin/study/papers/C/image/r05", headers=self.admin).status_code, 422)
         with patch.dict("os.environ", {"TEACHER_STUDENT_NO": "TEACHER-TEST", "TEACHER_NAME": "本地测试教师"}):
@@ -628,9 +623,9 @@ class StudyTests(unittest.TestCase):
             self.assertEqual([rows[f"r{n:02}"]["满分"] for n in range(1, 9)], ["2"] * 8)
             self.assertEqual(rows["c1_1"]["满分"], "3")
             self.assertEqual(Counter(r["测验模块"] for r in rows.values()), {"基础知识": 20, "皮疹辨别": 8, "模拟案例": 8})
-            self.assertEqual(Counter(r["题目形式"] for r in rows.values()), {"文字题": 32, "图片题": 4})
+            self.assertEqual(Counter(r["题目形式"] for r in rows.values()), {"文字题": 28, "图片题": 8})
             for qid, item in rows.items():
-                self.assertEqual(bool(item["图片出处"]), qid in {"r05", "r06", "r07", "r08"})
+                self.assertEqual(bool(item["图片出处"]), qid.startswith("r"))
         for qid in by_phase["pre"]:
             self.assertEqual(by_phase["pre"][qid]["配对知识点ID"], by_phase["post"][qid]["配对知识点ID"])
         self.assertEqual(by_phase["post"]["r05"]["得分"], "0")
