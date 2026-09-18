@@ -4,13 +4,14 @@
   "summary": {
     "category_count": 8,
     "disease_count": 30,
-    "image_count": 72
+    "image_count": 75
   },
   "notice": "图谱用于医学教学与鉴别思路训练，不能替代面诊、病理或实验室诊断。教材图片版权归出版社与原作者，仅供教学参考。",
   "provenance": [
     "教材：《皮肤性病学》第10版（人民卫生出版社，2024），版权归出版社与原作者。",
     "CDC PHIL：仅收录经原站核对为公有领域的图像。",
-    "PubMed Central：仅收录 CC BY / CC0 开放许可文献配图。"
+    "PubMed Central：仅收录 CC BY / CC0 开放许可文献配图。",
+    "用户提供图片：由教师提供，来源及许可信息待补充。"
   ],
   "categories": [
     {
@@ -965,9 +966,48 @@
                 }
               ],
               "textbook": false
+            },
+            {
+              "file": "meningo_user01_trunk.webp",
+              "alt": "流行性脑脊髓膜炎患者躯干及臀部出血性皮损",
+              "width": 832,
+              "height": 556,
+              "source_label": "用户提供图片 1",
+              "license": "来源/许可待补充",
+              "dimensions": "832×556",
+              "caption": "躯干及臀部可见散在至簇集的紫红色瘀点、瘀斑，部分皮损融合，局部中央出现灰黑色坏死或结痂；在急性发热背景下应警惕脑膜炎球菌血症相关出血性皮疹。",
+              "provider": "用户提供",
+              "links": [],
+              "textbook": false
+            },
+            {
+              "file": "meningo_user02_hand.webp",
+              "alt": "流行性脑脊髓膜炎患者手背及腕部出血性皮损",
+              "width": 832,
+              "height": 556,
+              "source_label": "用户提供图片 2",
+              "license": "来源/许可待补充",
+              "dimensions": "832×556",
+              "caption": "手背及腕部可见多发紫红色瘀点、瘀斑，部分病灶融合并伴中央暗色坏死。此类压之不褪色的出血性皮损提示小血管损伤及凝血功能障碍。",
+              "provider": "用户提供",
+              "links": [],
+              "textbook": false
+            },
+            {
+              "file": "meningo_user03_ankle.webp",
+              "alt": "流行性脑脊髓膜炎患者踝部及足背出血性皮损",
+              "width": 832,
+              "height": 556,
+              "source_label": "用户提供图片 3",
+              "license": "来源/许可待补充",
+              "dimensions": "832×556",
+              "caption": "踝部及足背可见散在紫红色瘀点、瘀斑，局部呈片状或条索状并伴中央暗色坏死；结合急骤高热、脑膜刺激征等表现时，应按危重感染尽快评估和处理。",
+              "provider": "用户提供",
+              "links": [],
+              "textbook": false
             }
           ],
-          "image_count": 1,
+          "image_count": 4,
           "search_text": "流行性脑脊髓膜炎 Meningococcemia 急骤高热、头痛呕吐、脑膜刺激征 迅速增多的瘀点瘀斑，压之不褪色，可融合坏死 最高危急症。发热 + 压之不褪色的瘀点必须按脑膜炎球菌血症处理，立即启动抗生素，不等培养结果"
         },
         {
@@ -1084,7 +1124,7 @@
         }
       ],
       "disease_count": 6,
-      "image_count": 11
+      "image_count": 14
     },
     {
       "id": "c2",
